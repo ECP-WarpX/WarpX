@@ -400,23 +400,18 @@ void warpx::hybrid::ApplyEBBoundaryToNodalScalar (
             amrex::Real W[AMREX_SPACEDIM][2];
             ablastr::particles::compute_weights<amrex::IndexType::NODE>(
                 xe[0], yq, zq, plo, dxi, ii, jj, kk, W);
-            auto const n3 =
-                DistanceToEB::interp_normal(xe[0], yq, zq, plo, dxi, phi);
-#if defined(WARPX_DIM_3D)
-            amrex::RealVect const nv{
-                amrex::Real(n3[0]), amrex::Real(n3[1]), amrex::Real(n3[2])};
-#else
-            amrex::RealVect const nv{
-                amrex::Real(n3[0]), amrex::Real(n3[2])};
-#endif
-            amrex::Real const nv2 = DistanceToEB::dot_product(nv, nv);
-            if (!std::isfinite(nv2) || !(nv2 > 0._rt)) {
-                // degenerate level-set gradient (interp_normal normalizes
-                // internally, so a vanishing gradient arrives non-finite):
-                // treat as deep interior
+            // test the level-set gradient before normalizing it (a vanishing
+            // gradient would otherwise divide by zero under the FPE traps)
+            amrex::RealVect const grad =
+                DistanceToEB::interp_gradient(xe[0], yq, zq, plo, dxi, phi);
+            amrex::Real const grad2 = DistanceToEB::dot_product(grad, grad);
+            if (!std::isfinite(grad2) || !(grad2 > 0._rt)) {
+                // degenerate level-set gradient: treat as deep interior
                 f(i, j, k, n) = 0._rt;
                 return;
             }
+            amrex::RealVect nv = grad;
+            nv *= 1.0_rt / std::sqrt(grad2);
 
             // Image point at the exact mirror distance, regularized near the
             // surface so the stencil retains fluid nodes; the gather never

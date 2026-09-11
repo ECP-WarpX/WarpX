@@ -212,24 +212,20 @@ namespace warpx::hybrid::detail
             return g;
         }
 
-        // Boundary normal (toward the plasma) from the level set. The
-        // post-#7051 interp_normal returns a unit 3D Cartesian normal for
-        // every dimensionality; with yq = 0 the RZ azimuthal rotation is the
-        // identity, so components 0 and 2 are the (x,z)/(r,z) grid normal.
-        auto const n3 = DistanceToEB::interp_normal(xe[0], yq, zq, plo, dxi, phi);
-#if defined(WARPX_DIM_3D)
-        g.nv = amrex::RealVect(
-            amrex::Real(n3[0]), amrex::Real(n3[1]), amrex::Real(n3[2]));
-#else
-        g.nv = amrex::RealVect(amrex::Real(n3[0]), amrex::Real(n3[2]));
-#endif
-        amrex::Real const nv2 = DistanceToEB::dot_product(g.nv, g.nv);
-        if (!std::isfinite(nv2) || !(nv2 > 0._rt)) {
-            // degenerate level-set gradient (interp_normal normalizes
-            // internally, so a vanishing gradient arrives non-finite):
-            // treat as deep interior
+        // Boundary normal (toward the plasma) from the level set: test the
+        // gradient before normalizing it (a vanishing gradient would
+        // otherwise divide by zero, which trips the CI's FPE traps)
+        amrex::RealVect const grad =
+            DistanceToEB::interp_gradient(xe[0], yq, zq, plo, dxi, phi);
+        amrex::Real const grad2 = DistanceToEB::dot_product(grad, grad);
+        if (!std::isfinite(grad2) || !(grad2 > 0._rt)) {
+            // degenerate level-set gradient: treat as deep interior
             g.band = false;
             return g;
+        }
+        amrex::Real const inv_norm = 1.0_rt / std::sqrt(grad2);
+        for (int d = 0; d < AMREX_SPACEDIM; ++d) {
+            g.nv[d] = grad[d] * inv_norm;
         }
 
         // image point in the plasma, at least one cell away from this point
