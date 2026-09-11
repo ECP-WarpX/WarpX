@@ -3011,6 +3011,9 @@ Details about the collision models can be found in the :ref:`theory section <mul
     If using ``bremsstrahlung``, the product species must be of type photon.
     If using ``linear_compton``, these should be two species: first, a photon species, and second, a lepton species, in this exact order.
     If using ``pulsed_decay``, the sum of the product species charges and mass must equal those of the parent species.
+    If using two-product ``nuclearfusion`` with ``scattering_angle_model = anisotropic_legendre``,
+    the heavier product must be listed first and the lighter product second. The angular
+    distribution coefficient table describes the lighter, second product.
 
 .. pp:param:: <collision_name>.ndt_supercycle
     :type: ``int``
@@ -3107,10 +3110,47 @@ Details about the collision models can be found in the :ref:`theory section <mul
     :optional:
 
     Only for ``nuclearfusion``. The scattering angle for the products of the fusion reaction.
-    The possible values are ``isotropic``, ``forward`` and ``backward``.
+    The possible values are ``isotropic``, ``forward``, ``backward``, and ``anisotropic_legendre``.
     With ``isotropic``, the scattering angle is drawn from an isotropic distribution.
     With ``forward``, the scattering angle is set to zero, i.e. the products are emitted in the same direction as the reactant (in the center of mass frame).
     With ``backward``, the scattering angle is set to :math:`\pi`, i.e. the products are emitted in the opposite direction of the reactant (in the center of mass frame).
+    With ``anisotropic_legendre``, the scattering angle is drawn from the anisotropic
+    distribution represented by a Legendre expansion of the differential cross section of the
+    fusion reaction.
+    For a two-product reaction, the coefficient table describes the lighter product; therefore,
+    :pp:param:`<collision_name>.product_species` must list the heavier product first.
+    The anisotropic distribution is sampled about the incident direction of the first reactant
+    listed in :pp:param:`<collision_name>.species`, in the center-of-mass frame.
+
+.. pp:param:: <collision_name>.fusion_angular_distribution_coefficients
+    :type: ``string``
+    :optional:
+
+    Only for ``nuclearfusion``. Path to an energy-dependent table of Legendre coefficients
+    used by the ``anisotropic_legendre`` scattering angle model. Each nonempty row contains a
+    center-of-mass energy in MeV followed by all coefficients from order zero upward. The
+    zeroth-order coefficient and at least one higher-order coefficient are required.
+    At least two rows are required, and their energies must be strictly increasing.
+    For two-product fusion, these coefficients describe the lighter product, which must be
+    listed second in :pp:param:`<collision_name>.product_species`.
+
+.. pp:param:: <collision_name>.fusion_angular_distribution_coefficients_format
+    :type: ``string``
+
+    Format of :pp:param:`<collision_name>.fusion_angular_distribution_coefficients`.
+    This parameter is required when a coefficient table is specified.
+    ``ENDF`` selects the orthonormal Legendre coefficients defined by the ENDF-6 format
+    :cite:p:`param-BrownENDF2023`, which WarpX uses as given.
+    ``IAEA`` selects the non-orthonormal coefficients tabulated by
+    :cite:t:`param-DrosgOtukaIAEA2015`. WarpX converts every IAEA coefficient before use
+    according to
+
+    .. math::
+
+       L_l^{\mathrm{ENDF}} = \frac{L_l^{\mathrm{IAEA}}/L_0^{\mathrm{IAEA}}}{2l+1}.
+
+    The value is case-insensitive. The zeroth-order IAEA coefficient must be nonzero in
+    every row.
 
 .. pp:param:: <collision_name>.create_products
     :type: ``bool``
