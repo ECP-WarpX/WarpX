@@ -19,6 +19,11 @@ WarpXSolverVec::~WarpXSolverVec ()
             delete lvl[i];
         }
     }
+    // the scalar slot owns its MultiFab the same way the array slots do
+    for (auto * mf : m_scalar_vec)
+    {
+        delete mf;
+    }
 }
 
 void WarpXSolverVec::Define ( WarpX*  a_WarpX,
@@ -59,10 +64,14 @@ void WarpXSolverVec::Define ( WarpX*  a_WarpX,
     if (m_scalar_type_name=="phi_fp") {
         m_scalar_type = FieldType::phi_fp;
     }
+    else if (m_scalar_type_name=="hybrid_electron_pressure_fp") {
+        m_scalar_type = FieldType::hybrid_electron_pressure_fp;
+    }
     else if (m_scalar_type_name!="none") {
         WARPX_ABORT_WITH_MESSAGE(a_scalar_type_name+" "
                     +"is not a valid option for scalar type used in Definining "
-                    +"a WarpXSolverVec. Valid scalar types are: phi_fp");
+                    +"a WarpXSolverVec. Valid scalar types are: phi_fp, "
+                    +"hybrid_electron_pressure_fp");
     }
 
     m_array_vec.resize(m_num_amr_levels);
