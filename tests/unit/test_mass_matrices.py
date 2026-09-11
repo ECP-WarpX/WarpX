@@ -132,6 +132,15 @@ def test_mass_matrices_match_push_and_deposit(particle_shape):
         particle_shape=particle_shape,
         current_deposition_algo="direct",
     )
+    # Fill fresh allocations with signaling NaN, so that reading state this
+    # test forgot to set up shows as NaN rather than as whatever the allocator
+    # happened to hand back. That matters here because the test drives the
+    # implicit routines outside the order an evolve scheme calls them in, so
+    # it has to establish their inputs itself. A release build would otherwise
+    # hide such a bug behind zeroed memory until CI, which builds AMReX with
+    # -DAMReX_TESTING=ON, turns this on anyway.
+    pywarpx.amrex.init_snan = 1
+
     # the mass matrices are only allocated by an evolve scheme that uses them
     sim.evolve_scheme = _theta_implicit_with_mass_matrices()
 
