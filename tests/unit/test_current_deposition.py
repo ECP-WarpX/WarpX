@@ -66,9 +66,6 @@ def test_current_deposition_conserves_total_current(current_deposition_algo):
     geom = sim.extension.warpx.Geom(0)
     cell_volume = float(np.prod(geom.data().CellSize()))
 
-    # atol=0.0, so that the relative tolerance is what actually decides. The
-    # numpy default of atol=1e-8 would be larger than the quantities compared
-    # here and would make the assertion vacuous.
     jz_multifab = fields.get("current_fp", "z", 0)
     total_jz = (
         jz_multifab.sum_unique(comp=0, local=False, period=geom.periodicity())
