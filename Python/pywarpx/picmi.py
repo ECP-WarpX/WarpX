@@ -2218,6 +2218,18 @@ class HybridPICSolver(picmistandard.base._ClassWithInit):
         Can be a constant value or an expression depending on ``rho`` (charge density)
         and ``B`` (magnetic field magnitude).
 
+    plasma_resistivity_species: dict, optional
+        Per-species resistivity overlays added on top of ``plasma_resistivity``,
+        as a dictionary mapping a charged species name to a value or expression
+        in Ohm*m. The expression may depend on ``rho_s`` (the species charge
+        density), ``rho`` (total charge density which, by quasineutrality,
+        equals the electron charge density), ``Te`` (electron temperature
+        in Kelvin), ``J`` (plasma current density magnitude), ``J_s`` (the
+        species current density magnitude), ``B`` (magnetic field magnitude)
+        and ``t`` (time). The effective resistivity applied to species ``s``
+        in Ohm's law, the Joule heating source and the resistive drag is
+        ``plasma_resistivity + plasma_resistivity_species[s]``.
+
     solve_electron_energy_equation: bool, default=False
         Solve the electron energy equation instead of the algebraic adiabatic
         pressure closure: the electron entropy ``K = Te * ne**(1-gamma)`` is
@@ -2302,6 +2314,15 @@ class HybridPICSolver(picmistandard.base._ClassWithInit):
         Flag to determine handling of vacuum region (where rho < n_floor*q_e). Setting to True will solve the simplified Generalized Ohm's Law dropping the Hall and pressure terms in the vacuum region. See `Holmstrom (2013) <https://arxiv.org/abs/1301.0272v1>`_.
         This flag is useful for suppressing vacuum region fluctuations. A large resistivity value must be used when rho <= rho_floor.
 
+    vacuum_seam_switch_mode: str, default="edge"
+        Sampling of the density that decides the vacuum-seam treatment --
+        the Holmstrom vacuum branch when holmstrom_vacuum_region is True and
+        the density-floor selection of the guarded Hall term otherwise:
+        "edge" (legacy per-component edge average), "node" (endpoint
+        minimum), or "cell" (adjacent-cell minimum -- one decision for all
+        three E components of an index, removing the per-component half-cell
+        decision offsets at the plasma/vacuum seam). Cartesian only.
+
     Jx/y/z_external_function: str
         Function of space and time specifying external (non-plasma) currents.
 
@@ -2349,6 +2370,7 @@ class HybridPICSolver(picmistandard.base._ClassWithInit):
         n_floor=None,
         plasma_resistivity=None,
         plasma_hyper_resistivity=None,
+        plasma_resistivity_species=None,
         solve_electron_energy_equation=None,
         include_joule_heating=None,
         joule_redirect_Te_threshold=None,
@@ -2361,6 +2383,7 @@ class HybridPICSolver(picmistandard.base._ClassWithInit):
         substep_max_growth=None,
         max_substep_attempts=None,
         holmstrom_vacuum_region=None,
+        vacuum_seam_switch_mode=None,
         Jx_external_function=None,
         Jy_external_function=None,
         Jz_external_function=None,
@@ -2377,6 +2400,7 @@ class HybridPICSolver(picmistandard.base._ClassWithInit):
         self.n_floor = n_floor
         self.plasma_resistivity = plasma_resistivity
         self.plasma_hyper_resistivity = plasma_hyper_resistivity
+        self.plasma_resistivity_species = plasma_resistivity_species
 
         self.solve_electron_energy_equation = solve_electron_energy_equation
         self.include_joule_heating = include_joule_heating
@@ -2392,6 +2416,7 @@ class HybridPICSolver(picmistandard.base._ClassWithInit):
         self.max_substep_attempts = max_substep_attempts
 
         self.holmstrom_vacuum_region = holmstrom_vacuum_region
+        self.vacuum_seam_switch_mode = vacuum_seam_switch_mode
 
         self.Jx_external_function = Jx_external_function
         self.Jy_external_function = Jy_external_function
@@ -2435,6 +2460,12 @@ class HybridPICSolver(picmistandard.base._ClassWithInit):
                 self.plasma_hyper_resistivity, self.mangle_dict
             ),
         )
+        if self.plasma_resistivity_species is not None:
+            for name, expr in self.plasma_resistivity_species.items():
+                pywarpx.hybridpicmodel.__setattr__(
+                    f"plasma_resistivity_{name}(rho_s,rho,Te,J,J_s,B,t)",
+                    pywarpx.my_constants.mangle_expression(expr, self.mangle_dict),
+                )
         # Only emit the electron-energy-equation attributes that were
         # explicitly set, so the generated input deck contains only
         # user-specified parameters.
@@ -2463,6 +2494,7 @@ class HybridPICSolver(picmistandard.base._ClassWithInit):
         pywarpx.hybridpicmodel.substep_max_growth = self.substep_max_growth
         pywarpx.hybridpicmodel.max_substep_attempts = self.max_substep_attempts
         pywarpx.hybridpicmodel.holmstrom_vacuum_region = self.holmstrom_vacuum_region
+        pywarpx.hybridpicmodel.vacuum_seam_switch_mode = self.vacuum_seam_switch_mode
         pywarpx.hybridpicmodel.__setattr__(
             "Jx_external_grid_function(x,y,z,t)",
             pywarpx.my_constants.mangle_expression(
@@ -3445,6 +3477,43 @@ class DSMCCollisions(picmistandard.base._ClassWithInit):
                 if "species" in key:
                     val = val.name
                 collision.add_new_attr(process + "_" + key, val)
+
+
+class HybridResistiveDragCollisions(picmistandard.base._ClassWithInit):
+    """
+    Custom class to handle setup of the hybrid-PIC resistive drag collision in
+    WarpX. If collision initialization is added to picmistandard this can be
+    changed to inherit that functionality.
+
+    This is the ion-side half of the electron-ion friction operator of the
+    hybrid-PIC (Ohm's law) solver: it relaxes the bulk velocity of the given
+    ion species toward the electron fluid velocity at the rate implied by the
+    resistivity of Ohm's law, pairing with the ``plasma_resistivity`` /
+    ``plasma_resistivity_species`` parameters of :class:`HybridPICSolver`.
+    With the drag registered, the resistive terms of Ohm's law are also
+    included in the particle-push E-field, so when used the drag must be
+    registered on every charged species (WarpX asserts this at
+    initialization).
+
+    Parameters
+    ----------
+    name: string
+        Name of instance (used in the inputs file)
+
+    species: species instance
+        The (positive, current-depositing) ion species the drag acts on
+    """
+
+    def __init__(self, name, species, **kw):
+        self.name = name
+        self.species = species
+
+        self.handle_init(kw)
+
+    def collision_initialize_inputs(self):
+        collision = pywarpx.Collisions.newcollision(self.name)
+        collision.type = "hybrid_resistive_drag"
+        collision.species = [self.species.name]
 
 
 class InverseBremsstrahlungCollisions(picmistandard.base._ClassWithInit):

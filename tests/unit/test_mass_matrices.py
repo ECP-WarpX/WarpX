@@ -18,6 +18,8 @@ deposits after pushing the particles in that same electric field.
 
 import numpy as np
 import pytest
+from conftest import rtol
+from helpers import N_AXES, add_uniform_particles, make_sim
 
 import pywarpx
 from pywarpx import picmi
@@ -95,9 +97,7 @@ def _fill_periodic_random(mf, n_cell, rng, amplitude):
 
 
 @pytest.mark.parametrize("particle_shape", ["linear", "quadratic", "cubic"])
-def test_mass_matrices_match_push_and_deposit(
-    make_sim, uniform_particles, rtol, particle_shape
-):
+def test_mass_matrices_match_push_and_deposit(particle_shape):
     """``S dE`` must equal the current deposited after a push in ``dE``.
 
     The particles start at rest, which makes this an exact identity rather
@@ -123,7 +123,7 @@ def test_mass_matrices_match_push_and_deposit(
     # with an electromagnetic solver; this pins it down independently of that.
     pywarpx.interpolation.galerkin_scheme = 0
 
-    n_axes = {"1d": 1, "2d": 2, "3d": 3}[pywarpx.libwarpx.geometry_dim]
+    n_axes = N_AXES[pywarpx.libwarpx.geometry_dim]
     # 8 cells and 4 cells per box: two boxes per axis, so that contributions
     # crossing a box boundary and the periodic boundary are both exercised
     sim = make_sim(
@@ -131,15 +131,24 @@ def test_mass_matrices_match_push_and_deposit(
         max_grid_size=4,
         particle_shape=particle_shape,
         current_deposition_algo="direct",
-        evolve_scheme=_theta_implicit_with_mass_matrices(),
     )
+    # the mass matrices are only allocated by an evolve scheme that uses them
+    sim.evolve_scheme = _theta_implicit_with_mass_matrices()
+
+    sim.add_species(
+        picmi.Species(particle_type="electron", name="electrons"), layout=None
+    )
+    sim.initialize_inputs()
+    sim.initialize_warpx()
+
     warpx = sim.extension.warpx
     fields = sim.fields
     dt = warpx.getdt(0)
     n_cell = list(warpx.Geom(0).domain.size)
 
     # the particles start at rest, see the docstring
-    electrons, _ = uniform_particles(sim)
+    add_uniform_particles(sim, "electrons")
+    electrons = sim.particles.get("electrons")
 
     # A uniform magnetic field with all three components, strong enough that
     # the normalized gyration ``b = q dt B / (2 m)`` is of order one: the
@@ -206,5 +215,5 @@ def test_mass_matrices_match_push_and_deposit(
         # the large ones and the assertion is not vacuous
         error = np.max(np.abs(dj_mass_matrices - dj_reference)) / scale
         assert np.allclose(
-            dj_mass_matrices, dj_reference, rtol=rtol, atol=rtol * scale
+            dj_mass_matrices, dj_reference, rtol=rtol(), atol=rtol() * scale
         ), f"J{direction}: max |dJ_mm - dJ_ref| / max |dJ_ref| = {error}"

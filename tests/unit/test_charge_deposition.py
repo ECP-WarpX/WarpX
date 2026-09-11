@@ -7,6 +7,8 @@
 
 import numpy as np
 import pytest
+from conftest import rtol
+from helpers import N_AXES, add_uniform_particles, make_sim
 
 import pywarpx
 from pywarpx import picmi
@@ -23,9 +25,7 @@ pytestmark = pytest.mark.skipif(
 
 
 @pytest.mark.parametrize("particle_shape", ["linear", "quadratic", "cubic"])
-def test_charge_deposition_conserves_total_charge(
-    make_sim, uniform_particles, total, rtol, particle_shape
-):
+def test_charge_deposition_conserves_total_charge(particle_shape):
     """Charge deposition must conserve the total charge of the species.
 
     Whatever the B-spline order, the shape factors of a macro particle sum to
@@ -35,9 +35,19 @@ def test_charge_deposition_conserves_total_charge(
     """
     sim = make_sim(particle_shape=particle_shape)
 
+    sim.add_species(
+        picmi.Species(particle_type="electron", name="electrons"), layout=None
+    )
+
+    sim.initialize_inputs()
+    sim.initialize_warpx()
+
+    n_per_dim = 4
     weight = 1.0e6
-    electrons, p = uniform_particles(sim, weight=weight)
-    n_part = p["w"].size
+    add_uniform_particles(sim, "electrons", n_per_dim=n_per_dim, weight=weight)
+
+    n_part = n_per_dim ** N_AXES[pywarpx.libwarpx.geometry_dim]
+    electrons = sim.particles.get("electrons")
 
     assert electrons.size == n_part
 
@@ -51,7 +61,7 @@ def test_charge_deposition_conserves_total_charge(
     assert np.isclose(
         electrons.sum_particle_charge(local=False),
         expected_charge,
-        rtol=rtol,
+        rtol=rtol(),
         atol=0.0,
     )
 
@@ -59,16 +69,31 @@ def test_charge_deposition_conserves_total_charge(
     # applies the boundary/volume treatment
     rho = electrons.get_charge_density(lev=0, local=False)
 
-    deposited_charge = total(rho, sim)
+    # integrate rho over the domain: sum the unique nodes, times the cell volume.
+    # Passing the periodicity matters, as rho is nodal and the nodes on the periodic
+    # boundary would otherwise be counted twice
+    geom = sim.extension.warpx.Geom(0)
+    cell_volume = float(np.prod(geom.data().CellSize()))
+    deposited_charge = (
+        rho.sum_unique(comp=0, local=False, period=geom.periodicity()) * cell_volume
+    )
 
-    assert np.isclose(deposited_charge, expected_charge, rtol=rtol, atol=0.0)
+    assert np.isclose(deposited_charge, expected_charge, rtol=rtol(), atol=0.0)
 
 
-def test_charge_deposition_is_negative_for_electrons(make_sim, uniform_particles):
+def test_charge_deposition_is_negative_for_electrons():
     """Electrons must deposit a negative charge density everywhere."""
     sim = make_sim()
-    electrons, _ = uniform_particles(sim)
+    sim.add_species(
+        picmi.Species(particle_type="electron", name="electrons"), layout=None
+    )
 
+    sim.initialize_inputs()
+    sim.initialize_warpx()
+
+    add_uniform_particles(sim, "electrons")
+
+    electrons = sim.particles.get("electrons")
     rho = electrons.get_charge_density(lev=0, local=False)
 
     assert rho.max(0) <= 0.0
