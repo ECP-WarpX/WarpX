@@ -275,6 +275,8 @@ WarpX::Evolve (int numsteps)
             }
         }
 
+        mypc->ContinuousFluxInjection(cur_time, dt[0]);
+
         HandleParticlesAtBoundaries(step, cur_time, num_moved);
 
         // Apply particle thermalizer (no-op until implemented)
@@ -736,8 +738,6 @@ void WarpX::ExplicitFillBoundaryEBUpdateAux ()
 
 void WarpX::HandleParticlesAtBoundaries (int step, amrex::Real cur_time, int num_moved)
 {
-    mypc->ContinuousFluxInjection(cur_time, dt[0]);
-
     ExecutePythonCallback("particlescraper");
 
     mypc->ApplyBoundaryConditions();
@@ -1391,6 +1391,7 @@ WarpX::PushParticlesandDeposit (
     bool skip_deposition,
     PositionPushType position_push_type,
     MomentumPushType momentum_push_type,
+    amrex::Real dt_scale,
     ImplicitOptions const * implicit_options
 )
 {
@@ -1404,6 +1405,7 @@ WarpX::PushParticlesandDeposit (
             skip_deposition,
             position_push_type,
             momentum_push_type,
+            dt_scale,
             implicit_options
         );
     }
@@ -1417,6 +1419,7 @@ WarpX::PushParticlesandDeposit (
     bool skip_deposition,
     PositionPushType position_push_type,
     MomentumPushType momentum_push_type,
+    amrex::Real dt_scale,
     ImplicitOptions const * implicit_options
 )
 {
@@ -1443,7 +1446,7 @@ WarpX::PushParticlesandDeposit (
         lev,
         current_fp_string,
         cur_time,
-        dt[lev],
+        dt[lev]*dt_scale,
         subcycling_half,
         skip_deposition,
         position_push_type,
