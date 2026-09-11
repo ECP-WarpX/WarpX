@@ -36,9 +36,6 @@ def test_current_deposition_conserves_total_current(current_deposition_algo):
     """
     sim = make_sim(current_deposition_algo=current_deposition_algo)
 
-    # relativistic enough that the per-step displacement is a sizeable fraction
-    # of a cell: Esirkepov forms differences of shape factors, which loses
-    # precision when the displacement is vanishingly small
     sim.add_species(
         picmi.Species(particle_type="electron", name="electrons"), layout=None
     )
