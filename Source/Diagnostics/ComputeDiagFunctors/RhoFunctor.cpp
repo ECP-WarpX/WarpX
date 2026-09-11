@@ -4,7 +4,6 @@
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_FFT)
     #include "FieldSolver/SpectralSolver/SpectralFieldData.H"
     #include "FieldSolver/SpectralSolver/SpectralSolverRZ.H"
-    #include "Utils/WarpXAlgorithmSelection.H"
 #endif
 #include "EmbeddedBoundary/Enabled.H"
 #include "FieldSolver/FiniteDifferenceSolver/HybridPICModel/EBJBoundary.H"
