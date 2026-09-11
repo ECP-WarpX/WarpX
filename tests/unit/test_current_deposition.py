@@ -8,7 +8,7 @@
 import numpy as np
 import pytest
 from conftest import rtol
-from helpers import N_AXES, add_species, add_uniform_particles, make_sim
+from helpers import N_AXES, add_uniform_particles, make_sim
 
 import pywarpx
 from pywarpx import picmi
@@ -39,7 +39,9 @@ def test_current_deposition_conserves_total_current(current_deposition_algo):
     # relativistic enough that the per-step displacement is a sizeable fraction
     # of a cell: Esirkepov forms differences of shape factors, which loses
     # precision when the displacement is vanishingly small
-    add_species(sim, "electrons", "electron")
+    sim.add_species(
+        picmi.Species(particle_type="electron", name="electrons"), layout=None
+    )
 
     sim.initialize_inputs()
     sim.initialize_warpx()
@@ -98,7 +100,9 @@ def test_current_deposition_sums_mixed_weights():
     """
     sim = make_sim(current_deposition_algo="direct")
 
-    add_species(sim, "electrons", "electron")
+    sim.add_species(
+        picmi.Species(particle_type="electron", name="electrons"), layout=None
+    )
 
     sim.initialize_inputs()
     sim.initialize_warpx()

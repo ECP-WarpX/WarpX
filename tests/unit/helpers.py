@@ -97,18 +97,6 @@ def make_sim(
     return sim
 
 
-def add_species(sim, species_name, species_type):
-    """Add an empty species to the simulation.
-
-    Call this before ``sim.initialize_inputs()``, which is what writes the
-    species into the input deck. The particles come later, with
-    ``add_uniform_particles``.
-    """
-    sim.add_species(
-        picmi.Species(particle_type=species_type, name=species_name), layout=None
-    )
-
-
 def add_uniform_particles(
     sim, species_name, n_per_dim=4, weight=1.0e6, ux=0.0, uy=0.0, uz=0.0
 ):

@@ -8,7 +8,7 @@
 import numpy as np
 import pytest
 from conftest import rtol
-from helpers import N_AXES, add_species, add_uniform_particles, make_sim
+from helpers import N_AXES, add_uniform_particles, make_sim
 
 import pywarpx
 from pywarpx import picmi
@@ -35,7 +35,9 @@ def test_charge_deposition_conserves_total_charge(particle_shape):
     """
     sim = make_sim(particle_shape=particle_shape)
 
-    add_species(sim, "electrons", "electron")
+    sim.add_species(
+        picmi.Species(particle_type="electron", name="electrons"), layout=None
+    )
 
     sim.initialize_inputs()
     sim.initialize_warpx()
@@ -82,7 +84,9 @@ def test_charge_deposition_conserves_total_charge(particle_shape):
 def test_charge_deposition_is_negative_for_electrons():
     """Electrons must deposit a negative charge density everywhere."""
     sim = make_sim()
-    add_species(sim, "electrons", "electron")
+    sim.add_species(
+        picmi.Species(particle_type="electron", name="electrons"), layout=None
+    )
 
     sim.initialize_inputs()
     sim.initialize_warpx()
