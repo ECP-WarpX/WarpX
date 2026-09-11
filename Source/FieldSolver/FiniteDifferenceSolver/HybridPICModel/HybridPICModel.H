@@ -500,6 +500,9 @@ public:
      * adiabatic). */
     bool m_solve_electron_energy_equation = false;
 
+    /** pe row scale when the theta-implicit scheme evolves pe as a Newton unknown (set by
+     *  the scheme, read by the preconditioner); 1.0 otherwise */
+    amrex::Real m_pe_newton_scale = 1.0;
     /** Resistive electron-heating source on T_e (see Phys. Plasmas 31, 012902 (2024), Eq. 12),
      * computed per cell as
      *     S_e = Sigma_s nu_{s,e} n_s m_s |V_s - V_e|^2,
@@ -512,6 +515,23 @@ public:
      * T_e source). Only consulted when m_solve_electron_energy_equation
      * is also true. */
     bool m_include_joule_heating = false;
+
+    /** hybrid_pic_model.kappa_e: electron thermal conductivity [1/(m s)] in the heat flux
+     *  q_e = -kappa_e grad(pe/n) of the energy equation (0 = off); kappa_e(rho,Te) gives
+     *  it as a function of the charge density [C/m^3] and Te [eV]. Ignored by QDSMC. */
+    amrex::Real m_kappa_e = 0.0;
+    std::string m_kappa_e_expression = "0.0";
+    std::unique_ptr<amrex::Parser> m_kappa_e_parser;
+    /** compiled kappa_e(rho,Te) executor (rho [C/m^3], Te [eV]) */
+    amrex::ParserExecutor<2> m_kappa;
+    /** a kappa_e(rho,Te) expression was provided (else the numeric m_kappa_e is used) */
+    bool m_has_kappa_e_expression = false;
+    /** conduction active: numeric kappa_e != 0 or expression provided */
+    bool m_has_kappa_e = false;
+
+    /** hybrid_pic_model.te_seed_uniform = 1: seed the energy-equation T_e isothermal
+     *  (Te = elec_temp everywhere) instead of on the adiabat Te0 (n/n0_ref)^(gamma-1). */
+    bool m_te_seed_uniform = false;
 
     /** Te-threshold Joule redirection. When active, the eta*J^2 Joule source in
      * QDSMCAddJouleHeating heats electrons in cells where Te < m_joule_redirect_Te_eV
