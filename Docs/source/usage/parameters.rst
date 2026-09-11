@@ -404,19 +404,20 @@ Overall simulation parameters
             - ``precond.bb_global`` (``int``, default: -1): replicated-global mode; -1 auto-enables whenever the BoxArray has more than one box, 0 per-box Schwarz, 1 force global.
             - ``precond.bb_device_solve`` (``bool``, default: true when compiled with ``WarpX_CUDSS``): factorize and solve on GPU via cuDSS.
 
-          - ``jacobian.pc_type = pc_hybrid_pic``: Multigrid block-Jacobi preconditioner for the theta-implicit hybrid (generalized Ohm's law) solver.
-            The linearized Faraday-Ohm operator (Hall, resistive and hyper-resistive terms, the electron-pressure row when it is a Newton unknown, and the ion response from the mass matrices when ``implicit_evolve.use_mass_matrices_pc`` is set) is smoothed by a damped block-Jacobi sweep inside a V-cycle; ``mode = nested`` wraps the V-cycle in an inner GMRES, which makes the preconditioner nonlinear and requires a flexible outer Krylov solver (``newton.linear_solver = petsc_ksp`` with ``PETSC_OPTIONS="-ksp_type fgmres"``).
-            Collocated and staggered Cartesian grids and RZ (m = 0) are supported.
+          - ``jacobian.pc_type = pc_hybrid_pic``: Multigrid preconditioner for the theta-implicit hybrid (generalized Ohm's law) solver.
+            The linearized Faraday-Ohm operator (Hall, resistive, hyper-resistive and electron-convection terms, the electron-pressure row when it is a Newton unknown, and the ion response from the mass matrices when ``implicit_evolve.use_mass_matrices_pc`` is set) is solved approximately as the primal pair (E, W = curl curl E) with a joint block-Jacobi smoother inside geometric-multigrid V-cycles that precondition an inner GMRES.
+            The inner solve makes the preconditioner nonlinear, so it requires a flexible outer Krylov solver (``newton.linear_solver = petsc_ksp`` with ``PETSC_OPTIONS="-ksp_type fgmres"``); with ``inner_max = 0`` the preconditioner is instead a fixed number of V-cycles, a linear operator that also works under ``newton.linear_solver = amrex_gmres``.
+            Supported grids: collocated Cartesian 1D/2D/3D and RZ (azimuthal mode m = 0), and the staggered (Yee) Cartesian grid with periodic boundaries.
 
-            - ``pc_hybrid_pic.mode`` (``string``, default: ``smoother``): ``smoother`` (V-cycles as a linear preconditioner) or ``nested`` (V-cycle inside an inner GMRES).
-            - ``pc_hybrid_pic.pair`` (``bool``, default: true in nested mode on the collocated Cartesian grid, false otherwise): smooth the primal (E, W) pair jointly instead of the reduced W system.
-            - ``pc_hybrid_pic.sigma`` (``float``, default: 1.3 with ``pair``, 0.55 otherwise): Jacobi damping factor, in (0, 2).
-            - ``pc_hybrid_pic.sigma_w`` (``float``, default: 1.2 with ``pair``, otherwise ``sigma``): damping of the W rows of the pair.
-            - ``pc_hybrid_pic.pair_whistler_defect`` (``float``, default: 0.4): whistler-coupling defect of the pair block, in (0, 1].
-            - ``pc_hybrid_pic.mg_floor`` (``int``, default: 4): coarsest multigrid box width (nested mode).
-            - ``pc_hybrid_pic.inner_max`` (``int``, default: 8): iteration cap of the inner GMRES (nested mode).
-            - ``pc_hybrid_pic.inner_rtol`` (``float``, default: 1.0): relative tolerance of the inner GMRES (in the reduced W system divided by the whistler stiffness parameter, max(1, beta)); 1.0 stops after one V-cycle and one Krylov step per application.
-            - ``pc_hybrid_pic.nsweeps`` (``int``, default: 48): block-Jacobi sweeps per application in ``smoother`` mode.
+            - ``pc_hybrid_pic.sigma`` (``float``, default: 1.3): Jacobi damping of the E rows, in (0, 2).
+            - ``pc_hybrid_pic.sigma_w`` (``float``, default: 1.2): Jacobi damping of the W rows, in (0, 2).
+            - ``pc_hybrid_pic.pair_whistler_defect`` (``float``, default: 0.4): whistler-coupling defect of the block, in (0, 1].
+            - ``pc_hybrid_pic.pair_sw_min`` (``float``, default: 0): floor of the local W-hat scale as a fraction of the global one (0: purely local, the choice for strong density-contrast profiles; 1: global).
+            - ``pc_hybrid_pic.pe_row_sweeps`` (``int``, default: 0): damped-Jacobi sweeps with the upwind advection and conduction stencils on the electron-pressure row after its pointwise solve (collocated grid only).
+            - ``pc_hybrid_pic.mg_floor`` (``int``, default: 4): coarsest multigrid box width.
+            - ``pc_hybrid_pic.inner_max`` (``int``, default: 8): iteration cap of the inner GMRES; 0 disables the inner solve (linear V-cycle preconditioner).
+            - ``pc_hybrid_pic.inner_rtol`` (``float``, default: 0.3): relative tolerance of the inner GMRES; 1.0 stops after one V-cycle and one Krylov step per application.
+            - ``pc_hybrid_pic.vcycles`` (``int``, default: 1): V-cycles per application when ``inner_max = 0``.
             - ``pc_hybrid_pic.verbose`` (``bool``, default: false)
 
           - ``jacobian.pc_type = pc_petsc``: Use the PETSc solver.

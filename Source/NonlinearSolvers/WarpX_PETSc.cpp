@@ -30,16 +30,16 @@
 
 namespace warpx_petsc {
 
-/** pc_hybrid_pic in nested mode runs an inner Krylov solve to an
+/** pc_hybrid_pic with an inner Krylov solve (inner_max > 0) stops at an
  *  RHS-dependent iteration count, so the preconditioner is not a fixed
  *  linear operator: only a flexible outer Krylov method is valid. */
 static void RequireFlexibleKSPForNonlinearPC (KSP a_ksp, PreconditionerType a_pc_type)
 {
     if (a_pc_type != PreconditionerType::pc_hybrid_pic) { return; }
-    std::string mode = "smoother";
+    int inner_max = 8;
     const amrex::ParmParse pp("pc_hybrid_pic");
-    pp.query("mode", mode);
-    if (mode != "nested") { return; }
+    pp.query("inner_max", inner_max);
+    if (inner_max == 0) { return; }
     KSPType ksptype;
     KSPGetType(a_ksp, &ksptype);
     const bool flexible = (std::strcmp(ksptype, KSPFGMRES) == 0)
@@ -47,9 +47,9 @@ static void RequireFlexibleKSPForNonlinearPC (KSP a_ksp, PreconditionerType a_pc
                        || (std::strcmp(ksptype, KSPGCR) == 0)
                        || (std::strcmp(ksptype, KSPFCG) == 0);
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(flexible,
-        "pc_hybrid_pic.mode = nested is a nonlinear preconditioner and requires a "
-        "flexible Krylov method (got KSP type '" + std::string(ksptype)
-        + "'): set PETSC_OPTIONS=\"-ksp_type fgmres\"");
+        "pc_hybrid_pic with inner_max > 0 is a nonlinear preconditioner and requires "
+        "a flexible Krylov method (got KSP type '" + std::string(ksptype)
+        + "'): set PETSC_OPTIONS=\"-ksp_type fgmres\" or pc_hybrid_pic.inner_max = 0");
 }
 
 
