@@ -158,6 +158,14 @@ def test_mass_matrices_match_push_and_deposit(particle_shape):
     for direction, b in zip(("x", "y", "z"), (0.6, -0.8, 1.1)):
         fields.get("Bfield_fp", direction, 0).set_val(b * b_unit)
 
+    # The deposit reads the state saved at the start of an implicit step: the
+    # u_n attributes, which set the Lorentz factor of the kernel, and the
+    # suborbit count. The evolve schemes fill these at the top of every step;
+    # driving the routines directly, this test has to do it itself, or they
+    # read uninitialized attributes (which a testing build of AMReX fills with
+    # signaling NaN). With the particles at rest, this makes u_n = 0.
+    warpx.save_particles_at_implicit_step_start()
+
     # Deposit the mass matrices the way the Darwin solver does: the deposit
     # leaves the contributions of particles near a box edge in the guard
     # cells, so sum those into the valid cells before mirroring the symmetric
