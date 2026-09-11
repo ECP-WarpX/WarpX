@@ -3293,6 +3293,9 @@ Time step
     When the electrostatic solver is being used, this must be supplied if not using adaptive timestepping.
     This can be used with the electromagnetic solver, overriding :pp:param:`warpx.cfl`, but
     it is up to the user to ensure that the CFL condition is met.
+    On a restart from a checkpoint an explicitly specified :pp:param:`warpx.const_dt` takes
+    precedence over the time step stored in the checkpoint (a warning is issued when they differ),
+    so a run can be continued with a different time step.
 
 .. pp:param:: warpx.dt_update_interval
     :type: ``string``

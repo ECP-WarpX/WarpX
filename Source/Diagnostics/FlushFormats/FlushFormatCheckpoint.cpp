@@ -101,6 +101,13 @@ FlushFormatCheckpoint::WriteToFile (
         VisMF::Write(*warpx.m_fields.get(FieldType::Bfield_fp, Direction{2}, lev),
                      amrex::MultiFabFileFullPrefix(lev, checkpointname, default_level_prefix, "Bz_fp"));
 
+        // Hybrid-PIC electron pressure (evolved state with the electron energy equation)
+        if (warpx.m_fields.has(FieldType::hybrid_electron_pressure_fp, lev)) {
+            VisMF::Write(*warpx.m_fields.get(FieldType::hybrid_electron_pressure_fp, lev),
+                         amrex::MultiFabFileFullPrefix(lev, checkpointname,
+                                                       default_level_prefix, "pe_fp"));
+        }
+
         if (WarpX::fft_do_time_averaging)
         {
             VisMF::Write(*warpx.m_fields.get(FieldType::Efield_avg_fp, Direction{0}, lev),

@@ -30,6 +30,7 @@
 #include <ablastr/fields/MultiFabRegister.H>
 #include <ablastr/profiler/ProfilerWrapper.H>
 #include <ablastr/utils/text/StreamUtils.H>
+#include <ablastr/warn_manager/WarnManager.H>
 
 #ifdef AMREX_USE_SENSEI_INSITU
 #   include <AMReX_AmrMeshInSituBridge.H>
@@ -171,6 +172,18 @@ WarpX::InitFromCheckpoint ()
             for (auto& dt_lev : dt) {
                 lis >> word;
                 dt_lev = static_cast<Real>(std::stod(word));
+            }
+            // An explicit warpx.const_dt in the inputs takes precedence over the
+            // checkpoint's time step, so a run can be restarted at a different dt.
+            if (m_const_dt.has_value()) {
+                if (dt[0] != m_const_dt.value()) {
+                    ablastr::warn_manager::WMRecordWarning("Restart",
+                        "warpx.const_dt differs from the checkpoint's dt: using the input value",
+                        ablastr::warn_manager::WarnPriority::low);
+                }
+                for (auto& dt_lev : dt) {
+                    dt_lev = m_const_dt.value();
+                }
             }
         }
 
@@ -329,6 +342,22 @@ WarpX::InitFromCheckpoint ()
                     amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "By_fp"));
         VisMF::Read(*m_fields.get(FieldType::Bfield_fp, Direction{2}, lev),
                     amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "Bz_fp"));
+
+        // Hybrid-PIC electron pressure (evolved state with the electron energy equation)
+        if (m_fields.has(FieldType::hybrid_electron_pressure_fp, lev)) {
+            const std::string pe_name =
+                amrex::MultiFabFileFullPrefix(lev, restart_chkfile, level_prefix, "pe_fp");
+            if (VisMF::Exist(pe_name)) {
+                auto* pe = m_fields.get(FieldType::hybrid_electron_pressure_fp, lev);
+                VisMF::Read(*pe, pe_name);
+                pe->FillBoundary(Geom(lev).periodicity());
+            } else if (lev == 0) {
+                ablastr::warn_manager::WMRecordWarning("Restart",
+                    "checkpoint " + restart_chkfile + " has no electron pressure record "
+                    "(pe_fp): the electron pressure starts from its initialization.",
+                    ablastr::warn_manager::WarnPriority::low);
+            }
+        }
 
         if (WarpX::fft_do_time_averaging)
         {
