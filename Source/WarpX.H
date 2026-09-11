@@ -281,6 +281,10 @@ public:
     //! Maximum number of allowed grid crossings for particles
     static int particle_max_grid_crossings;
 
+    //! Maximum number of allowed grid crossings for particles when using mass matrices for Jacobian
+    //! The Villasenor deposition requires this value at compile time for arrays used in the routine
+    static constexpr int villasenor_mass_matrices_max_grid_crossings = 3;
+
     //! Order of finite centering of fields (from staggered grid to nodal grid), along x
     static int field_centering_nox;
     //! Order of finite centering of fields (from staggered grid to nodal grid), along y
@@ -434,7 +438,7 @@ public:
      */
     amrex::Real GlobalPlasmaFrequencyMax ();
     amrex::Real GlobalCyclotronFrequencyMax ();
-    void ApplyDtLimiters ();
+    void ApplyDtLimiters (int step);
 
     /** Print main PIC parameters to stdout */
     void PrintMainPICparameters ();
@@ -811,7 +815,7 @@ public:
     [[nodiscard]] amrex::IntVect get_numprocs() const {return numprocs;}
 
     /** Electrostatic solve call */
-    void ComputeSpaceChargeField (bool reset_E_field, bool reset_B_field);
+    void ComputeSpaceChargeField (bool reset_E_field, bool reset_B_field, bool verbose_step);
 
     // Magnetostatic Solver Interface
     MagnetostaticSolver::VectorPoissonBoundaryHandler m_vector_poisson_boundary_handler;
@@ -1095,7 +1099,8 @@ private:
     void OneStep (
         amrex::Real a_cur_time,
         amrex::Real a_dt,
-        int a_step
+        int a_step,
+        bool verbose_step
     );
 
     void OneStep_nosub (
@@ -1222,7 +1227,9 @@ private:
     amrex::Vector<amrex::Real> dt;
     // How often to update the timestep when using adaptive timestepping
     ablastr::utils::text::IntervalsParser m_dt_update_interval;
+    ablastr::utils::text::IntervalsParser m_dt_update_write_interval;
     std::string m_dt_update_diagnostic_file;
+    void WriteDtUpdateFileHeader ();
 
     bool m_safe_guard_cells = false;
 
