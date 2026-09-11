@@ -613,14 +613,16 @@ public:
 #endif
 
     /**
-     * \brief When the Ohm's law solver is used, the electron pressure values
-     * on PEC boundaries are set to enforce a zero derivative Neumann condition,
-     * otherwise the E_perp values have large spikes (that grows as 1/dx). This
-     * has to be done since the E-field is algebraically calculated instead of
-     * evolved which means the 1/dx growth is not avoided by multiplication
-     * with dt as happens in the B-field evolve.
+     * \brief Boundary fill for the hybrid (Ohm's law) electron pressure: the PEC
+     * image rewrites the wall node from the first interior node (zero-derivative
+     * Neumann condition, without which E_perp spikes as 1/dx since E is computed
+     * algebraically rather than evolved), followed by zero-gradient ghost mirrors.
+     * With rewrite_pec_nodes = false the wall nodes are left untouched (pe as a
+     * Newton unknown: they are solver unknowns held by identity rows) and only
+     * the domain ghosts are filled, PEC sides included.
      */
-    void ApplyElectronPressureBoundary (int lev, PatchType patch_type);
+    void ApplyElectronPressureBoundary (int lev, PatchType patch_type,
+                                        bool rewrite_pec_nodes = true);
 
     void DampPML ();
     void DampPML (int lev);
@@ -1218,6 +1220,7 @@ private:
     mutable amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>,3 > > Bfield_dotMask;
     mutable amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>,3 > > Afield_dotMask;
     mutable amrex::Vector<            std::unique_ptr<amrex::iMultiFab>     > phi_dotMask;
+    mutable amrex::Vector<            std::unique_ptr<amrex::iMultiFab>     > hybrid_pe_dotMask;
 
     /** EB: Flag to indicate whether a gridpoint is inside the embedded boundary and therefore
      * whether the E or B should not be updated. (One array per level and per direction, due to staggering)

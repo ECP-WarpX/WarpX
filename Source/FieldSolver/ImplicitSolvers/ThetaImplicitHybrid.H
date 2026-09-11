@@ -87,6 +87,16 @@ public:
     // Hybrid model has no light waves, so return 0 for the PC theta parameter
     [[nodiscard]] amrex::Real GetThetaForPC () const override { return 0.0; }
 
+    /** Lagged mass matrices: re-deposit on Newton iterations 0, n, 2n, ... with
+     *  n = implicit_evolve.mass_matrices_deposit_interval (0: iteration 0 only), and at
+     *  iteration 0 only on every k-th step, k = mass_matrices_step_interval. */
+    [[nodiscard]] bool DepositMassMatricesThisIter (int a_newton_iter) const override
+    {
+        if (a_newton_iter == 0) { return m_mm_deposit_this_step; }
+        if (m_mass_matrices_deposit_interval <= 0) { return false; }
+        return a_newton_iter % m_mass_matrices_deposit_interval == 0;
+    }
+
     /** Capture m_J_base / m_rho_base from the current (scaled, synced) fields */
     void CaptureJRhoBase ();
 
@@ -97,7 +107,13 @@ public:
      * hybrid_electron_pressure_fp for the Ohm's-law solve. Public because the CUDA
      * compiler requires the enclosing function of a device lambda to be public.
      */
-    void AdvanceElectronPressure ( bool a_from_jacobian );
+    void AdvanceElectronPressure ( bool a_from_jacobian,
+                                   amrex::Real a_theta_time );
+
+    /** Positive-definite Joule deposit Q = eta |Jp|^2 + eta_H <|grad Jp|^2> of the
+     *  collocated in-loop pe advance (include_joule_heating = 1), replacing the pointwise
+     *  sign-indefinite -D.Jp pairing there; Yee/RZ keep -D.Jp. */
+    mutable std::unique_ptr<amrex::MultiFab> m_Q_diss;
 
     /**
      * \brief Turn Efield_fp (holding the Newton iterate a_E) into the particle push
@@ -222,7 +238,7 @@ public:
      * \brief Solver vectors for the electric field.
      * m_E: E field at time n+theta (during solve), then n+1 (after FinishFieldUpdate)
      * m_Eold: E field at time n (saved at start of timestep)
-     * 
+     *
      * m_Eold is needed for:
      * - Initial guess for the nonlinear solver
      * - Reference value for residual computation in ComputeRHS
@@ -230,6 +246,43 @@ public:
      */
     WarpXSolverVec m_E;
     WarpXSolverVec m_Eold;
+
+    /** implicit_evolve.pe_newton_unknown = 1 (in-loop pe closure only): solve for
+     *  pe^{n+theta} as a Newton unknown in the solver vector's scalar slot, scaled by
+     *  m_pe_scale = 1/(q_e n0_ref dx_min) so the pe row is commensurate with E. */
+    bool m_pe_unknown = false;
+    amrex::Real m_pe_scale = 1.0;
+
+    /** see DepositMassMatricesThisIter */
+    int m_mass_matrices_deposit_interval = 1;
+    int m_mass_matrices_step_interval = 1;
+    bool m_mm_deposit_this_step = true;
+    bool m_mm_deposited_once = false;
+
+    /** pe_newton_unknown mode: one-evaluation theta-update result at the
+     *  current iterate, consumed by the residual row in ComputeRHS (the
+     *  pressure field itself keeps the iterate for Ohm's law). */
+    mutable std::unique_ptr<amrex::MultiFab> m_pe_rhs;
+
+    /** implicit_evolve.pe_advection = central | vanalbada: discretization of the enthalpy
+     *  flux div(ue pe) in the in-loop pe advance, 0 = central differences, 1 = van Albada
+     *  MUSCL face flux (default on the collocated Cartesian grid; central on Yee/RZ). */
+    int m_pe_advection = 1;
+
+    /** implicit_evolve.filter_push_fields (requires warpx.use_filter, a periodic domain
+     *  and no external fields): the ions gather the binomial-filtered push field while
+     *  Ohm's law and the pe work pairing keep the unfiltered E (conservative smoothing). */
+    bool m_filter_push_fields = false;
+
+    /** unfiltered E push-field copies for the filter_push_fields swap */
+    mutable std::array<std::unique_ptr<amrex::MultiFab>, 3> m_E_unfiltered;
+
+    /** apply (true) / restore (false) the push-field filter swap */
+    void FilterPushFieldsSwap (bool a_apply);
+
+    /** implicit_evolve.pe_ue_cap_fac: multiplier on the marker-CFL u_e cap of the pe
+     *  advance, ue_cap = fac * dx_min/(theta dt). */
+    amrex::Real m_pe_ue_cap_fac = 1.0;
 
     /**
      * \brief Update the E and B fields owned by WarpX. Updates B^{n+theta}

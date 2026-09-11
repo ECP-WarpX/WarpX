@@ -422,9 +422,11 @@ WarpX::ApplyFieldBoundaryOnAxis (amrex::MultiFab* Er, amrex::MultiFab* Et, amrex
 }
 #endif
 
-void WarpX::ApplyElectronPressureBoundary (const int lev, PatchType patch_type)
+void WarpX::ApplyElectronPressureBoundary (const int lev, PatchType patch_type,
+                                           const bool rewrite_pec_nodes)
 {
-    if (::isAnyBoundary<FieldBoundaryType::PEC>(field_boundary_lo, field_boundary_hi)) {
+    if (rewrite_pec_nodes &&
+        ::isAnyBoundary<FieldBoundaryType::PEC>(field_boundary_lo, field_boundary_hi)) {
         if (patch_type == PatchType::fine) {
             ablastr::fields::ScalarField electron_pressure_fp = m_fields.get(FieldType::hybrid_electron_pressure_fp, lev);
             PEC::ApplyPECtoElectronPressure(
@@ -453,11 +455,13 @@ void WarpX::ApplyElectronPressureBoundary (const int lev, PatchType patch_type)
     if (patch_type == PatchType::fine) {
         ablastr::fields::ScalarField electron_pressure_fp =
             m_fields.get(FieldType::hybrid_electron_pressure_fp, lev);
+        // with rewrite_pec_nodes off the PEC image above is skipped (the wall nodes are
+        // Newton unknowns), so the pure-ghost mirror must cover the PEC sides as well
         PEC::ApplyZeroGradientToScalar(
             electron_pressure_fp,
             field_boundary_lo, field_boundary_hi,
             Geom(lev), lev, patch_type, ref_ratio,
-            /*include_pec=*/false);
+            /*include_pec=*/!rewrite_pec_nodes);
         ablastr::fields::ScalarField electron_temperature_fp =
             m_fields.get(FieldType::hybrid_electron_temperature_fp, lev);
         PEC::ApplyZeroGradientToScalar(

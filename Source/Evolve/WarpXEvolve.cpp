@@ -423,6 +423,13 @@ void WarpX::OneStep (
         // electrostatic solver or hybrid solver
         if (electromagnetic_solver_id == ElectromagneticSolverAlgo::None ||
             electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC) {
+            // hybrid-PIC conservative smoothing: the ions gather the
+            // binomial-filtered E (adjoint of the filtered deposition); the
+            // unfiltered field is restored after the push for Ohm's law
+            const bool hybrid_filter_push =
+                (electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC)
+                && m_hybrid_pic_model->m_filter_push_fields;
+            if (hybrid_filter_push) { m_hybrid_pic_model->FilterPushFieldsSwap(true); }
             // with collisions placed in the middle of the momentum push
             if (m_collisions_split_momentum_push) {
                 // push particles (half momentum)
@@ -461,6 +468,7 @@ void WarpX::OneStep (
                     MomentumPushType::Full
                 );
             }
+            if (hybrid_filter_push) { m_hybrid_pic_model->FilterPushFieldsSwap(false); }
         }
         // electromagnetic solver
         else {

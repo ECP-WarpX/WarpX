@@ -396,6 +396,7 @@ WarpX::WarpX ()
     Bfield_dotMask.resize(nlevs_max);
     Afield_dotMask.resize(nlevs_max);
     phi_dotMask.resize(nlevs_max);
+    hybrid_pe_dotMask.resize(nlevs_max);
 
     m_eb_update_E.resize(nlevs_max);
     m_eb_update_B.resize(nlevs_max);
@@ -2312,6 +2313,7 @@ WarpX::ClearLevel (int lev)
     }
 
     phi_dotMask[lev].reset();
+    hybrid_pe_dotMask[lev].reset();
 
 #ifdef WARPX_USE_FFT
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
@@ -2738,7 +2740,7 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
     if (evolve_scheme == EvolveScheme::Theta_Implicit_Hybrid) {
         rho_ncomps = 2*ncomps;  // Need old and new time levels
     }
-    
+
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
         if (do_dive_cleaning || update_with_rho || current_correction) {
             // For the PSATD-JRhom algorithm we can allocate only one rho component (no distinction between old and new)
@@ -3680,6 +3682,10 @@ WarpX::getFieldDotMaskPointer ( FieldType field_type, int lev, ablastr::fields::
         case FieldType::phi_fp :
             ::SetDotMask( phi_dotMask[lev], m_fields.get("phi_fp", lev), periodicity);
             return phi_dotMask[lev].get();
+        case FieldType::hybrid_electron_pressure_fp :
+            ::SetDotMask( hybrid_pe_dotMask[lev],
+                          m_fields.get("hybrid_electron_pressure_fp", lev), periodicity);
+            return hybrid_pe_dotMask[lev].get();
         default:
             WARPX_ABORT_WITH_MESSAGE("Invalid field type for dotMask");
             return Efield_dotMask[lev][dir].get();

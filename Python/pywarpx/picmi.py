@@ -2287,6 +2287,19 @@ class HybridPICSolver(picmistandard.base._ClassWithInit):
         Reduces to ``eta * J**2`` for a single ion species. Only used when
         ``solve_electron_energy_equation`` is True.
 
+    electron_energy_solver: str, default='qdsmc'
+        Explicit scheme only: ``'qdsmc'`` transports the electron entropy with
+        fictitious particles, ``'fluid'`` advances the pressure with the fluid update.
+
+    kappa_e: float or str, optional
+        Electron thermal conductivity in 1/(m s) for the heat flux
+        ``q_e = -kappa_e * grad(pe/n)`` of the electron energy equation. A string
+        is an expression in ``rho`` (charge density in C/m^3) and ``Te`` (in eV).
+
+    te_seed_uniform: bool, default=False
+        Seed the electron temperature uniformly at ``Te`` instead of on the
+        adiabat ``Te * (n/n0)**(gamma-1)`` when the energy equation is solved.
+
     joule_redirect_Te_threshold: float, optional
         Electron temperature threshold in eV above which the Joule heating of
         a cell is routed to the ions (as an energy-conserving stochastic kick)
@@ -2413,6 +2426,9 @@ class HybridPICSolver(picmistandard.base._ClassWithInit):
         plasma_resistivity_species=None,
         solve_electron_energy_equation=None,
         include_joule_heating=None,
+        electron_energy_solver=None,
+        kappa_e=None,
+        te_seed_uniform=None,
         joule_redirect_Te_threshold=None,
         electron_ion_relaxation_rate=None,
         qdsmc_n_floor=None,
@@ -2444,6 +2460,9 @@ class HybridPICSolver(picmistandard.base._ClassWithInit):
 
         self.solve_electron_energy_equation = solve_electron_energy_equation
         self.include_joule_heating = include_joule_heating
+        self.electron_energy_solver = electron_energy_solver
+        self.kappa_e = kappa_e
+        self.te_seed_uniform = te_seed_uniform
         self.joule_redirect_Te_threshold = joule_redirect_Te_threshold
         self.electron_ion_relaxation_rate = electron_ion_relaxation_rate
         self.qdsmc_n_floor = qdsmc_n_floor
@@ -2515,6 +2534,20 @@ class HybridPICSolver(picmistandard.base._ClassWithInit):
             )
         if self.include_joule_heating is not None:
             pywarpx.hybridpicmodel.include_joule_heating = self.include_joule_heating
+        if self.electron_energy_solver is not None:
+            pywarpx.hybridpicmodel.electron_energy_solver = self.electron_energy_solver
+        if self.kappa_e is not None:
+            if isinstance(self.kappa_e, str):
+                pywarpx.hybridpicmodel.__setattr__(
+                    "kappa_e(rho,Te)",
+                    pywarpx.my_constants.mangle_expression(
+                        self.kappa_e, self.mangle_dict
+                    ),
+                )
+            else:
+                pywarpx.hybridpicmodel.kappa_e = self.kappa_e
+        if self.te_seed_uniform is not None:
+            pywarpx.hybridpicmodel.te_seed_uniform = self.te_seed_uniform
         if self.joule_redirect_Te_threshold is not None:
             pywarpx.hybridpicmodel.joule_redirect_Te_threshold = (
                 self.joule_redirect_Te_threshold

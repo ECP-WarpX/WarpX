@@ -88,9 +88,11 @@ public:
                               bool             a_from_jacobian ) = 0;
 
     /**
-     * Prepare for the linear solve. This includes depositing the mass matrices and updating the PC.
+     * Prepare for the linear solve: deposit the mass matrices and update the PC. The deposit
+     * is skipped on 0-based Newton iterations where DepositMassMatricesThisIter says so
+     * (a_newton_iter = -1, unknown, always deposits); the E0 save and PC sync always run.
      */
-    void PreLinearSolve ();
+    void PreLinearSolve (int a_newton_iter = -1);
 
     [[nodiscard]] int numAMRLevels () const { return m_num_amr_levels; }
 
@@ -303,6 +305,16 @@ protected:
      * \brief Width for mass matrices in the preconditioner
      */
     int m_mass_matrices_pc_width = -1;
+
+    /**
+     * \brief Whether PreLinearSolve (re-)deposits the mass matrices on the 0-based Newton
+     * iteration a_newton_iter. Default: every iteration; schemes that lag the matrices
+     * override this (only the Newton/GMRES counts change, not the converged answer).
+     */
+    [[nodiscard]] virtual bool DepositMassMatricesThisIter (int /*a_newton_iter*/) const
+    {
+        return true;
+    }
 
     /**
      * \brief Direction-dependent component number of mass matrices elements

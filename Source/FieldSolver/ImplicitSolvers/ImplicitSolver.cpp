@@ -794,16 +794,24 @@ void ImplicitSolver::InitializeMassMatrices ()
 
 }
 
-void ImplicitSolver::PreLinearSolve ()
+void ImplicitSolver::PreLinearSolve (int a_newton_iter)
 {
     BL_PROFILE("ImplicitSolver::PreLinearSolve()");
 
     if (m_use_mass_matrices) {
 
-        m_WarpX->DepositMassMatrices();
+        // lagged mass matrices: a scheme may reuse the stored, finished matrices on some
+        // Newton iterations (DepositMassMatricesThisIter); an unknown iteration
+        // (a_newton_iter < 0) always deposits
+        const bool deposit = (a_newton_iter < 0) ||
+                             DepositMassMatricesThisIter(a_newton_iter);
+
+        if (deposit) {
+            m_WarpX->DepositMassMatrices();
+            if (m_use_mass_matrices_jacobian) { FinishMassMatrices(); }
+        }
 
         if (m_use_mass_matrices_jacobian) {
-            FinishMassMatrices();
             // For schemes where Efield_fp is scratch space that no longer holds the
             // linearization-point field after ComputeRHS (e.g. the hybrid solver,
             // where it ends up holding the Ohm's-law E), E0 is saved by the scheme

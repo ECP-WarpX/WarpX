@@ -155,7 +155,7 @@ public:
         ablastr::fields::MultiLevelScalarField const& rhofield,
         amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>,3 > >& eb_update_E,
         bool solve_for_Faraday,
-        bool solve_for_implicit = false) const;
+        bool keep_grad_pe = false) const;
 
     void HybridPICSolveE (
         ablastr::fields::VectorField const& Efield,
@@ -164,7 +164,7 @@ public:
         amrex::MultiFab const& rhofield,
         std::array< std::unique_ptr<amrex::iMultiFab>,3 >& eb_update_E,
         int lev, bool solve_for_Faraday,
-        bool solve_for_implicit = false) const;
+        bool keep_grad_pe = false) const;
 
     void HybridPICSolveE (
         ablastr::fields::VectorField const& Efield,
@@ -173,7 +173,7 @@ public:
         amrex::MultiFab const& rhofield,
         std::array< std::unique_ptr<amrex::iMultiFab>,3 >& eb_update_E,
         int lev, PatchType patch_type, bool solve_for_Faraday,
-        bool solve_for_implicit = false) const;
+        bool keep_grad_pe = false) const;
 
     void BfieldEvolve (
         ablastr::fields::MultiLevelVectorField const& Bfield,
@@ -420,6 +420,27 @@ public:
      */
     void AdvanceElectronEnergyQDSMC (amrex::Real dt) const;
 
+    /** Explicit fluid electron-pressure advance (electron_energy_solver = fluid): forward
+     *  Euler over one accepted B substep dt_sub with the conservative enthalpy flux, the
+     *  u_e.grad(pe) work term, the Joule deposit and the kappa_e conduction; a_Jfield and
+     *  a_rho are the ion current and charge density of the half step. Collocated only. */
+    void AdvanceElectronPressureFluid (int lev, amrex::Real dt_sub, amrex::Real t_eval,
+                                       ablastr::fields::VectorField const& a_Jfield,
+                                       amrex::MultiFab const& a_rho) const;
+
+    /** filter_push_fields: a_apply = true saves the unfiltered E and binomial-filters
+     *  Efield_fp in place for the particle gather; a_apply = false restores it. */
+    void FilterPushFieldsSwap (bool a_apply) const;
+
+    /** End-of-step bookkeeping of the explicit fluid pe advance: pin the floored halo,
+     *  mirror T_e = pe/(n k_B) and apply the optional Q_ei exchange once per step. */
+    void FinishElectronPressureFluid (amrex::Real dt) const;
+
+    /** true when the electron pressure is advanced by the explicit fluid update */
+    [[nodiscard]] bool FluidElectronPressure () const {
+        return m_solve_electron_energy_equation && (m_electron_energy_solver == 1);
+    }
+
     /**
      * \brief Compute the per-species resistive overlay vector field added to
      *        Ohm's-law E alongside the existing +eta_global * J term:
@@ -500,9 +521,32 @@ public:
      * adiabatic). */
     bool m_solve_electron_energy_equation = false;
 
+    /** hybrid_pic_model.electron_energy_solver = qdsmc (default) | fluid, explicit scheme
+     *  only: qdsmc transports the electron entropy with fictitious particles, fluid
+     *  advances pe with AdvanceElectronPressureFluid inside the B substep loop. */
+    int m_electron_energy_solver = 0;
+
+    /** hybrid_pic_model.pe_advection (fluid solver): face reconstruction of the enthalpy
+     *  flux, 0 = central, 1 = van Albada limited upwind (default) */
+    int m_pe_advection = 1;
+    /** hybrid_pic_model.pe_ue_cap (fluid solver): tanh soft cap [m/s] on the flux
+     *  velocity u_e, 0 = off */
+    amrex::Real m_pe_ue_cap = 0.0;
     /** pe row scale when the theta-implicit scheme evolves pe as a Newton unknown (set by
      *  the scheme, read by the preconditioner); 1.0 otherwise */
     amrex::Real m_pe_newton_scale = 1.0;
+    /** scratch copy of pe^s for the explicit fluid update */
+    mutable std::unique_ptr<amrex::MultiFab> m_pe_fluid_scratch;
+    /** pe at entry of the half step, restored when a NaN in the RK4 B
+     *  substepping rewinds the half step to restart it with RKF45 */
+    mutable std::unique_ptr<amrex::MultiFab> m_pe_fluid_entry;
+    /** hybrid_pic_model.filter_push_fields (requires warpx.use_filter): the ions gather
+     *  the binomial-filtered E while Ohm's law and Faraday keep the unfiltered field;
+     *  explicit counterpart of implicit_evolve.filter_push_fields. */
+    bool m_filter_push_fields = false;
+    /** unfiltered E copies for the filter_push_fields swap */
+    mutable std::array<std::unique_ptr<amrex::MultiFab>, 3> m_E_unfiltered;
+
     /** Resistive electron-heating source on T_e (see Phys. Plasmas 31, 012902 (2024), Eq. 12),
      * computed per cell as
      *     S_e = Sigma_s nu_{s,e} n_s m_s |V_s - V_e|^2,

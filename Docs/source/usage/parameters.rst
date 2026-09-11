@@ -326,6 +326,14 @@ Overall simulation parameters
             This avoids all-particle charge deposits in every GMRES iteration.
             Can be set to ``false`` for debugging or benchmarking.
 
+          - ``implicit_evolve.mass_matrices_deposit_interval`` (``integer``, default: 1; hybrid theta-implicit scheme only).
+            Re-deposit the mass matrices every n-th Newton iteration of a step (iterations 0, n, 2n, ...); 0 deposits once per step.
+
+          - ``implicit_evolve.mass_matrices_step_interval`` (``integer``, default: 1; hybrid theta-implicit scheme only).
+            Deposit the mass matrices only on every k-th step; on the steps in between the matrices of the last depositing step are reused,
+            so the Jacobian and its preconditioner lag by up to k-1 steps while the nonlinear residual is unaffected (inexact Newton).
+            The first step after a start or restart always deposits.
+
         - ``implicit_evolve.use_mass_matrices_pc`` (``bool``, default: false).
           When ``true``, the plasma response is captured in the preconditioner.
           Requires use of a preconditioner (``jacobian.pc_type = pc_curl_curl_mlmg``, ``pc_petsc``, ``pc_jacobi``, ``pc_hybrid_pic``, or ``pc_block_banded``).
@@ -333,6 +341,21 @@ Overall simulation parameters
         - ``implicit_evolve.mass_matrices_pc_width`` (``integer``, default: 0).
           If using ``jacobian.pc_type = pc_petsc``, this parameter specifies the width of the mass matrices included in the preconditioner.
           In most cases, a width of 1 is sufficient for good GMRES performance.
+
+        - ``implicit_evolve.pe_newton_unknown`` (``bool``, default: 0; hybrid theta-implicit scheme only).
+          Evolve the electron pressure as a Newton unknown with its own residual row (requires the in-loop electron energy equation).
+          The pressure row is preconditioned by ``jacobian.pc_type = pc_hybrid_pic``.
+
+        - ``implicit_evolve.pe_advection`` (``string``, default: ``vanalbada``; hybrid theta-implicit scheme only).
+          Face reconstruction of the enthalpy flux in the in-loop electron pressure advance: ``central`` or ``vanalbada`` (limited upwind).
+
+        - ``implicit_evolve.pe_ue_cap_fac`` (``float``, default: 1.0; hybrid theta-implicit scheme only).
+          Smooth (tanh) cap on the electron velocity in the enthalpy flux of the in-loop electron pressure advance,
+          as a multiple of :math:`\Delta x_{min}/(\theta\,\Delta t)`.
+
+        - ``implicit_evolve.filter_push_fields`` (``bool``, default: false; hybrid theta-implicit scheme only).
+          With :pp:param:`warpx.use_filter`, the particles gather the binomial-filtered electric field (the adjoint of the filtered
+          current deposition) while Ohm's law keeps the unfiltered field. Fully periodic domains without external fields only.
 
         - ``jacobian.pc_type`` (``string``, default: None). A preconditioner can be used to minimize the number of linear GMRES iterations. There are five options:
 
@@ -3846,6 +3869,63 @@ Maxwell solver: kinetic-fluid hybrid
     (as stochastic thermal-velocity kicks, bookkept per species) instead of the electron fluid. This caps the
     electron heating at the threshold and allows :math:`T_i > T_e` to develop, mimicking regimes where the
     electrons radiate strongly.
+
+.. pp:param:: hybrid_pic_model.electron_energy_solver
+    :type: ``str``
+    :default: ``qdsmc``
+    :optional:
+
+    Explicit scheme only; selects how the electron energy equation is advanced when
+    :pp:param:`hybrid_pic_model.solve_electron_energy_equation` is on. ``qdsmc`` transports the electron
+    entropy with fictitious particles (no heat conduction). ``fluid`` advances the electron pressure with a
+    conservative-flux fluid update (limited upwind enthalpy flux, work term, Joule deposit when
+    :pp:param:`hybrid_pic_model.include_joule_heating` is on, :pp:param:`hybrid_pic_model.kappa_e` conduction),
+    forward Euler over every accepted B-field sub-step. Cartesian collocated grids only.
+
+.. pp:param:: hybrid_pic_model.filter_push_fields
+    :type: ``bool``
+    :default: ``false``
+    :optional:
+
+    Explicit scheme with :pp:param:`warpx.use_filter`: the particles gather the binomial-filtered electric
+    field (the adjoint of the filtered current deposition) while Ohm's law and Faraday's law keep the
+    unfiltered field. Fully periodic domains without external fields only.
+
+.. pp:param:: hybrid_pic_model.kappa_e
+    :type: ``float``
+    :default: ``0``
+    :optional:
+
+    Electron thermal conductivity :math:`\kappa_e` in :math:`1/(\mathrm{m\,s})` for the heat flux
+    :math:`\mathbf{q}_e = -\kappa_e \nabla(p_e/n)` of the electron energy equation (``fluid`` solver and
+    theta-implicit scheme; ``qdsmc`` has no conduction). A density- and temperature-dependent conductivity
+    may be given instead as ``hybrid_pic_model.kappa_e(rho,Te)``, with ``rho`` the charge density in
+    :math:`\mathrm{C/m^3}` and ``Te`` in eV.
+
+.. pp:param:: hybrid_pic_model.pe_advection
+    :type: ``str``
+    :default: ``vanalbada``
+    :optional:
+
+    Face reconstruction of the enthalpy flux in the ``fluid`` electron-pressure solver: ``central`` or
+    ``vanalbada`` (limited upwind with the van Albada slope average).
+
+.. pp:param:: hybrid_pic_model.pe_ue_cap
+    :type: ``float``
+    :default: ``0`` (off)
+    :optional:
+
+    Smooth (tanh) cap, in m/s, on the electron velocity in the enthalpy flux of the ``fluid``
+    electron-pressure solver (the work term uses the uncapped Ohm's-law velocity).
+
+.. pp:param:: hybrid_pic_model.te_seed_uniform
+    :type: ``bool``
+    :default: ``false``
+    :optional:
+
+    With :pp:param:`hybrid_pic_model.solve_electron_energy_equation`, seed the electron temperature
+    uniformly at ``hybrid_pic_model.elec_temp`` instead of on the adiabat
+    :math:`T_{e0} (n/n_0)^{\gamma-1}`.
 
 .. pp:param:: hybrid_pic_model.electron_ion_relaxation_rate(rho,Te,Ti,t)
     :type: ``float`` or ``str``

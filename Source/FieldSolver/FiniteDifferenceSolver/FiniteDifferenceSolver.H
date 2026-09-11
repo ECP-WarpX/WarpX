@@ -155,9 +155,8 @@ class FiniteDifferenceSolver
           * \param[in] lev  level number for the calculation
           * \param[in] hybrid_model instance of the hybrid-PIC model
           * \param[in] solve_for_Faraday boolean flag for whether the E-field is solved to be used in Faraday's equation
-          * \param[in] solve_for_implicit boolean flag to include the electron pressure
-          *            gradient term even when solve_for_Faraday is true (used by the
-          *            implicit solver where grad(Pe) should be part of the RHS)
+          * \param[in] keep_grad_pe keep grad(Pe)/(e n) in the E-field also when solve_for_Faraday
+          *            is true: Pe is an evolved field, so curl(grad(Pe)/(e n)) does not vanish
           */
         void HybridPICSolveE ( ablastr::fields::VectorField const& Efield,
                                ablastr::fields::VectorField & Jfield,
@@ -168,7 +167,7 @@ class FiniteDifferenceSolver
                                std::array< std::unique_ptr<amrex::iMultiFab>,3> const& eb_update_E,
                                int lev, HybridPICModel const* hybrid_model,
                                bool solve_for_Faraday,
-                               bool solve_for_implicit = false );
+                               bool keep_grad_pe = false );
 
         /**
           * \brief Calculation of total current using Ampere's law (without
@@ -317,7 +316,7 @@ class FiniteDifferenceSolver
             std::array< std::unique_ptr<amrex::iMultiFab>,3> const& eb_update_E,
             int lev, HybridPICModel const* hybrid_model,
             bool solve_for_Faraday,
-            bool solve_for_implicit = false );
+            bool keep_grad_pe = false );
 
         template<typename T_Algo>
         void CalculateCurrentAmpereCylindrical (
@@ -400,7 +399,7 @@ class FiniteDifferenceSolver
             amrex::MultiFab const& Pefield,
             int lev, HybridPICModel const* hybrid_model,
             bool solve_for_Faraday,
-            bool solve_for_implicit = false );
+            bool keep_grad_pe = false );
 
         template<typename T_Algo>
         void CalculateCurrentAmpereSpherical (
@@ -536,7 +535,7 @@ class FiniteDifferenceSolver
             std::array< std::unique_ptr<amrex::iMultiFab>,3> const& eb_update_E,
             int lev, HybridPICModel const* hybrid_model,
             bool solve_for_Faraday,
-            bool solve_for_implicit = false );
+            bool keep_grad_pe = false );
 
         template<typename T_Algo>
         void CalculateCurrentAmpereCartesian (

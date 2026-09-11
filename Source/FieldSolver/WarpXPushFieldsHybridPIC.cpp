@@ -68,7 +68,11 @@ void WarpX::HybridPICEvolveFields ()
     // closure fills Pe (and mirrors the implied T_e for diagnostics) at
     // this same point.
     if (m_hybrid_pic_model->m_solve_electron_energy_equation) {
-        m_hybrid_pic_model->AdvanceElectronEnergyQDSMC(dt[0]);
+        // electron_energy_solver = fluid: pe is advanced inside the two B
+        // substep loops below, nothing to do here
+        if (!m_hybrid_pic_model->FluidElectronPressure()) {
+            m_hybrid_pic_model->AdvanceElectronEnergyQDSMC(dt[0]);
+        }
     } else {
         m_hybrid_pic_model->CalculateElectronPressure();
     }
@@ -164,6 +168,13 @@ void WarpX::HybridPICEvolveFields ()
         WarpX::sync_nodal_points
     );
 
+    // Fluid electron pressure: pe^{n+1} is now complete (sub-stepped with
+    // B); mirror T_e and apply the optional once-per-step Q_ei exchange
+    // before the final E-solve reads pe.
+    if (m_hybrid_pic_model->FluidElectronPressure()) {
+        m_hybrid_pic_model->FinishElectronPressureFluid(dt[0]);
+    }
+
     // Extrapolate the ion current density to t=n+1 using
     // J_i^{n+1} = 1/2 * J_i^{n-1/2} + 3/2 * J_i^{n+1/2}, and recalling that
     // now current_fp_temp = J_i^{n} = 1/2 * (J_i^{n-1/2} + J_i^{n+1/2})
@@ -249,7 +260,7 @@ void WarpX::HybridPICDepositRhoAndJ ()
     auto current_fp = m_fields.get_mr_levels_alldirs(FieldType::current_fp, finest_level);
     auto rho_fp = m_fields.get_mr_levels(FieldType::rho_fp, finest_level);
     if (m_hybrid_pic_model->m_need_per_species_fields) {
-        // Per-species deposition at t_{n+1} (rho) and t_{n-1/2} (J): each
+        // Per-species deposition at t_{n+1} (rho) and t_{n+1/2} (J): each
         // charged species deposits once into its own MultiFabs and the raw
         // deposits are accumulated into the totals rho_fp / current_fp (which
         // get their guard-cell sum, filtering, boundaries and RZ volume
@@ -320,7 +331,7 @@ void WarpX::HybridPICDepositRhoAndJ ()
         }
 #endif
     } else {
-        // Single-pass deposition (rho at t_{n+1}, J at t_{n-1/2}): no active
+        // Single-pass deposition (rho at t_{n+1}, J at t_{n+1/2}): no active
         // feature consumes the per-species fields, so skip the per-species
         // deposits and guard-cell sums entirely. Zeroing and the RZ inverse
         // volume scaling are handled inside.

@@ -193,6 +193,12 @@ guardCellManager::Init (
         const amrex::IntVect extra = bilinear_filter_stencil_length - amrex::IntVect(1);
         ng_alloc_J += extra;
         ng_alloc_Rho += extra;
+        if (evolve_scheme == EvolveScheme::Theta_Implicit_Hybrid) {
+            // the filter widened the J guards: restore the implicit-scheme invariant
+            // ng_alloc_EB >= ng_alloc_J set above, which the mass-matrix Jacobian
+            // requires (E is contracted over J-sized banded windows)
+            ng_alloc_EB.max(ng_alloc_J);
+        }
     }
 
     // After pushing particle
