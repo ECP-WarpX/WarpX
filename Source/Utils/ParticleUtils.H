@@ -683,17 +683,17 @@ namespace ParticleUtils {
                                   [[maybe_unused]] const amrex::Gpu::DeviceVector<int>& d_error_z,
                                   const int max_grid_crossings)
     {
-        int h_error_x = 0;
+        int h_error_x = 0; // NOLINT(misc-const-correctness)
 #if !defined(WARPX_DIM_1D_Z)
         amrex::Gpu::copy(amrex::Gpu::deviceToHost, d_error_x.begin(),
                          d_error_x.begin() + 1, &h_error_x);
 #endif
-        int h_error_y = 0;
+        int h_error_y = 0; // NOLINT(misc-const-correctness)
 #if defined(WARPX_DIM_3D)
         amrex::Gpu::copy(amrex::Gpu::deviceToHost, d_error_y.begin(),
                          d_error_y.begin() + 1, &h_error_y);
 #endif
-        int h_error_z = 0;
+        int h_error_z = 0; // NOLINT(misc-const-correctness)
 #if defined(WARPX_ZINDEX)
         amrex::Gpu::copy(amrex::Gpu::deviceToHost, d_error_z.begin(),
                          d_error_z.begin() + 1, &h_error_z);
