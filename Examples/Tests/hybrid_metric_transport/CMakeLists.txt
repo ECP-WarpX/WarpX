@@ -2,6 +2,55 @@
 #
 # License: BSD-3-Clause-LBNL
 
+if(WarpX_LIB AND RZ IN_LIST WarpX_DIMS AND WarpX_PRECISION STREQUAL DOUBLE)
+    if(WarpX_PARTICLE_PRECISION STREQUAL DOUBLE)
+        add_warpx_test(
+            test_rz_implicit_vacuum_crossing
+            RZ
+            1
+            inputs_base_rz_implicit_vacuum
+            analysis_implicit_vacuum.py
+            OFF
+            OFF)
+        if(WarpX_MPI)
+            add_warpx_test(
+                test_rz_implicit_vacuum_crossing_mpi
+                RZ
+                2
+                inputs_base_rz_implicit_vacuum
+                analysis_implicit_vacuum.py
+                OFF
+                OFF)
+        endif()
+    endif()
+    add_executable(test_rz_implicit_charge_energy test_implicit_charge_energy.cpp)
+    target_link_libraries(test_rz_implicit_charge_energy PRIVATE lib_rz)
+    if(WarpX_COMPUTE STREQUAL CUDA)
+        setup_target_for_cuda_compilation(test_rz_implicit_charge_energy)
+    endif()
+    warpx_set_compile_warnings(test_rz_implicit_charge_energy)
+    add_test(NAME test_rz_implicit_charge_energy COMMAND test_rz_implicit_charge_energy
+        amrex.the_arena_init_size=0)
+    set_tests_properties(test_rz_implicit_charge_energy PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1")
+    if(NOT Python_EXECUTABLE)
+        find_package(Python COMPONENTS Interpreter REQUIRED)
+    endif()
+    add_test(NAME test_rz_implicit_metric_rejected COMMAND ${Python_EXECUTABLE}
+        ${WarpX_SOURCE_DIR}/Examples/Tests/implicit/check_command_output.py
+        --expect-failure --expect "Implicit charge-energy remap violated" --
+        $<TARGET_FILE:test_rz_implicit_charge_energy>
+        amrex.the_arena_init_size=0 test.corrupt_metric=1)
+    set_tests_properties(test_rz_implicit_metric_rejected PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1")
+    if(WarpX_MPI)
+        add_test(NAME test_rz_implicit_charge_energy_mpi
+            COMMAND ${MPIEXEC_EXECUTABLE} ${MPI_ALLOW_ROOT} ${MPIEXEC_NUMPROC_FLAG} 2
+                ${MPIEXEC_POSTFLAGS} ${MPIEXEC_PREFLAGS}
+                $<TARGET_FILE:test_rz_implicit_charge_energy> amrex.the_arena_init_size=0)
+        set_tests_properties(test_rz_implicit_charge_energy_mpi PROPERTIES
+            ENVIRONMENT "OMP_NUM_THREADS=1" PROCESSORS 2)
+    endif()
+endif()
+
 if(WarpX_LIB)
 foreach(dimension IN LISTS WarpX_DIMS)
     warpx_set_suffix_dims(suffix ${dimension})

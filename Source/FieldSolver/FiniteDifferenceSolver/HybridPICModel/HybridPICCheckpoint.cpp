@@ -109,7 +109,8 @@ void HybridPICModel::WriteMomentHistory (std::string const &directory) const
         }
         if (m_fv_transport_internal_energy && m_electron_thermodynamics.executor().isIdealGas()) {
             std::ofstream transport(directory + "/HybridIdealElectronTransport.txt");
-            transport << "ideal_finite_volume_v1\n";
+            transport << (m_fv_transport_implicit ? "ideal_finite_volume_implicit_v1\n"
+                                                : "ideal_finite_volume_v1\n");
             transport.flush();
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(transport.good(),
                 "Could not checkpoint ideal finite-volume electron transport.");
@@ -160,7 +161,9 @@ void HybridPICModel::ReadMomentHistory (std::string const &directory)
         std::istringstream transport(std::string(transport_buffer.data()));
         std::string version, trailing;
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE((transport >> version)
-            && version == "ideal_finite_volume_v1" && !(transport >> trailing),
+            && version == (m_fv_transport_implicit ? "ideal_finite_volume_implicit_v1"
+                                                 : "ideal_finite_volume_v1")
+            && !(transport >> trailing),
             "Invalid ideal electron transport checkpoint manifest.");
     }
     m_moment_history_valid = false;

@@ -11,6 +11,7 @@ import yt
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--reference", type=Path)
+parser.add_argument("--implicit", action="store_true")
 args = parser.parse_args()
 yt.set_log_level(50)
 
@@ -41,9 +42,9 @@ checkpoint = Path("diags/chk000200")
 support = (checkpoint / "HybridQeiSupport.txt").read_text().split()
 assert support[0] == "resolved_pairwise_v3"
 assert int(support[1]) == 1 and int(support[2]) == 200
-assert (
-    checkpoint / "HybridIdealElectronTransport.txt"
-).read_text().strip() == "ideal_finite_volume_v1"
+assert (checkpoint / "HybridIdealElectronTransport.txt").read_text().strip() == (
+    "ideal_finite_volume_implicit_v1" if args.implicit else "ideal_finite_volume_v1"
+)
 if args.reference:
     reference_fields, reference_particles = load(args.reference / "diags/plt000200")
     # Same-rank continuation is deterministic. A field-relative absolute floor

@@ -61,3 +61,4 @@ radiation_energy.path = diags/
 radiation_energy.intervals = 1
 radiation_energy.precision = 17
 amrex.abort_on_unused_inputs = 1
+amrex.the_arena_init_size = 0

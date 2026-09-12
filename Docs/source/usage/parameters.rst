@@ -4032,6 +4032,23 @@ Maxwell solver: kinetic-fluid hybrid
     upwind donor/CFL requirements. A dilute-background calculation is a
     different model, not evidence that exact-vacuum transport is supported.
 
+    Experimental ``finite_volume_implicit`` instead solves a backward-Euler
+    upwind remap of specific electron energy using the same integrated charge
+    face fluxes and native volumes. It currently supports double-precision RZ
+    ideal electrons without material tables. Positive face coefficients form
+    an M-matrix, permitting incoming and outgoing transport through an initially
+    empty node. The result is exactly zero energy at a zero-charge endpoint.
+    The positive iteration must satisfy a relative matrix residual of
+    ``128*epsilon`` within 512 iterations; otherwise the run stops. A separate native-volume
+    inventory must conserve energy within ``4096*epsilon`` times the old,
+    new and transported energy scales. It neither
+    clips energy nor changes the explicit method's CFL gate. Endpoint charge
+    continuity, EOS-domain, source-realization, and boundary restrictions
+    remain enforced. Backward-Euler transport is first-order and more diffusive;
+    timestep/resolution studies are required. It does not repair the separate
+    RZ pressure-work closure. Restart must preserve this distinct transport
+    policy and its manifest.
+
 .. pp:param:: hybrid_pic_model.resolved_qei_support
     :type: ``bool``
     :default: ``false``

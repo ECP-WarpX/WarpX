@@ -651,6 +651,7 @@ public:
      * entropy markers. Derived from the thermodynamics model and supported
      * geometry/material constraints; not a user-facing approximation switch. */
     bool m_fv_transport_internal_energy = false;
+    bool m_fv_transport_implicit = false;
 
     /** Instrument the full Boris ion push with the isolated pressure electric
      * field so its work can be exchanged conservatively with the nonlinear

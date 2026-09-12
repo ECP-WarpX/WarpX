@@ -20,6 +20,7 @@
 #include "Python/callbacks.H"
 #include "Fields.H"
 #include "Fluids/QdsmcParticleContainer.H"
+#include "ImplicitChargeEnergyTransport.H"
 #include "Particles/MultiParticleContainer.H"
 #include "ExternalVectorPotential.H"
 #include "QdsmcMetricTransport.H"
@@ -512,6 +513,7 @@ namespace
         amrex::Real absolute_charge_flux_per_volume = 0.0_rt;
         amrex::GpuArray<amrex::Real, 6>
         outgoing_face_charge_flux_per_volume{};
+        amrex::GpuArray<amrex::Real, 6> incoming_face_charge_flux_per_volume{};
     };
 
     struct QdsmcVelocityMetric
@@ -694,6 +696,10 @@ namespace
         result.outgoing_face_charge_flux_per_volume[2 * direction + 1] =
             amrex::max(charge_flux_hi, 0.0_rt) * face_area_hi
             * inv_control_volume;
+        result.incoming_face_charge_flux_per_volume[2 * direction] =
+            amrex::max(charge_flux_lo, 0.0_rt) * face_area_lo * inv_control_volume;
+        result.incoming_face_charge_flux_per_volume[2 * direction + 1] =
+            amrex::max(-charge_flux_hi, 0.0_rt) * face_area_hi * inv_control_volume;
         return result;
     }
 #endif
@@ -793,6 +799,9 @@ namespace
             radial.absolute_charge_flux_per_volume
             + axial.absolute_charge_flux_per_volume;
         for (int face = 0; face < 4; ++face) {
+            result.incoming_face_charge_flux_per_volume[face] = face < 2
+                ? radial.incoming_face_charge_flux_per_volume[face]
+                : axial.incoming_face_charge_flux_per_volume[face];
             result.outgoing_face_charge_flux_per_volume[face] =
                 face < 2
                     ? radial.outgoing_face_charge_flux_per_volume[face]
@@ -1335,20 +1344,31 @@ void HybridPICModel::ReadParameters (
     std::string electron_energy_transport = "auto";
     pp_hybrid.query("electron_energy_transport", electron_energy_transport);
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        electron_energy_transport == "auto" || electron_energy_transport == "finite_volume",
-        "hybrid_pic_model.electron_energy_transport must be auto or finite_volume.");
-    if (electron_energy_transport == "finite_volume") {
+        electron_energy_transport == "auto" || electron_energy_transport == "finite_volume"
+            || electron_energy_transport == "finite_volume_implicit",
+        "hybrid_pic_model.electron_energy_transport must be auto, finite_volume "
+        "or finite_volume_implicit.");
+    m_fv_transport_implicit = electron_energy_transport == "finite_volume_implicit";
+    if (electron_energy_transport != "auto") {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             m_solve_electron_energy_equation && m_electron_thermodynamics.numMaterials() <= 1
                 && std::numeric_limits<amrex::Real>::digits >= 53
                 && std::numeric_limits<amrex::ParticleReal>::digits >= 53,
-            "Explicit finite-volume electron transport requires the evolved electron energy "
+            "Opt-in finite-volume electron transport requires the evolved electron energy "
             "equation, double fields/particles and at most one material table.");
         // Select the existing native charge-flux/internal-energy discretization
         // without changing the ideal-gas EOS or introducing fluid ion dynamics.
         // Its geometry, boundary, precision and particle-operation guards below
         // remain in force; this does not enable the radial pressure-work adjoint.
         m_fv_transport_internal_energy = true;
+    }
+    if (m_fv_transport_implicit) {
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_electron_thermodynamics.executor().isIdealGas()
+                && m_electron_thermodynamics.numMaterials() == 0,
+            "Implicit electron transport currently requires ideal-gas electrons without tables.");
+#if !defined(WARPX_DIM_RZ)
+        WARPX_ABORT_WITH_MESSAGE("Implicit electron transport currently supports RZ only.");
+#endif
     }
 
     // Resistive electron-heating source (Phys. Plasmas 31, 012902 (2024), Eq. 12):
@@ -3832,6 +3852,13 @@ void HybridPICModel::QDSMCUpdateThermodynamics (
             vacuum_cleanup_source.nGrowVect());
         amrex::Real const cleanup_roundoff_factor = 4096.0_rt
             * std::numeric_limits<amrex::Real>::epsilon();
+        bool const implicit_transport = m_fv_transport_implicit;
+        amrex::MultiFab implicit_outflow, implicit_inflow, implicit_volume;
+        if (implicit_transport) {
+            implicit_outflow.define(Ke.boxArray(), Ke.DistributionMap(), 1, 0);
+            implicit_inflow.define(Ke.boxArray(), Ke.DistributionMap(), 2*AMREX_SPACEDIM, 0);
+            implicit_volume.define(Ke.boxArray(), Ke.DistributionMap(), 1, 0);
+        }
 
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
@@ -3845,6 +3872,12 @@ void HybridPICModel::QDSMCUpdateThermodynamics (
                 ? continuity_debug.array(mfi) : amrex::Array4<amrex::Real>{};
             amrex::Array4<amrex::Real> const& cleanup =
                 vacuum_cleanup_source.array(mfi);
+            auto const implicit_out = implicit_transport ? implicit_outflow.array(mfi)
+                : amrex::Array4<amrex::Real>{};
+            auto const implicit_in = implicit_transport ? implicit_inflow.array(mfi)
+                : amrex::Array4<amrex::Real>{};
+            [[maybe_unused]] auto const implicit_measure = implicit_transport
+                ? implicit_volume.array(mfi) : amrex::Array4<amrex::Real>{};
             amrex::Array4<amrex::Real const> transport_energy =
                 Ke.const_array(mfi);
             if (conservative_pressure_work) {
@@ -3944,20 +3977,19 @@ void HybridPICModel::QDSMCUpdateThermodynamics (
                     debug(i, j, k, 3) = continuity_residual;
                     debug(i, j, k, 4) = cfl;
                 }
-                bool const bad_cfl = !amrex::Math::isfinite(cfl)
+                bool const bad_cfl = !implicit_transport && (!amrex::Math::isfinite(cfl)
                     || cfl > 1.0_rt + 64.0_rt
-                        * std::numeric_limits<amrex::Real>::epsilon();
+                        * std::numeric_limits<amrex::Real>::epsilon());
                 bool const bad_flux_state = !amrex::Math::isfinite(
-                        transport.energy_flux_divergence)
-                    || !amrex::Math::isfinite(
                         transport.velocity_divergence)
                     || !amrex::Math::isfinite(
                         transport.charge_flux_divergence)
                     || !amrex::Math::isfinite(
-                        transport.absolute_energy_flux_per_volume)
-                    || !amrex::Math::isfinite(
                         transport.absolute_charge_flux_per_volume)
-                    || !amrex::Math::isfinite(advected_energy_density);
+                    || (!implicit_transport && (!amrex::Math::isfinite(
+                        transport.energy_flux_divergence) || !amrex::Math::isfinite(
+                        transport.absolute_energy_flux_per_volume)
+                        || !amrex::Math::isfinite(advected_energy_density)));
                 bool const bad_continuity =
                     !amrex::Math::isfinite(continuity_residual)
                     || continuity_residual > continuity_tolerance;
@@ -3984,6 +4016,20 @@ void HybridPICModel::QDSMCUpdateThermodynamics (
                     return;
                 }
 
+                if (implicit_transport) {
+#if defined(WARPX_DIM_RZ)
+                    implicit_measure(i,j,k) = hybrid_transport_node_volume(
+                        i, j, k, problo, dx, physical_domain_lo,
+                        axis_volume_factor, physical_domain_hi, periodic);
+#endif
+                    implicit_out(i,j,k) = dt * outgoing_charge_flux;
+                    for (int face = 0; face < 2*AMREX_SPACEDIM; ++face) {
+                        implicit_in(i,j,k,face) = dt
+                            * transport.incoming_face_charge_flux_per_volume[face];
+                    }
+                    advected(i,j,k) = 0.0_rt; // Filled by the separately qualified M-matrix solve.
+                    return;
+                }
                 if (deposited_rho_node != 0.0_rt
                     || advected_energy_density == 0.0_rt)
                 {
@@ -4160,6 +4206,12 @@ void HybridPICModel::QDSMCUpdateThermodynamics (
                 }
                 advected(i, j, k) += incoming_energy / target_volume;
             });
+        }
+
+        if (implicit_transport) {
+            warpx::hybrid::implicitChargeEnergyRemap(
+                advected_energy, conservative_pressure_work ? pressure_work_loaded_energy : Ke,
+                rho, implicit_outflow, implicit_inflow, implicit_volume, geom);
         }
 
 #ifdef AMREX_USE_OMP

@@ -27,7 +27,7 @@ main (int argc, char* argv[])
     {
         // Fixed-key ensemble: sanity-check proposal moments and independent
         // component/counter streams without weakening any energy tolerances.
-        std::array<double, 4> moments{};
+        std::array<double, 4> sampler_moments{};
         double component_cross = 0.0;
         double counter_cross = 0.0;
         constexpr std::uint64_t samples = 1000000;
@@ -37,17 +37,17 @@ main (int argc, char* argv[])
             auto const next = warpx::hybrid::qeiNormal(1, 1, 0, particle, 0);
             AMREX_ALWAYS_ASSERT(std::isfinite(x) && std::isfinite(y) && std::isfinite(next));
             auto power = x;
-            for (auto& moment : moments) {
+            for (auto& moment : sampler_moments) {
                 moment += power / static_cast<double>(samples);
                 power *= x;
             }
             component_cross += x * y / static_cast<double>(samples);
             counter_cross += x * next / static_cast<double>(samples);
         }
-        AMREX_ALWAYS_ASSERT(std::abs(moments[0]) < 0.01);
-        AMREX_ALWAYS_ASSERT(std::abs(moments[1] - 1.0) < 0.02);
-        AMREX_ALWAYS_ASSERT(std::abs(moments[2]) < 0.04);
-        AMREX_ALWAYS_ASSERT(std::abs(moments[3] - 3.0) < 0.1);
+        AMREX_ALWAYS_ASSERT(std::abs(sampler_moments[0]) < 0.01);
+        AMREX_ALWAYS_ASSERT(std::abs(sampler_moments[1] - 1.0) < 0.02);
+        AMREX_ALWAYS_ASSERT(std::abs(sampler_moments[2]) < 0.04);
+        AMREX_ALWAYS_ASSERT(std::abs(sampler_moments[3] - 3.0) < 0.1);
         AMREX_ALWAYS_ASSERT(std::abs(component_cross) < 0.01);
         AMREX_ALWAYS_ASSERT(std::abs(counter_cross) < 0.01);
         auto& simulation = WarpX::GetInstance();

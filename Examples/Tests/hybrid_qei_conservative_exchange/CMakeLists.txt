@@ -3,6 +3,26 @@
 
 if(RZ IN_LIST WarpX_DIMS AND WarpX_PRECISION STREQUAL DOUBLE
    AND WarpX_PARTICLE_PRECISION STREQUAL DOUBLE)
+    set(implicit_restart_procs 1)
+    if(WarpX_MPI)
+        set(implicit_restart_procs 2)
+    endif()
+    add_warpx_test(
+        test_rz_implicit_qei_moving
+        RZ
+        1
+        "inputs_base_rz_resolved_restart hybrid_pic_model.electron_energy_transport=finite_volume_implicit"
+        "analysis_resolved_restart.py --implicit"
+        OFF
+        OFF)
+    add_warpx_test(
+        test_rz_implicit_qei_moving_restart
+        RZ
+        ${implicit_restart_procs}
+        "inputs_base_rz_resolved_restart hybrid_pic_model.electron_energy_transport=finite_volume_implicit amr.restart='../test_rz_implicit_qei_moving/diags/chk000100'"
+        "analysis_resolved_restart.py --implicit --reference ../test_rz_implicit_qei_moving"
+        OFF
+        test_rz_implicit_qei_moving)
     add_warpx_test(
         test_rz_resolved_qei_moving
         RZ
