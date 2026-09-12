@@ -192,7 +192,7 @@ void init_WarpX (py::module& m)
 
         // Expose the implicit solver and the mass matrices deposition
         .def("implicit_solver",
-            [](WarpX& wx){ return wx.GetImplicitSolver(); },
+            [](WarpX& wx){ return wx.get_pointer_ImplicitSolver(); },
             py::return_value_policy::reference_internal,
             R"pbdoc(Return the implicit solver, or None when the evolve scheme is explicit)pbdoc"
         )

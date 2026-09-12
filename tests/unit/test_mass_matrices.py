@@ -26,32 +26,16 @@ from pywarpx import picmi
 
 constants = picmi.constants
 
-pytestmark = [
-    # RZ deposits with an inverse volume scaling and rotates the mass matrices
-    # into cylindrical components; make_sim does not build that geometry yet.
-    pytest.mark.skipif(
-        pywarpx.libwarpx.geometry_dim not in ("1d", "2d", "3d"),
-        reason="the mass matrices comparison is set up for Cartesian geometries",
-    ),
-    # In 3D only the diagonal preconditioner mass matrices are deposited: the
-    # full_mass_matrices branch of doDirectJandSigmaDepositionKernel is empty
-    # there, and ImplicitSolver::InitializeMassMatrices asserts against
-    # use_mass_matrices_jacobian. Skip rather than trip that assert, which
-    # would abort the whole pytest process. Drop this once 3D is implemented.
-    pytest.mark.skipif(
-        pywarpx.libwarpx.geometry_dim == "3d",
-        reason="full mass matrices are not implemented in 3D",
-    ),
-]
-
-
-def _theta_implicit_with_mass_matrices():
-    """Evolve scheme that allocates and can deposit the full mass matrices."""
-    newton = picmi.NewtonNonlinearSolver(
-        linear_solver=picmi.GMRESLinearSolver(),
-        use_mass_matrices_jacobian=True,
-    )
-    return picmi.ThetaImplicitEMEvolveScheme(nonlinear_solver=newton, theta=0.5)
+# RZ deposits with an inverse volume scaling and rotates the mass matrices
+# into cylindrical components; make_sim does not build that geometry yet.
+# In 3D only the diagonal preconditioner mass matrices are deposited: the
+# full_mass_matrices branch of doDirectJandSigmaDepositionKernel is empty
+# there, and ImplicitSolver::InitializeMassMatrices asserts against
+# use_mass_matrices_jacobian. Add "3d" once it is implemented.
+pytestmark = pytest.mark.skipif(
+    pywarpx.libwarpx.geometry_dim not in ("1d", "2d"),
+    reason="full mass matrices are only implemented in Cartesian 1D and 2D",
+)
 
 
 def _alloc_like(sim, name, template, n_grow_extra=0):
@@ -73,8 +57,8 @@ def _alloc_like(sim, name, template, n_grow_extra=0):
             mf.n_comp,
             mf.n_grow_vect + n_grow_extra,
             0.0,
-            False,
-            False,
+            redistribute=False,
+            redistribute_on_remake=False,
         )
 
 
@@ -117,32 +101,27 @@ def test_mass_matrices_match_push_and_deposit(particle_shape):
     ``(u^n + u^{n+1}) / 2``, whereas the push from rest leaves ``u^{n+1}`` on
     the particles, hence the factor 1/2 on the reference.
     """
-    # The mass matrices use plain shape factors for the field gather (see
-    # MassMatricesDeposition.H), so the pusher must too. WarpX already turns
-    # the Galerkin (energy-conserving) gather off for the direct deposition
-    # with an electromagnetic solver; this pins it down independently of that.
-    pywarpx.interpolation.galerkin_scheme = 0
-
     n_axes = N_AXES[pywarpx.libwarpx.geometry_dim]
     # 8 cells and 4 cells per box: two boxes per axis, so that contributions
-    # crossing a box boundary and the periodic boundary are both exercised
+    # crossing a box boundary and the periodic boundary are both exercised.
+    # The direct deposition also makes WarpX gather with plain shape factors
+    # (no Galerkin correction), which is what the mass matrices assume.
+    n_cell = [8] * n_axes
     sim = make_sim(
-        n_cell=[8] * n_axes,
+        n_cell=n_cell,
         max_grid_size=4,
         particle_shape=particle_shape,
         current_deposition_algo="direct",
     )
-    # Fill fresh allocations with signaling NaN, so that reading state this
-    # test forgot to set up shows as NaN rather than as whatever the allocator
-    # happened to hand back. That matters here because the test drives the
-    # implicit routines outside the order an evolve scheme calls them in, so
-    # it has to establish their inputs itself. A release build would otherwise
-    # hide such a bug behind zeroed memory until CI, which builds AMReX with
-    # -DAMReX_TESTING=ON, turns this on anyway.
-    pywarpx.amrex.init_snan = 1
 
     # the mass matrices are only allocated by an evolve scheme that uses them
-    sim.evolve_scheme = _theta_implicit_with_mass_matrices()
+    sim.evolve_scheme = picmi.ThetaImplicitEMEvolveScheme(
+        nonlinear_solver=picmi.NewtonNonlinearSolver(
+            linear_solver=picmi.GMRESLinearSolver(),
+            use_mass_matrices_jacobian=True,
+        ),
+        theta=0.5,
+    )
 
     sim.add_species(
         picmi.Species(particle_type="electron", name="electrons"), layout=None
@@ -153,7 +132,6 @@ def test_mass_matrices_match_push_and_deposit(particle_shape):
     warpx = sim.extension.warpx
     fields = sim.fields
     dt = warpx.getdt(0)
-    n_cell = list(warpx.Geom(0).domain.size)
 
     # the particles start at rest, see the docstring
     add_uniform_particles(sim, "electrons")
@@ -171,8 +149,7 @@ def test_mass_matrices_match_push_and_deposit(particle_shape):
     # u_n attributes, which set the Lorentz factor of the kernel, and the
     # suborbit count. The evolve schemes fill these at the top of every step;
     # driving the routines directly, this test has to do it itself, or they
-    # read uninitialized attributes (which a testing build of AMReX fills with
-    # signaling NaN). With the particles at rest, this makes u_n = 0.
+    # read uninitialized attributes. With the particles at rest, u_n = 0.
     warpx.save_particles_at_implicit_step_start()
 
     # Deposit the mass matrices the way the Darwin solver does: the deposit
@@ -199,7 +176,6 @@ def test_mass_matrices_match_push_and_deposit(particle_shape):
     )
     _alloc_like(sim, "dE", "Efield_fp", n_grow_extra=n_grow_extra)
     _alloc_like(sim, "dJ", "current_fp")
-    _alloc_like(sim, "J_ref", "current_fp")
 
     # The amplitude keeps the push non-relativistic: q dE dt / m is a fraction
     # of a meter per second, so gamma is one to far better than the tolerance.
@@ -210,27 +186,30 @@ def test_mass_matrices_match_push_and_deposit(particle_shape):
     # mass matrices: dJ = S dE
     solver.apply_mass_matrices("dJ", "dE", zero_out_first=True)
 
-    # reference: push from rest in (dE, B), then deposit the current
+    # reference: push from rest in (dE, B), then deposit the current into the
+    # (so far unused) current_fp
     sim.particles.push_p(
         0,
         dt,
         *(fields.get("dE", direction, 0) for direction in ("x", "y", "z")),
         *(fields.get("Bfield_fp", direction, 0) for direction in ("x", "y", "z")),
     )
-    electrons.deposit_current("J_ref", 0, dt, 0.0)
+    for direction in ("x", "y", "z"):
+        fields.get("current_fp", direction, 0).set_val(0.0)
+    electrons.deposit_current("current_fp", 0, dt, 0.0)
 
     for direction in ("x", "y", "z"):
         dj_mass_matrices = fields.get("dJ", direction, 0)[...]
-        dj_reference = 0.5 * fields.get("J_ref", direction, 0)[...]
+        dj_reference = 0.5 * fields.get("current_fp", direction, 0)[...]
 
         # a magnetized push from rest in a random field drives all components
         scale = np.max(np.abs(dj_reference))
         assert scale > 0.0
 
-        # atol scaled to the current that is actually flowing, so that the
+        # relative to the current that is actually flowing, so that the
         # entries that happen to be small are held to the same accuracy as
-        # the large ones and the assertion is not vacuous
+        # the large ones
         error = np.max(np.abs(dj_mass_matrices - dj_reference)) / scale
-        assert np.allclose(
-            dj_mass_matrices, dj_reference, rtol=rtol(), atol=rtol() * scale
-        ), f"J{direction}: max |dJ_mm - dJ_ref| / max |dJ_ref| = {error}"
+        assert error <= rtol(), (
+            f"J{direction}: max |dJ_mm - dJ_ref| / max |dJ_ref| = {error}"
+        )
