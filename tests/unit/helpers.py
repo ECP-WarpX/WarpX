@@ -83,6 +83,10 @@ def make_sim(
         warpx_current_deposition_algo=current_deposition_algo,
     )
 
+    # Turn on options to catch unexpected behavior
+    pywarpx.amrex.init_snan = 1
+    pywarpx.amrex.fpe_trap_invalid = 1
+    pywarpx.amrex.fpe_trap_zero = 1
     # AMReX runtime parameters, mirroring the ones ImpactX and pyAMReX use
     # in their pytest suites
     pywarpx.warpx.get_bucket("tiny_profiler").enabled = 0
