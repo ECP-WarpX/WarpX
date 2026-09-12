@@ -678,9 +678,9 @@ namespace ParticleUtils {
      * \param max_grid_crossings  Maximum allowed crossings per direction
      */
     AMREX_INLINE
-    void CheckGridCrossingErrors (const amrex::Gpu::DeviceVector<int>& d_error_x,
-                                  const amrex::Gpu::DeviceVector<int>& d_error_y,
-                                  const amrex::Gpu::DeviceVector<int>& d_error_z,
+    void CheckGridCrossingErrors ([[maybe_unused]] const amrex::Gpu::DeviceVector<int>& d_error_x,
+                                  [[maybe_unused]] const amrex::Gpu::DeviceVector<int>& d_error_y,
+                                  [[maybe_unused]] const amrex::Gpu::DeviceVector<int>& d_error_z,
                                   const int max_grid_crossings)
     {
         int h_error_x = 0;
