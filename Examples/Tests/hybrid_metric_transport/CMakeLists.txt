@@ -3,7 +3,24 @@
 # License: BSD-3-Clause-LBNL
 
 if(WarpX_LIB AND RZ IN_LIST WarpX_DIMS AND WarpX_PRECISION STREQUAL DOUBLE)
+    add_executable(test_rz_shape_integral test_shape_integral.cpp)
+    target_link_libraries(test_rz_shape_integral PRIVATE lib_rz)
+    if(WarpX_COMPUTE STREQUAL CUDA)
+        setup_target_for_cuda_compilation(test_rz_shape_integral)
+    endif()
+    warpx_set_compile_warnings(test_rz_shape_integral)
+    add_test(NAME test_rz_shape_integral COMMAND test_rz_shape_integral
+        amrex.the_arena_init_size=0)
+    set_tests_properties(test_rz_shape_integral PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1")
     if(WarpX_PARTICLE_PRECISION STREQUAL DOUBLE)
+        add_warpx_test(
+            test_rz_hybrid_shape_tail
+            RZ
+            1
+            inputs_base_rz_shape_tail
+            analysis_shape_tail.py
+            OFF
+            OFF)
         add_warpx_test(
             test_rz_implicit_vacuum_crossing
             RZ

@@ -776,6 +776,15 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
         if (deposition_algo == CurrentDepositionAlgo::Esirkepov) {
             if (push_type == PushType::Explicit) {
 
+                // Only the dedicated RZ hybrid energy flux uses this path;
+                // conventional electromagnetic deposition keeps its operation order.
+                bool const stable_shape_integrals =
+#if defined(WARPX_DIM_RZ)
+                    WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC;
+#else
+                    false;
+#endif
+
                 amrex::Array4<const int> eb_reduce_particle_shape;
                 if (EB::enabled()) {
                     eb_reduce_particle_shape = (*warpx.GetEBReduceParticleShapeFlag()[lev])[pti].array();
@@ -788,7 +797,7 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
                         jx_arr, jy_arr, jz_arr,
                         np_to_deposit, dt, relative_time, dinv, xyzmin, lo, q,
                         WarpX::n_rz_azimuthal_modes,
-                        eb_reduce_particle_shape, EB::enabled() );
+                        eb_reduce_particle_shape, EB::enabled(), stable_shape_integrals );
                 } else if (WarpX::nox == 2){
                     doEsirkepovDepositionShapeN<2>(
                         GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
@@ -796,7 +805,7 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
                         jx_arr, jy_arr, jz_arr,
                         np_to_deposit, dt, relative_time, dinv, xyzmin, lo, q,
                         WarpX::n_rz_azimuthal_modes,
-                        eb_reduce_particle_shape, EB::enabled() );
+                        eb_reduce_particle_shape, EB::enabled(), stable_shape_integrals );
                 } else if (WarpX::nox == 3){
                     doEsirkepovDepositionShapeN<3>(
                         GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
@@ -804,7 +813,7 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
                         jx_arr, jy_arr, jz_arr,
                         np_to_deposit, dt, relative_time, dinv, xyzmin, lo, q,
                         WarpX::n_rz_azimuthal_modes,
-                        eb_reduce_particle_shape, EB::enabled() );
+                        eb_reduce_particle_shape, EB::enabled(), stable_shape_integrals );
                 } else if (WarpX::nox == 4){
                     doEsirkepovDepositionShapeN<4>(
                         GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
@@ -812,7 +821,7 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
                         jx_arr, jy_arr, jz_arr,
                         np_to_deposit, dt, relative_time, dinv, xyzmin, lo, q,
                         WarpX::n_rz_azimuthal_modes,
-                        eb_reduce_particle_shape, EB::enabled() );
+                        eb_reduce_particle_shape, EB::enabled(), stable_shape_integrals );
                 }
 
             } else if (push_type == PushType::Implicit) {
