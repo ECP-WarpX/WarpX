@@ -29,8 +29,10 @@
  *
  *     J_work,g += q_weight * v_work * S_g(x^n) / cell_volume.
  *
- * The caller owns the outer particle loop.  Host/device atomics make this
- * helper safe inside either a CPU or GPU `amrex::ParallelFor` scatter loop.
+ * The caller owns the outer particle loop and must use `amrex::For`, not
+ * `amrex::ParallelFor`: different particles can scatter to the same node.
+ * Host/device atomics protect shared nodes across CPU threads and GPU lanes,
+ * but do not satisfy a CPU SIMD promise of independent loop iterations.
  * The three destination arrays must be collocated and have `field_type`.
  * Cylindrical/spherical coordinate transforms and their metric-weighted
  * adjoints are intentionally outside this first Cartesian implementation.

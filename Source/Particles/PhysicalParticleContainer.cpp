@@ -112,6 +112,7 @@
 #include <map>
 #include <random>
 #include <string>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -1620,17 +1621,10 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
 #ifdef WARPX_QED
     const int qed_runtime_flag = (local_has_quantum_sync || do_sync) ? has_qed : no_qed;
 #else
-    int qed_runtime_flag = no_qed;
+    int const qed_runtime_flag = no_qed;
 #endif
 
-    // Loop over the particles and update their momentum.
-    // Using this version of ParallelFor with compile time options
-    // improves performance when qed or external EB are not used by reducing
-    // register pressure.
-    amrex::ParallelFor(
-        TypeList<CompileTimeOptions<no_exteb,has_exteb>, CompileTimeOptions<no_qed  ,has_qed>>{},
-        {exteb_runtime_flag, qed_runtime_flag},
-        np_to_push,
+    auto const push_particle =
         [=] AMREX_GPU_DEVICE (long ip, auto exteb_control, auto qed_control)
     {
         amrex::ParticleReal xp, yp, zp;
@@ -1761,7 +1755,24 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
 #else
             amrex::ignore_unused(qed_control);
 #endif
-    });
+    };
+    if (collect_hybrid_pressure_work) {
+        // The work-current scatter shares grid nodes between particles.
+        // Host/device atomics do not satisfy ParallelFor's CPU SIMD contract.
+        // This instrumented path already rejects QED momentum changes; keep
+        // external-field evaluation enabled, including its no-op case.
+        amrex::For(np_to_push, [=] AMREX_GPU_DEVICE (long ip) {
+            push_particle(ip, std::integral_constant<int, has_exteb>{},
+                          std::integral_constant<int, no_qed>{});
+        });
+    } else {
+        // Ordinary pushes have independent writes. Compile-time options
+        // retain the reduced register pressure when QED/external EB are absent.
+        amrex::ParallelFor(
+            TypeList<CompileTimeOptions<no_exteb,has_exteb>,
+                     CompileTimeOptions<no_qed,has_qed>>{},
+            {exteb_runtime_flag, qed_runtime_flag}, np_to_push, push_particle);
+    }
 }
 
 void
