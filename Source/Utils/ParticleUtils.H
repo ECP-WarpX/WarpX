@@ -12,6 +12,7 @@
 
 #include <AMReX_DenseBins.H>
 #include <AMReX_Geometry.H>
+#include <AMReX_GpuContainers.H>
 #include <AMReX_Particles.H>
 #include <AMReX_Math.H>
 
@@ -677,15 +678,26 @@ namespace ParticleUtils {
      * \param max_grid_crossings  Maximum allowed crossings per direction
      */
     AMREX_INLINE
-    void CheckGridCrossingErrors (const amrex::Gpu::DeviceVector<int>& d_error_x,
-                                  const amrex::Gpu::DeviceVector<int>& d_error_y,
-                                  const amrex::Gpu::DeviceVector<int>& d_error_z,
+    void CheckGridCrossingErrors ([[maybe_unused]] const amrex::Gpu::DeviceVector<int>& d_error_x,
+                                  [[maybe_unused]] const amrex::Gpu::DeviceVector<int>& d_error_y,
+                                  [[maybe_unused]] const amrex::Gpu::DeviceVector<int>& d_error_z,
                                   const int max_grid_crossings)
     {
-        const int h_error_x = d_error_x[0];
-        const int h_error_y = d_error_y[0];
-        const int h_error_z = d_error_z[0];
-
+        int h_error_x = 0;
+#if !defined(WARPX_DIM_1D_Z)
+        amrex::Gpu::copy(amrex::Gpu::deviceToHost, d_error_x.begin(),
+                         d_error_x.begin() + 1, &h_error_x);
+#endif
+        int h_error_y = 0;
+#if defined(WARPX_DIM_3D)
+        amrex::Gpu::copy(amrex::Gpu::deviceToHost, d_error_y.begin(),
+                         d_error_y.begin() + 1, &h_error_y);
+#endif
+        int h_error_z = 0;
+#if defined(WARPX_ZINDEX)
+        amrex::Gpu::copy(amrex::Gpu::deviceToHost, d_error_z.begin(),
+                         d_error_z.begin() + 1, &h_error_z);
+#endif
         if (h_error_x > 0 || h_error_y > 0 || h_error_z > 0) {
             std::string error_msg = "Villasenor deposition error: particles exceeded max_grid_crossings.\n";
             if (h_error_x > 0) {
