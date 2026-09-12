@@ -31,3 +31,26 @@ if(WarpX_LIB)
         NAME test_hybrid_metric_transport
         COMMAND test_hybrid_metric_transport)
 endif()
+
+if(WarpX_PRECISION STREQUAL "DOUBLE" AND WarpX_PARTICLE_PRECISION STREQUAL "DOUBLE")
+    foreach(axis_correction IN ITEMS 0 1)
+        add_warpx_test(
+            test_rz_hybrid_axial_continuity_axis${axis_correction}
+            RZ
+            1
+            "inputs_test_rz_hybrid_axial_continuity boundary.verboncoeur_axis_correction=${axis_correction}"
+            "analysis_axial_continuity.py"
+            OFF
+            OFF
+        )
+    endforeach()
+    add_warpx_test(
+        test_rz_hybrid_axial_continuity_cubic_mpi
+        RZ
+        2
+        "inputs_test_rz_hybrid_axial_continuity algo.particle_shape=3"
+        "analysis_axial_continuity.py"
+        OFF
+        OFF
+    )
+endif()

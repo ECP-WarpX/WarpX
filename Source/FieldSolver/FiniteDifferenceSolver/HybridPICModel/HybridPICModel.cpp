@@ -722,8 +722,12 @@ namespace
             warpx::hybrid::cylindricalRadialFaceArea(r_hi, 1.0_rt),
             1.0_rt / node_volume, radial_velocity_metric);
 #else
-        amrex::Real const radial_face_area =
-            warpx::hybrid::cylindricalAxialFaceArea(r_lo, r_hi);
+        // Rho and Jz use the same inverse-volume correction on the axis.
+        // Its effective axial area must therefore be V/dz, not the
+        // geometric quarter-disc area when Verboncoeur's 1/3 correction
+        // is active. Otherwise the axial charge divergence is scaled by
+        // 3/4 while radial transport and endpoint charge use the full metric.
+        amrex::Real const radial_face_area = node_volume / dx[1];
         QdsmcCartesianTransportTerms const radial = qdsmc_nodal_direction_terms(
             energy, old_charge_density, midpoint_charge_density,
             ion_current_x, plasma_current_x, vr,
