@@ -3,6 +3,21 @@
 # License: BSD-3-Clause-LBNL
 
 if(WarpX_LIB)
+foreach(dimension IN LISTS WarpX_DIMS)
+    warpx_set_suffix_dims(suffix ${dimension})
+    set(offset_test test_${suffix}_temperature_deposition_offset)
+    add_executable(${offset_test} test_temperature_offset.cpp)
+    target_link_libraries(${offset_test} PRIVATE lib_${suffix})
+    if(WarpX_COMPUTE STREQUAL CUDA)
+        setup_target_for_cuda_compilation(${offset_test})
+    endif()
+    warpx_set_compile_warnings(${offset_test})
+    add_test(NAME ${offset_test} COMMAND ${offset_test} amrex.the_arena_init_size=0)
+    set_tests_properties(${offset_test} PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1")
+endforeach()
+endif()
+
+if(WarpX_LIB)
     add_executable(
         test_hybrid_metric_transport
         test_hybrid_metric_transport.cpp)
