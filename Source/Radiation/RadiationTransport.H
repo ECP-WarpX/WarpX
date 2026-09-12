@@ -294,6 +294,7 @@ private:
     bool m_require_cell_interface_exact_streaming = false;
     bool m_use_nonlinear_hybrid_lte_remap = false;
     bool m_track_energy_balance = false;
+    bool m_absorb_nonperiodic_photons = false;
     bool m_is_restart = false;
     bool m_restart_momentum_carry_fields_present = false;
     int m_restart_diffusion_momentum_groups = 0;

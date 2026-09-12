@@ -99,6 +99,21 @@ void HybridPICModel::WriteMomentHistory (std::string const &directory) const
         }
     }
     if (amrex::ParallelDescriptor::IOProcessor()) {
+        if (m_resolved_qei_support) {
+            std::ofstream support(directory + "/HybridQeiSupport.txt");
+            support << "resolved_pairwise_v3 " << m_resolved_qei_seed << ' '
+                    << m_resolved_qei_counter << '\n';
+            support.flush();
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(support.good(),
+                "Could not checkpoint resolved Qei support.");
+        }
+        if (m_fv_transport_internal_energy && m_electron_thermodynamics.executor().isIdealGas()) {
+            std::ofstream transport(directory + "/HybridIdealElectronTransport.txt");
+            transport << "ideal_finite_volume_v1\n";
+            transport.flush();
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(transport.good(),
+                "Could not checkpoint ideal finite-volume electron transport.");
+        }
         std::ofstream output(directory + "/HybridMomentHistory.txt");
         output << "hybrid_moments_v1 " << m_moment_history_valid << ' ' << simulation.getistep(0)
                << ' ' << fields.size() << '\n';
@@ -115,6 +130,39 @@ void HybridPICModel::WriteMomentHistory (std::string const &directory) const
 
 void HybridPICModel::ReadMomentHistory (std::string const &directory)
 {
+    auto const support_manifest = directory + "/HybridQeiSupport.txt";
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(Exists(support_manifest) == m_resolved_qei_support,
+        "Restart must preserve the Qei thermal support model and its manifest.");
+    if (m_resolved_qei_support) {
+        amrex::Vector<char> buffer;
+        amrex::ParallelDescriptor::ReadAndBcastFile(support_manifest, buffer);
+        std::istringstream support(std::string(buffer.data()));
+        std::string version, trailing;
+        int stored_seed = 0;
+        std::string counter_token;
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE((support >> version >> stored_seed >> counter_token)
+            && version == "resolved_pairwise_v3" && stored_seed == m_resolved_qei_seed
+            && counter_token.find_first_not_of("0123456789") == std::string::npos
+            && !(support >> trailing),
+            "Invalid resolved Qei support checkpoint manifest.");
+        std::istringstream counter_stream(counter_token);
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(counter_stream >> m_resolved_qei_counter,
+            "Invalid resolved Qei support checkpoint counter.");
+    }
+    auto const transport_manifest = directory + "/HybridIdealElectronTransport.txt";
+    bool const ideal_fv = m_fv_transport_internal_energy
+        && m_electron_thermodynamics.executor().isIdealGas();
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(Exists(transport_manifest) == ideal_fv,
+        "Restart must preserve the ideal electron transport model and its manifest.");
+    if (ideal_fv) {
+        amrex::Vector<char> transport_buffer;
+        amrex::ParallelDescriptor::ReadAndBcastFile(transport_manifest, transport_buffer);
+        std::istringstream transport(std::string(transport_buffer.data()));
+        std::string version, trailing;
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE((transport >> version)
+            && version == "ideal_finite_volume_v1" && !(transport >> trailing),
+            "Invalid ideal electron transport checkpoint manifest.");
+    }
     m_moment_history_valid = false;
     m_restored_moment_history_pending = false;
     auto const fields = HistoryFields(*this);

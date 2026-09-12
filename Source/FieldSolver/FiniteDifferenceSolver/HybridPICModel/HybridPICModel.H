@@ -37,6 +37,7 @@
 #include <AMReX_DistributionMapping.H>
 #include <AMReX_Enum.H>
 
+#include <cstdint>
 #include <map>
 #include <memory>
 #include <optional>
@@ -695,6 +696,11 @@ public:
      * ReadParameters, not a separate user input); only consulted when
      * m_solve_electron_energy_equation is on. */
     bool m_include_temperature_relaxation = false;
+    bool m_resolved_qei_support = false;
+    int m_resolved_qei_seed = 1;
+    mutable std::uint64_t m_resolved_qei_counter = 0;
+    mutable std::map<std::string, std::unique_ptr<amrex::MultiFab>> m_qei_support_moments;
+    mutable std::map<std::string, std::unique_ptr<amrex::MultiFab>> m_qei_support_sources;
 
     /** Electron-ion energy-equilibration rate nu_ei(rho,Te,Ti,t) [1/s] used by
      * the Q_ei term (rho = charge density [C/m^3]; Te, Ti in eV; t in s). */

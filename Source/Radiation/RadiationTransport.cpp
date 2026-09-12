@@ -3055,6 +3055,18 @@ RadiationTransport::RadiationTransport (
     if (!m_enabled) { return; }
 
     pp.get("photon_species", m_photon_species);
+    std::string photon_boundary = "inherit";
+    pp.query("photon_boundary", photon_boundary);
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(photon_boundary == "inherit" || photon_boundary == "absorbing",
+        "radiation_transport.photon_boundary must be inherit or absorbing.");
+    m_absorb_nonperiodic_photons = photon_boundary == "absorbing";
+#if !defined(WARPX_DIM_RZ)
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!m_absorb_nonperiodic_photons,
+        "Independent absorbing photon boundaries currently support RZ only.");
+#endif
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!m_absorb_nonperiodic_photons || !EB::enabled(),
+        "Independent absorbing photon boundaries do not support embedded boundaries.");
+    if (m_absorb_nonperiodic_photons) { m_track_energy_balance = true; }
     std::vector<std::string> reduced_diagnostic_names;
     amrex::ParmParse const pp_warpx("warpx");
     pp_warpx.queryarr("reduced_diags_names", reduced_diagnostic_names);
@@ -4830,6 +4842,13 @@ RadiationTransport::WriteCheckpointData (std::string const& dir) const
 {
     WriteParticleCarryWallCheckpoint(dir);
     if (!m_enabled) { return; }
+    if (m_absorb_nonperiodic_photons) {
+        std::ofstream boundary{dir + "/RadiationPhotonBoundary_data.txt"};
+        boundary << "absorbing_nonperiodic_v1 " << m_photon_species << '\n';
+        boundary.flush();
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(boundary.good(),
+            "Could not checkpoint independent photon boundaries.");
+    }
     if (m_use_coupled_moment_transport) {
         std::ofstream model{dir + "/RadiationMomentModel_data.txt"};
         model << "gray_m1_low_beta_nodal_shape_v2 " << WarpX::nox << '\n';
@@ -4863,9 +4882,18 @@ RadiationTransport::WriteCheckpointData (std::string const& dir) const
 void
 RadiationTransport::ReadCheckpointData (std::string const& dir)
 {
+    std::ifstream boundary{dir + "/RadiationPhotonBoundary_data.txt"};
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(boundary.good() == m_absorb_nonperiodic_photons,
+        "Restart must preserve independent photon boundaries and their manifest.");
     if (!m_enabled) {
         ReadParticleCarryWallCheckpoint(dir);
         return;
+    }
+    if (m_absorb_nonperiodic_photons) {
+        std::string version, species, trailing;
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE((boundary >> version >> species)
+            && version == "absorbing_nonperiodic_v1" && species == m_photon_species
+            && !(boundary >> trailing), "Invalid independent photon boundary manifest.");
     }
     std::ifstream model{dir + "/RadiationMomentModel_data.txt"};
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(model.good() == m_use_coupled_moment_transport,
@@ -7130,7 +7158,36 @@ RadiationTransport::Advance (
             amrex::For(np, transport_packet);
         }
 
-        photons.ApplyBoundaryConditions();
+        if (m_absorb_nonperiodic_photons) {
+#if defined(WARPX_DIM_RZ)
+            // Material may have impermeable boundaries while photons leave.
+            // Keep the lost packet weight and momentum until the independent
+            // escape reduction below has consumed them. Periodicity remains
+            // the mesh's contract and is handled by Redistribute.
+            auto const photon_lo = warpx.Geom(lev).ProbLoArray();
+            auto const photon_hi = warpx.Geom(lev).ProbHiArray();
+            auto const photon_periodicity = warpx.Geom(lev).isPeriodicArray();
+            for (WarpXParIter pti(photons, lev); pti.isValid(); ++pti) {
+                auto const ptd = pti.GetParticleTile().getParticleTileData();
+                auto const packet_position = GetParticlePosition<PIdx>(pti);
+                amrex::ParallelFor(pti.numParticles(), [=] AMREX_GPU_DEVICE (long const ip) {
+                    if (!amrex::ParticleIDWrapper{ptd.m_idcpu[ip]}.is_valid()) { return; }
+                    amrex::ParticleReal packet_radius, packet_theta, packet_z;
+                    packet_position.AsStored(ip, packet_radius, packet_theta, packet_z);
+                    amrex::ignore_unused(packet_theta);
+                    if ((!photon_periodicity[0]
+                         && (packet_radius < photon_lo[0] || packet_radius >= photon_hi[0]))
+                        || (!photon_periodicity[1]
+                            && (packet_z < photon_lo[1] || packet_z >= photon_hi[1])))
+                    {
+                        ptd.m_idcpu[ip] = amrex::ParticleIdCpus::Invalid;
+                    }
+                });
+            }
+#endif
+        } else {
+            photons.ApplyBoundaryConditions();
+        }
         if (m_track_energy_balance) {
             AccumulateStreamingBoundaryLoss(
                 photons, lev, streaming_boundary_loss);

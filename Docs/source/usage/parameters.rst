@@ -4004,6 +4004,84 @@ Maxwell solver: kinetic-fluid hybrid
     (see the :ref:`theory section <theory-hybrid-model-electron-energy-eq>`), instead of evaluating the polytropic
     closure with the constant reference state :math:`(n_0, T_{e0})`.
 
+.. pp:param:: hybrid_pic_model.electron_energy_transport
+    :type: ``string``
+    :default: ``auto``
+    :optional:
+
+    Experimental ``finite_volume`` selects the existing native conservative
+    charge-flux/internal-energy transport with the ideal electron EOS as well
+    as with nonlinear caloric models. ``auto`` retains the existing selection:
+    entropy markers for ideal electrons and finite volumes for the supported
+    nonlinear models. This option does not replace kinetic ions by a fluid.
+    Double field/particle precision, the evolved electron-energy equation,
+    at most one material table, and all existing finite-volume geometry and
+    particle-operation restrictions are required. In particular, material
+    boundaries must remain impermeable or periodic. The radial pressure-work
+    adjoint is still unsupported; selecting finite volumes alone does not
+    establish exact ion/electron work closure. Ideal finite-volume checkpoints
+    require their transport-model manifest and the same selection on restart.
+
+    In RZ, the evolved ideal-electron caloric inventory uses the deposition's
+    axis-volume correction and reflective wall half-volumes. Radiation-source
+    inversion and realized-energy accounting use that same inventory. Source
+    heating is distributed with frozen heat-capacity weights; cooling uses
+    available thermal energy so a hot/cold cell cannot overdraw its cold
+    corners. Requests exceeding a cell's available cooling energy are rejected,
+    not clipped. Exact-vacuum through-flow can still violate the explicit
+    upwind donor/CFL requirements. A dilute-background calculation is a
+    different model, not evidence that exact-vacuum transport is supported.
+
+.. pp:param:: hybrid_pic_model.resolved_qei_support
+    :type: ``bool``
+    :default: ``false``
+    :optional:
+
+    Experimental, double-precision RZ thermal exchange for fixed-charge,
+    ideal-gas finite-volume electrons. Requires an explicit
+    :pp:param:`hybrid_pic_model.electron_ion_relaxation_rate(rho,Te,Ti,t)`.
+    The electron node exchanges with each adjacent particle cell's geometric
+    corner fraction using the exact frozen-coefficient two-temperature pair.
+    Each realized energy increment is retained for its specific ion recipient;
+    no cooling request is reassigned to a distant or unsupported cell.
+
+    Frozen particle moments and two-pass central variances determine the
+    available ion heat without subtracting a large bulk kinetic energy.
+    Stochastic proposals are projected to the exact cell energy and the three
+    pre-exchange cylindrical momentum components. Cells with fewer than two
+    positive-weight macroparticles have no resolved thermal degree of freedom:
+    they do not exchange heat through this option, and their particle momenta
+    are unchanged. Quantify that unresolved material fraction in applications.
+    This discrete kinetic-cell closure is not identical to a fluid-ion EOS or
+    a tabulated collisional model. It does not supply an RZ pressure-work
+    adjoint, evolving ionization, or relativistic thermal equilibration.
+    Restart must preserve the support policy and its checkpoint manifest.
+
+.. pp:param:: hybrid_pic_model.resolved_qei_seed
+    :type: ``int`` > 0
+    :default: ``1``
+    :optional:
+
+    Independent seed for the experimental resolved-Qei ion proposals. Samples
+    are keyed by a checkpointed exchange counter, species, persistent particle
+    identity and velocity component, rather than thread scheduling. Restart
+    must preserve this seed. This does not make unrelated stochastic operators
+    reproducible, nor promise bitwise agreement of parallel floating-point sums.
+
+.. pp:param:: hybrid_pic_model.continuity_debug_prefix
+    :type: ``string``
+    :default: empty
+    :optional:
+
+    Experimental failure diagnostics for finite-volume electron transport.
+    With a nonempty prefix, a failed continuity/CFL check writes native VisMF
+    arrays for old, deposited and predicted charge density, relative continuity
+    residual, CFL number, and ion/plasma currents. A failed material-energy
+    realization writes its old/candidate temperature and source fields. These
+    dumps do not alter the failure gates or repair the numerical state. Use a
+    run-specific prefix in a writable directory; repeated failures can replace
+    previous dumps with that prefix.
+
 .. pp:param:: hybrid_pic_model.conservative_pressure_work
     :type: ``bool``
     :default: ``false``
@@ -4898,6 +4976,22 @@ studies.
    density-major/temperature/photon-energy-fastest order. ``#`` begins a comment.
    Every axis must contain at least two strictly increasing points. Values outside
    the table are clamped to the closest endpoint.
+
+.. pp:param:: radiation_transport.photon_boundary
+   :type: ``string``
+   :default: ``inherit``
+   :optional:
+
+   Experimental RZ-only ``absorbing`` removes streaming photons when they reach
+   a nonperiodic physical domain face, independently of the material-particle
+   boundary conditions. The axis remains a coordinate axis, not an absorbing
+   surface, and periodic directions retain mesh periodicity. Lost photon
+   energy and momentum enter the existing independent escape accounting before
+   redistribution. ``inherit`` retains the global particle-boundary behavior.
+   Embedded boundaries are unsupported by this override. Checkpoints must retain
+   the same policy, photon species and boundary-policy manifest. This option
+   does not add material outflow, wall recoil, moving-frame transport or
+   conservative packet/moment conversion with material momentum coupling.
 
 .. pp:param:: radiation_transport.opacity_species
    :type: ``list of strings``

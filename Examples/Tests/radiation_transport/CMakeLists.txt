@@ -2974,6 +2974,41 @@ add_warpx_test(
 )
 
 add_warpx_test(
+    test_rz_radiation_independent_photon_boundary
+    RZ
+    1
+    inputs_base_rz_radiation_independent_photon_boundary
+    "analysis_independent_photon_boundary.py --precision ${WarpX_PRECISION} --particle-precision ${WarpX_PARTICLE_PRECISION}"
+    OFF
+    OFF
+)
+add_warpx_test(
+    test_rz_radiation_independent_photon_boundary_restart
+    RZ
+    2
+    "inputs_base_rz_radiation_independent_photon_boundary amr.restart='../test_rz_radiation_independent_photon_boundary/diags/chk000001'"
+    "analysis_independent_photon_boundary.py --precision ${WarpX_PRECISION} --particle-precision ${WarpX_PARTICLE_PRECISION} --initial ../test_rz_radiation_independent_photon_boundary/diags/plt000000"
+    OFF
+    test_rz_radiation_independent_photon_boundary
+)
+add_radiation_failure_test(
+    test_rz_radiation_independent_photon_boundary_policy_rejected
+    RZ
+    "inputs_base_rz_radiation_independent_photon_boundary amr.restart='../test_rz_radiation_independent_photon_boundary/diags/chk000000' radiation_transport.photon_boundary=inherit"
+    "Restart must preserve independent photon boundaries"
+)
+if(TEST test_rz_radiation_independent_photon_boundary.run)
+    set_property(TEST test_rz_radiation_independent_photon_boundary.run
+        APPEND PROPERTY FIXTURES_SETUP independent_photon_checkpoint)
+    set_property(TEST test_rz_radiation_independent_photon_boundary_policy_rejected.run
+        APPEND PROPERTY FIXTURES_REQUIRED independent_photon_checkpoint)
+    if(TEST test_rz_radiation_independent_photon_boundary.cleanup)
+        set_property(TEST test_rz_radiation_independent_photon_boundary.cleanup
+            APPEND PROPERTY FIXTURES_CLEANUP independent_photon_checkpoint)
+    endif()
+endif()
+
+add_warpx_test(
     test_3d_radiation_transport_multigroup_conversion  # name
     3  # dims
     1  # nprocs
