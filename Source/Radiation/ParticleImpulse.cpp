@@ -29,6 +29,16 @@ namespace warpx::radiation
 {
     namespace
     {
+        // Particle and field precision can differ. Complete each contribution
+        // in its expression type, then convert once to the ledger's storage
+        // type; AMReX atomics require identical pointer and value types.
+        template <typename T>
+        AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+        void AddFieldReal (amrex::Real* destination, T value) noexcept
+        {
+            amrex::Gpu::Atomic::AddNoRet(destination, static_cast<amrex::Real>(value));
+        }
+
         AMREX_GPU_HOST_DEVICE
         amrex::GpuArray<int, 3> FoldReflectingCell (
             amrex::GpuArray<int, 3> cell, bool reflecting, int lo, int hi) noexcept
@@ -439,12 +449,12 @@ namespace warpx::radiation
                         {
                             auto const cell = FoldReflectingCell(
                                 shape.Cell(s), reflecting, domain_lo, domain_hi);
-                            amrex::Gpu::Atomic::AddNoRet(&mass_field(cell[0], cell[1], cell[2]),
+                            AddFieldReal(&mass_field(cell[0], cell[1], cell[2]),
                                 shape.Weight(s) * data.m_rdata[PIdx::w][ip] * mass);
                         }
                         return;
                     }
-                    amrex::Gpu::Atomic::AddNoRet(
+                    AddFieldReal(
                         &mass_field(i, j, k), data.m_rdata[PIdx::w][ip] * mass);
                 });
             }
@@ -660,13 +670,13 @@ namespace warpx::radiation
                                     scale += std::abs(term);
                                     if (need_work_velocity)
                                     {
-                                        amrex::Gpu::Atomic::AddNoRet(
+                                        AddFieldReal(
                                             &work_velocity(cell[0], cell[1], cell[2], d),
                                             weight_mass * ratio * secant[d]);
                                     }
                                 }
                                 partition += work;
-                                amrex::Gpu::Atomic::AddNoRet(
+                                AddFieldReal(
                                     &requested_work(cell[0], cell[1], cell[2]), weight_mass * work);
                             }
                             auto const difference = partition - result.requested_work;
@@ -675,14 +685,14 @@ namespace warpx::radiation
                             {
                                 amrex::HostDevice::Atomic::Add(invalid_ptr, 1);
                             }
-                            amrex::Gpu::Atomic::AddNoRet(&partition_residual(i, j, k),
+                            AddFieldReal(&partition_residual(i, j, k),
                                 weight_mass * difference);
                         }
                         else
                         {
                             for (int d = 0; d < 3; ++d)
                             {
-                                amrex::Gpu::Atomic::AddNoRet(&work_velocity(i, j, k, d),
+                                AddFieldReal(&work_velocity(i, j, k, d),
                                     weight_mass / mass(i, j, k) * secant[d]);
                             }
                         }
@@ -707,22 +717,22 @@ namespace warpx::radiation
 #endif
                     for (int d = 0; d < 3; ++d)
                     {
-                        amrex::Gpu::Atomic::AddNoRet(
+                        AddFieldReal(
                             &actual_impulse(i, j, k, d), weight_mass * applied[d]);
-                        amrex::Gpu::Atomic::AddNoRet(
+                        AddFieldReal(
                             &momentum_change(i, j, k, d), weight_mass * carry_change[d]);
                     }
                     if (!shaped)
                     {
-                        amrex::Gpu::Atomic::AddNoRet(
+                        AddFieldReal(
                             &requested_work(i, j, k), weight_mass * result.requested_work);
                     }
-                    amrex::Gpu::Atomic::AddNoRet(
+                    AddFieldReal(
                         &actual_work(i, j, k), weight_mass * result.actual_work);
-                    amrex::Gpu::Atomic::AddNoRet(
+                    AddFieldReal(
                         &energy_change(i, j, k),
                         weight_mass * (result.energy_carry - carry[3][ip]));
-                    amrex::Gpu::Atomic::AddNoRet(&residual(i, j, k), weight_mass *
+                    AddFieldReal(&residual(i, j, k), weight_mass *
                         (result.requested_work - result.actual_work
                          - (result.energy_carry - carry[3][ip])));
                 });
