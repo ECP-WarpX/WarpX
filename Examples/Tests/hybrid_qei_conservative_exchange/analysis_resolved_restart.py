@@ -4,6 +4,7 @@
 """Compare moving Qei continuation, including particle state and thermal history."""
 
 import argparse
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -12,6 +13,7 @@ import yt
 parser = argparse.ArgumentParser()
 parser.add_argument("--reference", type=Path)
 parser.add_argument("--implicit", action="store_true")
+parser.add_argument("--initial-pressure", type=float)
 args = parser.parse_args()
 yt.set_log_level(50)
 
@@ -23,6 +25,8 @@ def load(path):
         name: grid["boxlib", name].v
         for name in ("rho", "Te", "hybrid_qei_electron_energy_cumulative_fp")
     }
+    if args.initial_pressure is not None:
+        fields["Pe"] = grid["boxlib", "Pe"].v
     data = dataset.all_data()
     order = np.lexsort((data["ions", "particle_cpu"].v, data["ions", "particle_id"].v))
     particles = {
@@ -65,6 +69,29 @@ if args.reference:
     )
 else:
     initial, _ = load(Path("diags/plt000000"))
+    if args.initial_pressure is not None:
+        sys.path.insert(
+            0, str(Path(__file__).resolve().parents[1] / "radiation_transport")
+        )
+        from analysis_moving_moment_interface import nodes
+
+        charge = nodes(
+            Path("diags/plt000000/raw_fields/Level_0/rho_fp_H"),
+            [8, 16],
+            periodic=[False, True],
+        )
+        temperature = nodes(
+            Path("diags/chk000000/Level_0/hybrid_electron_temperature_fp[level=0]_H"),
+            [8, 16],
+            periodic=[False, True],
+        )
+        np.testing.assert_allclose(
+            charge * temperature * (1.380649e-23 / 1.602176634e-19),
+            args.initial_pressure,
+            rtol=256 * np.finfo(float).eps,
+            atol=0,
+        )
+        assert np.ptp(temperature) / np.mean(temperature) > 0.1
     assert np.max(np.abs(fields["rho"] - initial["rho"])) > 0
     assert np.max(np.abs(fields["Te"] - initial["Te"])) > 0
     print("Nonuniform material moves and exchanges nonzero thermal energy.")

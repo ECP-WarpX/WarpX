@@ -16,6 +16,8 @@
 #include "Fluids/WarpXFluidContainer.H"
 #include "WarpX.H"
 
+#include <AMReX_Math.H>
+
 #include <ablastr/fields/MultiFabRegister.H>
 #include <ablastr/profiler/ProfilerWrapper.H>
 #include <ablastr/utils/Communication.H>
@@ -640,9 +642,71 @@ void
 WarpX::HybridPICInitializeElectronPressure ()
 {
     using warpx::fields::FieldType;
+#if defined(WARPX_DIM_RZ)
+    if (m_hybrid_pic_model->m_has_initial_elec_pressure && restart_chkfile.empty()
+        && !m_hybrid_pic_model->m_initial_elec_pressure_applied)
+    {
+        auto const pressure = m_hybrid_pic_model->m_initial_elec_pressure;
+        auto const eos = m_hybrid_pic_model->electronThermodynamicsExecutor();
+        for (int lev = 0; lev <= finest_level; ++lev) {
+            auto& temperature = *m_fields.get(FieldType::hybrid_electron_temperature_fp, lev);
+            auto const& charge = *m_fields.get(FieldType::rho_fp, lev);
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(temperature.nComp() == 1
+                    && temperature.ixType().nodeCentered()
+                    && temperature.ixType() == charge.ixType(),
+                "Initial electron pressure requires scalar collocated nodal temperature and charge.");
+            auto const lo = Geom(lev).ProbLoArray();
+            auto const dx = Geom(lev).CellSizeArray();
+            auto const domain = amrex::convert(Geom(lev).Domain(), temperature.ixType());
+            auto const lower = amrex::lbound(domain);
+            auto const upper = amrex::ubound(domain);
+            auto const periodic = Geom(lev).isPeriodicArray();
+            for (amrex::MFIter mfi(temperature); mfi.isValid(); ++mfi) {
+                auto const t = temperature.array(mfi);
+                auto const rho = charge.const_array(mfi);
+                amrex::ParallelFor(mfi.validbox(), [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+                    auto const p = pressure(lo[0]+(i-lower.x)*dx[0], 0.0_rt,
+                                            lo[1]+(j-lower.y)*dx[1]);
+                    auto const density = rho(i,j,k);
+                    auto const value = density > 0.0_rt ? p*PhysConst::q_e/(density*PhysConst::kb)
+                        : eos.minimumTemperature();
+                    t(i,j,k) = amrex::Math::isfinite(p) && p >= 0.0_rt
+                        && amrex::Math::isfinite(density) && density >= 0.0_rt
+                        && (density > 0.0_rt || p == 0.0_rt)
+                        && amrex::Math::isfinite(value) && value >= eos.minimumTemperature()
+                        && value <= eos.maximumTemperature()
+                        ? value : std::numeric_limits<amrex::Real>::quiet_NaN();
+                });
+            }
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(temperature.is_finite(0,1,0),
+                "Initial electron pressure is invalid or requests nonzero pressure in vacuum.");
+            ablastr::utils::communication::FillBoundary(temperature, temperature.nGrowVect(),
+                false, Geom(lev).periodicity(), true);
+            // Scalar even extension, including the coordinate axis. Read only
+            // interior/previously exchanged values; each ghost destination is unique.
+            for (amrex::MFIter mfi(temperature); mfi.isValid(); ++mfi) {
+                auto const t = temperature.array(mfi);
+                amrex::ParallelFor(mfi.fabbox(), [=] AMREX_GPU_DEVICE (int i, int j, int k) {
+                    int ii = i, jj = j;
+                    if (!periodic[0]) {
+                        if (i < lower.x) { ii = 2*lower.x-i; }
+                        if (i > upper.x) { ii = 2*upper.x-i; }
+                    }
+                    if (!periodic[1]) {
+                        if (j < lower.y) { jj = 2*lower.y-j; }
+                        if (j > upper.y) { jj = 2*upper.y-j; }
+                    }
+                    if (ii != i || jj != j) { t(i,j,k) = t(ii,jj,k); }
+                });
+            }
+        }
+        m_hybrid_pic_model->m_initial_elec_pressure_applied = true;
+    }
+#endif
     bool const preserve_evolved_temperature =
         m_hybrid_pic_model->m_solve_electron_energy_equation &&
         (!restart_chkfile.empty() || m_hybrid_pic_model->m_has_initial_elec_temp ||
+         m_hybrid_pic_model->m_has_initial_elec_pressure ||
          !m_hybrid_pic_model->electronThermodynamicsExecutor().isIdealGas());
     if (preserve_evolved_temperature) {
         for (int lev = 0; lev <= finest_level; ++lev) {

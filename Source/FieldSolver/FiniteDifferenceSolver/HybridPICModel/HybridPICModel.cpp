@@ -1287,6 +1287,10 @@ void HybridPICModel::ReadParameters (
     m_has_initial_elec_temp = utils::parser::Query_parserString(
         pp_hybrid,
         "initial_elec_temp(x,y,z)", m_initial_elec_temp_expression);
+    m_has_initial_elec_pressure = utils::parser::Query_parserString(
+        pp_hybrid, "initial_elec_pressure(x,y,z)", m_initial_elec_pressure_expression);
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!(m_has_initial_elec_pressure && m_has_initial_elec_temp),
+        "Choose either initial_elec_pressure or initial_elec_temp, not both.");
     const bool n0_ref_given = utils::parser::queryWithParser(pp_hybrid, "n0_ref", m_n0_ref);
     if (m_gamma != 1.0 && !n0_ref_given) {
         Abort("hybrid_pic_model.n0_ref should be specified if hybrid_pic_model.gamma != 1");
@@ -1368,6 +1372,16 @@ void HybridPICModel::ReadParameters (
             "Implicit electron transport currently requires ideal-gas electrons without tables.");
 #if !defined(WARPX_DIM_RZ)
         WARPX_ABORT_WITH_MESSAGE("Implicit electron transport currently supports RZ only.");
+#endif
+    }
+    if (m_has_initial_elec_pressure) {
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_solve_electron_energy_equation
+                && m_fv_transport_internal_energy
+                && m_electron_thermodynamics.executor().isIdealGas()
+                && m_electron_thermodynamics.numMaterials() == 0,
+            "Initial electron pressure requires evolved ideal-gas finite-volume electrons.");
+#if !defined(WARPX_DIM_RZ)
+        WARPX_ABORT_WITH_MESSAGE("Initial electron pressure currently supports RZ only.");
 #endif
     }
 
@@ -1945,6 +1959,11 @@ void HybridPICModel::AllocateAuxiliaryLevelMFs (
 
 void HybridPICModel::InitData (const ablastr::fields::MultiFabRegister& fields)
 {
+    if (m_has_initial_elec_pressure) {
+        m_initial_elec_pressure_parser = std::make_unique<amrex::Parser>(
+            utils::parser::makeParser(m_initial_elec_pressure_expression, {"x", "y", "z"}));
+        m_initial_elec_pressure = m_initial_elec_pressure_parser->compile<3>();
+    }
     if (m_has_initial_elec_temp) {
         m_initial_elec_temp_parser = std::make_unique<amrex::Parser>(
             utils::parser::makeParser(

@@ -3950,6 +3950,27 @@ Maxwell solver: kinetic-fluid hybrid
     temperature. The profile is not reapplied on restart and does not select
     a different electron-energy transport or material closure.
 
+.. pp:param:: hybrid_pic_model.initial_elec_pressure(x,y,z)
+    :type: :ref:`parser_function <running-cpp-parameters-parser>`
+    :optional:
+
+    Experimental cold-start electron pressure in Pa, currently for RZ ideal-gas
+    finite-volume electrons. Evaluated once after native particle charge
+    deposition; the initial temperature is derived from that deposited density.
+    This avoids multiplying a sharp prescribed temperature by an independently
+    smoothed density at a material contact. Pressure must be finite and
+    nonnegative, nonzero pressure in exact vacuum is rejected, and the derived
+    temperature must lie in the EOS domain. Scalar nodal fields are required.
+    Standard pressure boundary conditions still apply; choose a compatible
+    profile. Physical temperature ghosts use even extension, including the axis.
+
+    Mutually exclusive with :pp:param:`hybrid_pic_model.initial_elec_temp(x,y,z)`.
+    The required ``elec_temp`` remains a reference parameter. Restarts preserve
+    the checkpoint temperature and do not reapply the cold-start pressure,
+    even if its expression changes. This sets electron pressure only: compatible
+    ion distributions and their finite-particle pressure fluctuations remain
+    separate considerations. It does not enable the radial pressure-work adjoint.
+
 .. pp:param:: hybrid_pic_model.gamma
     :type: ``float``
     :default: ``5/3``

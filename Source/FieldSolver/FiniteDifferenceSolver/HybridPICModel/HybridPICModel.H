@@ -631,6 +631,12 @@ public:
     std::unique_ptr<amrex::Parser> m_initial_elec_temp_parser;
     amrex::ParserExecutor<3> m_initial_elec_temp;
     bool m_has_initial_elec_temp = false;
+    /** Optional cold-start electron pressure [Pa], evaluated after charge deposition. */
+    std::string m_initial_elec_pressure_expression;
+    std::unique_ptr<amrex::Parser> m_initial_elec_pressure_parser;
+    amrex::ParserExecutor<3> m_initial_elec_pressure;
+    bool m_has_initial_elec_pressure = false;
+    bool m_initial_elec_pressure_applied = false;
     /** Reference electron density */
     amrex::Real m_n0_ref = 1.0;
     /** Electron pressure scaling exponent */

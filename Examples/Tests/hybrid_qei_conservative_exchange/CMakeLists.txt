@@ -8,6 +8,43 @@ if(RZ IN_LIST WarpX_DIMS AND WarpX_PRECISION STREQUAL DOUBLE
         set(implicit_restart_procs 2)
     endif()
     add_warpx_test(
+        test_rz_pressure_initialized_qei
+        RZ
+        1
+        inputs_base_rz_pressure_initialization
+        "analysis_resolved_restart.py --implicit --initial-pressure 1.e6"
+        OFF
+        OFF)
+    add_warpx_test(
+        test_rz_pressure_initialized_qei_restart
+        RZ
+        ${implicit_restart_procs}
+        "inputs_base_rz_pressure_initialization amr.restart='../test_rz_pressure_initialized_qei/diags/chk000100' hybrid_pic_model.initial_elec_pressure(x,y,z)=2.e6"
+        "analysis_resolved_restart.py --implicit --initial-pressure 1.e6 --reference ../test_rz_pressure_initialized_qei"
+        OFF
+        test_rz_pressure_initialized_qei)
+    if(TEST test_rz_pressure_initialized_qei.run)
+        foreach(rejection vacuum conflict)
+            file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/pressure_${rejection})
+            if(rejection STREQUAL vacuum)
+                set(pressure_override "ions.density_function(x,y,z)=0")
+                set(pressure_expected "Initial electron pressure is invalid")
+            else()
+                set(pressure_override "hybrid_pic_model.initial_elec_temp(x,y,z)=100")
+                set(pressure_expected "Choose either initial_elec_pressure")
+            endif()
+            add_test(NAME test_rz_pressure_initialization_rejects_${rejection}
+                COMMAND ${Python_EXECUTABLE}
+                ${WarpX_SOURCE_DIR}/Examples/Tests/implicit/check_command_output.py
+                --expect-failure --expect "${pressure_expected}" -- $<TARGET_FILE:app_rz>
+                ${CMAKE_CURRENT_SOURCE_DIR}/inputs_base_rz_pressure_initialization
+                "${pressure_override}")
+            set_tests_properties(test_rz_pressure_initialization_rejects_${rejection}
+                PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1"
+                WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/pressure_${rejection})
+        endforeach()
+    endif()
+    add_warpx_test(
         test_rz_implicit_qei_moving
         RZ
         1
