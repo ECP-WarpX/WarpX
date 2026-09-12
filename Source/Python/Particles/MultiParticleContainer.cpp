@@ -7,8 +7,10 @@
 #include "Python/pyWarpX.H"
 
 #include <Particles/MultiParticleContainer.H>
+#include <Utils/WarpXAlgorithmSelection.H>
 
 #include <AMReX_GpuContainers.H>
+#include <AMReX_MultiFab.H>
 #include <AMReX_REAL.H>
 
 
@@ -48,6 +50,34 @@ strength_E, strength_B: floats
                 return mpc.GetChargeDensity(lev, local);
             },
             py::arg("lev"), py::arg("local")
+        )
+
+        .def("push_p",
+            [](MultiParticleContainer& mpc, int lev, amrex::Real dt,
+               amrex::MultiFab const& Ex, amrex::MultiFab const& Ey, amrex::MultiFab const& Ez,
+               amrex::MultiFab const& Bx, amrex::MultiFab const& By, amrex::MultiFab const& Bz)
+            {
+                mpc.PushP(lev, dt, Ex, Ey, Ez, Bx, By, Bz, MomentumPushType::Full);
+            },
+            py::arg("lev"), py::arg("dt"),
+            py::arg("Ex"), py::arg("Ey"), py::arg("Ez"),
+            py::arg("Bx"), py::arg("By"), py::arg("Bz"),
+            R"pbdoc(Push the momentum of the particles of all species by a full step
+
+The positions are left unchanged. The fields are gathered from the given
+MultiFabs, which must have their guard cells filled, with the field gathering
+settings of the simulation.
+
+Parameters
+----------
+lev: int
+  Mesh refinement level of the particles to push
+dt: float
+  Time step over which to push the momentum
+Ex, Ey, Ez: MultiFab
+  Components of the electric field, with the staggering of ``Efield_fp``
+Bx, By, Bz: MultiFab
+  Components of the magnetic field, with the staggering of ``Bfield_fp``)pbdoc"
         )
     ;
 }
