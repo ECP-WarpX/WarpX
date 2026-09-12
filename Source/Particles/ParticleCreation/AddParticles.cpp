@@ -875,6 +875,14 @@ PhysicalParticleContainer::AddPlasma (PlasmaInjector& plasma_injector, int lev, 
                 const amrex::Long r = (fine_overlap_box.ok() && fine_overlap_box.contains(iv))?
                     (AMREX_D_TERM(rrfac[0],*rrfac[1],*rrfac[2])) : (1);
                 pcounts[index] = num_ppc*r;
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
+                // These are logical cell coordinates. Nonuniform radial
+                // loading maps them to different physical radii below, so a
+                // zero logical-corner density cannot reject those candidates.
+                // The physical per-particle bounds and density checks remain
+                // authoritative after the coordinate transformation.
+                if (radial_numpercell_power != 0.0_rt) { return; }
+#endif
                 // update pcount by checking if cell-corners or cell-center
                 // has non-zero density
                 const auto xlim = amrex::GpuArray<Real, 3>{lo.x,(lo.x+hi.x)/2._rt,hi.x};
