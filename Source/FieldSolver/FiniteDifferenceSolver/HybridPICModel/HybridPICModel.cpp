@@ -3818,7 +3818,7 @@ void HybridPICModel::QDSMCUpdateThermodynamics (
 
             amrex::Box const box = amrex::convert(
                 mfi.tilebox(), Te.ixType().toIntVect());
-            amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE (
+            amrex::For(box, [=] AMREX_GPU_DEVICE (
                 int i, int j, int k) noexcept
             {
                 amrex::Real const deposited_rho_node =
@@ -4124,7 +4124,7 @@ void HybridPICModel::QDSMCUpdateThermodynamics (
 
             amrex::Box const box = amrex::convert(
                 mfi.tilebox(), Te.ixType().toIntVect());
-            amrex::ParallelFor(box, [=] AMREX_GPU_DEVICE (
+            amrex::For(box, [=] AMREX_GPU_DEVICE (
                 int i, int j, int k) noexcept
             {
                 amrex::Real const deposited_rho_node =
@@ -5244,7 +5244,7 @@ void HybridPICModel::QDSMCApplyIonHeating (int const lev, amrex::Real const dt,
                     ion_moments->const_array(mfi);
                 amrex::Array4<amrex::Real const> const source =
                     source_on_particles.const_array(mfi);
-                amrex::ParallelFor(mfi.tilebox(), [=] AMREX_GPU_DEVICE(
+                amrex::For(mfi.tilebox(), [=] AMREX_GPU_DEVICE(
                                                       int i, int j,
                                                       int k) noexcept {
                     // Partition each nodal dual-volume source only among
@@ -5317,7 +5317,7 @@ void HybridPICModel::QDSMCApplyIonHeating (int const lev, amrex::Real const dt,
                                     source(ni, nj, nk);
                                 if (!(support > 0.0_rt)) {
                                     if (source_density != 0.0_rt) {
-                                        amrex::Gpu::Atomic::Add(
+                                        amrex::HostDevice::Atomic::Add(
                                             invalid_cells_ptr, 1);
                                     }
                                     continue;
@@ -5346,7 +5346,7 @@ void HybridPICModel::QDSMCApplyIonHeating (int const lev, amrex::Real const dt,
                             128.0_rt *
                                 std::numeric_limits<amrex::Real>::epsilon() *
                                 request_scale) {
-                            amrex::Gpu::Atomic::Add(invalid_cells_ptr, 1);
+                            amrex::HostDevice::Atomic::Add(invalid_cells_ptr, 1);
                         }
                         corr(i, j, k, 0) = 1.0_rt;
                         return;
@@ -5395,7 +5395,7 @@ void HybridPICModel::QDSMCApplyIonHeating (int const lev, amrex::Real const dt,
                     if (target_thermal < -tolerance ||
                         (proposal_thermal <= tolerance &&
                          target_thermal > tolerance)) {
-                        amrex::Gpu::Atomic::Add(invalid_cells_ptr, 1);
+                        amrex::HostDevice::Atomic::Add(invalid_cells_ptr, 1);
                         corr(i, j, k, 0) = 1.0_rt;
                         return;
                     }
