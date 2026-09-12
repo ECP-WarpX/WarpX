@@ -606,6 +606,17 @@ struct ElectronThermodynamicsExecutor
             return {invalid, invalid, invalid, false};
         }
 
+        // A zero source must not make a caloric inverse round trip. The inverse
+        // need not recover the input temperature bitwise, and its rounding
+        // error would otherwise become an artificial conjugate energy request.
+        // Retain the same material-state and temperature-range validation.
+        if (requested_energy_change_density == amrex::Real(0.0)
+            && old_temperature >= minimumTemperature()
+            && old_temperature <= maximumTemperature())
+        {
+            return {old_temperature, amrex::Real(0.0), amrex::Real(0.0), true};
+        }
+
         amrex::Real const requested_energy_density =
             old_state.internal_energy_density
             + requested_energy_change_density;

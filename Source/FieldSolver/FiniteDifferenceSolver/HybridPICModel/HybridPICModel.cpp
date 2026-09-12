@@ -5397,7 +5397,8 @@ void HybridPICModel::QDSMCApplyIonHeating (int const lev, amrex::Real const dt,
                 "variance (normally at least two non-identical ion "
                 "macroparticles), and an ion-cooling request cannot exceed "
                 "that cell's thermal energy. Increase particles per cell or "
-                "reduce the Qei source timestep/rate.");
+                "reduce the Qei source timestep/rate. Failing species: "
+                + spec_name + ".");
 
             auto& ion_request_field = *warpx.m_fields.get(
                 "hybrid_qei_ion_energy_cc_" + spec_name, lev);

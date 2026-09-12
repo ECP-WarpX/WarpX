@@ -150,6 +150,31 @@ these reference updates do not close the production-qualification gaps above.
 
 ## Detailed records
 
+### Application-exposed initialization and no-op defects
+
+The September 12 exploratory RZ shell/foam/capsule setup exposed two general
+defects. These fixes do not qualify the complete hohlraum application:
+
+- Nonuniform radial particle loading culled candidates using density at
+  untransformed logical cell coordinates. A zero-step spherical-layer loading
+  regression found only 4678 of 5654 expected particles for radial power one,
+  and 2132 of 3368 for power two. The physical quadrature sites and cylindrical
+  weights now pass for powers zero, one and two, including two-rank loading.
+  Only the invalid early density cull is bypassed for nonzero radial power;
+  final physical-position density and bounds checks remain authoritative.
+- A zero electron-energy increment unnecessarily inverted the caloric EOS,
+  which could change temperature and produce a spurious conjugate energy
+  request at a particle-support edge. The shared caloric source helper now
+  preserves valid state and zero ledgers exactly without an inverse round trip.
+  The independent ideal/latent-EOS check improves from 124/256 to 256/256;
+  invalid input states remain rejected. Nonzero-source Qei support failures
+  are a separate, unresolved application issue.
+
+The new local regression selection passes 9/9 CTest entries. Existing selected
+RZ radiation run/analysis checks pass 23/23. No checksum reference or physical
+assertion tolerance was changed. These are local checks, not a claim of a new
+complete CI pass or production radiation-driven capsule compression.
+
 ```{toctree}
 :maxdepth: 1
 
