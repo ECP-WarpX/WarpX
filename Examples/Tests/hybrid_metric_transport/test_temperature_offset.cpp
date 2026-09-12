@@ -22,8 +22,8 @@ void check_offset ()
     amrex::Box const storage(amrex::IntVect::TheZeroVector(), amrex::IntVect(31));
     amrex::FArrayBox moments(storage, 9);
     amrex::IArrayBox counts(storage, 3);
-    moments.setVal(0);
-    counts.setVal(0);
+    moments.setVal<amrex::RunOn::Device>(0);
+    counts.setVal<amrex::RunOn::Device>(0);
     auto const wx = moments.array(0), wy = moments.array(1), wz = moments.array(2);
     auto const w2x = moments.array(3), w2y = moments.array(4), w2z = moments.array(5);
     auto const vx = moments.array(6), vy = moments.array(7), vz = moments.array(8);
