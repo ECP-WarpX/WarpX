@@ -53,7 +53,7 @@ if(WarpX_PRECISION STREQUAL "DOUBLE" AND WarpX_PARTICLE_PRECISION STREQUAL "DOUB
             test_rz_hybrid_axial_continuity_axis${axis_correction}
             RZ
             1
-            "inputs_test_rz_hybrid_axial_continuity boundary.verboncoeur_axis_correction=${axis_correction}"
+            "inputs_base_rz_hybrid_axial_continuity boundary.verboncoeur_axis_correction=${axis_correction}"
             "analysis_axial_continuity.py"
             OFF
             OFF
@@ -63,7 +63,7 @@ if(WarpX_PRECISION STREQUAL "DOUBLE" AND WarpX_PARTICLE_PRECISION STREQUAL "DOUB
         test_rz_hybrid_axial_continuity_cubic_mpi
         RZ
         2
-        "inputs_test_rz_hybrid_axial_continuity algo.particle_shape=3"
+        "inputs_base_rz_hybrid_axial_continuity algo.particle_shape=3"
         "analysis_axial_continuity.py"
         OFF
         OFF
@@ -72,7 +72,7 @@ if(WarpX_PRECISION STREQUAL "DOUBLE" AND WarpX_PARTICLE_PRECISION STREQUAL "DOUB
         test_rz_hybrid_reflective_wall_continuity
         RZ
         2
-        "inputs_test_rz_hybrid_axial_continuity max_step=4 warpx.const_dt=2.e-11 boundary.field_lo='none pec' boundary.field_hi='pec pec' boundary.particle_lo='none reflecting' boundary.particle_hi='reflecting reflecting' ions.ux=5.e-5 diag.intervals=4 diag.plot_raw_fields=1"
+        "inputs_base_rz_hybrid_axial_continuity max_step=4 warpx.const_dt=2.e-11 boundary.field_lo='none pec' boundary.field_hi='pec pec' boundary.particle_lo='none reflecting' boundary.particle_hi='reflecting reflecting' ions.ux=5.e-5 diag.intervals=4 diag.plot_raw_fields=1"
         "analysis_reflective_wall.py"
         OFF
         OFF

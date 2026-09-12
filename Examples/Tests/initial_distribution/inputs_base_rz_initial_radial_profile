@@ -1,4 +1,4 @@
-# Zero-step loading regression: a physical spherical layer in an RZ mesh.
+# Shared loading regression: a physical spherical layer in an RZ mesh.
 # The density mask must be evaluated at mapped physical, not logical radii.
 my_constants.power = 1
 max_step = 0

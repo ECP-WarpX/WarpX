@@ -1,4 +1,4 @@
-# A nonuniform material translates through the axis with constant temperature.
+# Shared base: a nonuniform material translates through the coordinate axis.
 # This isolates charge-consistent transport from force and radiation sources.
 my_constants.n0 = 1.e23
 my_constants.length = 1.e-3
