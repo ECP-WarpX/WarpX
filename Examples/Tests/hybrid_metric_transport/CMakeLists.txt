@@ -68,4 +68,13 @@ if(WarpX_PRECISION STREQUAL "DOUBLE" AND WarpX_PARTICLE_PRECISION STREQUAL "DOUB
         OFF
         OFF
     )
+    add_warpx_test(
+        test_rz_hybrid_reflective_wall_continuity
+        RZ
+        2
+        "inputs_test_rz_hybrid_axial_continuity max_step=4 warpx.const_dt=2.e-11 boundary.field_lo='none pec' boundary.field_hi='pec pec' boundary.particle_lo='none reflecting' boundary.particle_hi='reflecting reflecting' ions.ux=5.e-5 diag.intervals=4 diag.plot_raw_fields=1"
+        "analysis_reflective_wall.py"
+        OFF
+        OFF
+    )
 endif()

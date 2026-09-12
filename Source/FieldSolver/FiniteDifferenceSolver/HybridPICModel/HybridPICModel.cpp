@@ -102,10 +102,9 @@ namespace
     constexpr int nonlinear_lte_remap_components = 2;
 
 #if defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RZ)
-    /** Volume consistent with a radially inverse-volume-scaled nodal charge
-     * deposit.  Unlike hybrid_node_volume, this keeps the full exterior
-     * half-cell at a non-periodic radial face because the scaled deposit
-     * represents a full-cell density even when that face is a wall. */
+    /** Volume consistent with radial inverse-volume scaling. RZ physical
+     * walls use the half-volume measure conjugate to reflective deposition;
+     * the coordinate axis retains its independent volume correction. */
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     amrex::Real hybrid_transport_node_volume (
         int const i,
@@ -114,22 +113,34 @@ namespace
         amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> const& problo,
         amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> const& dx,
         amrex::Dim3 const domain_lo,
-        amrex::Real const axis_volume_factor) noexcept
+        amrex::Real const axis_volume_factor,
+        amrex::Dim3 const domain_hi,
+        amrex::GpuArray<int, 3> const& periodic) noexcept
     {
 #if defined(WARPX_DIM_RCYLINDER)
         amrex::Real const r =
             problo[0] + (i - domain_lo.x) * dx[0];
-        amrex::ignore_unused(j, k);
+        amrex::ignore_unused(j, k, domain_hi, periodic);
         return warpx::hybrid::cylindricalTransportNodeVolume(
             r, dx[0], 1.0_rt, axis_volume_factor);
 #elif defined(WARPX_DIM_RZ)
         amrex::Real const r =
             problo[0] + (i - domain_lo.x) * dx[0];
-        amrex::ignore_unused(j, k);
+        amrex::ignore_unused(k);
+        // Reflective deposition doubles nodal density at physical walls.
+        // The matching control volume is half of the native deposition
+        // volume in each wall-normal direction. The coordinate axis is
+        // already accounted for by its dedicated volume correction.
+        amrex::Real const radial_fraction = !periodic[0]
+            && (i == domain_hi.x + 1 || (i == domain_lo.x && r > 0.0_rt))
+            ? 0.5_rt : 1.0_rt;
+        amrex::Real const axial_fraction = !periodic[1]
+            && (j == domain_lo.y || j == domain_hi.y + 1) ? 0.5_rt : 1.0_rt;
         return warpx::hybrid::cylindricalTransportNodeVolume(
-            r, dx[0], dx[1], axis_volume_factor);
+            r, dx[0], dx[1], axis_volume_factor) * radial_fraction * axial_fraction;
 #else
-        amrex::ignore_unused(i, j, k, problo, dx, domain_lo, axis_volume_factor);
+        amrex::ignore_unused(i, j, k, problo, dx, domain_lo, axis_volume_factor,
+                            domain_hi, periodic);
         return std::numeric_limits<amrex::Real>::quiet_NaN();
 #endif
     }
@@ -704,7 +715,8 @@ namespace
             amrex::max(problo[0], r - 0.5_rt * dx[0]);
         amrex::Real const r_hi = r + 0.5_rt * dx[0];
         amrex::Real const node_volume = hybrid_transport_node_volume(
-            i, j, k, problo, dx, physical_domain_lo, axis_volume_factor);
+            i, j, k, problo, dx, physical_domain_lo, axis_volume_factor,
+            physical_domain_hi, periodic);
         QdsmcVelocityMetric const radial_velocity_metric{
             true, r - dx[0], r, r + dx[0], r_lo, r_hi};
 
@@ -727,15 +739,17 @@ namespace
         // geometric quarter-disc area when Verboncoeur's 1/3 correction
         // is active. Otherwise the axial charge divergence is scaled by
         // 3/4 while radial transport and endpoint charge use the full metric.
-        amrex::Real const radial_face_area = node_volume / dx[1];
+        amrex::Real const axial_width = dx[1] * (!periodic[1]
+            && (j == nodal_lo.y || j == nodal_hi.y) ? 0.5_rt : 1.0_rt);
+        amrex::Real const radial_face_area = node_volume / axial_width;
         QdsmcCartesianTransportTerms const radial = qdsmc_nodal_direction_terms(
             energy, old_charge_density, midpoint_charge_density,
             ion_current_x, plasma_current_x, vr,
             i, j, k, 0, nodal_lo.x, nodal_hi.x,
             periodic[0] != 0,
             plasma_current_face_centered[0] != 0,
-            warpx::hybrid::cylindricalRadialFaceArea(r_lo, dx[1]),
-            warpx::hybrid::cylindricalRadialFaceArea(r_hi, dx[1]),
+            warpx::hybrid::cylindricalRadialFaceArea(r_lo, axial_width),
+            warpx::hybrid::cylindricalRadialFaceArea(r_hi, axial_width),
             1.0_rt / node_volume, radial_velocity_metric);
         QdsmcCartesianTransportTerms const axial = qdsmc_nodal_direction_terms(
             energy, old_charge_density, midpoint_charge_density,
@@ -3957,7 +3971,7 @@ void HybridPICModel::QDSMCUpdateThermodynamics (
 #if defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RZ)
                     hybrid_transport_node_volume(
                         i, j, k, problo, dx, physical_domain_lo,
-                        axis_volume_factor);
+                        axis_volume_factor, physical_domain_hi, periodic);
 #else
                     hybrid_node_volume(
                         i, j, k, problo, probhi, dx,
@@ -4034,7 +4048,7 @@ void HybridPICModel::QDSMCUpdateThermodynamics (
 #if defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RZ)
                     hybrid_transport_node_volume(
                         i, j, k, problo, dx, physical_domain_lo,
-                        axis_volume_factor);
+                        axis_volume_factor, physical_domain_hi, periodic);
 #else
                     hybrid_node_volume(
                         i, j, k, problo, probhi, dx,
