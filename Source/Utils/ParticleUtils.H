@@ -12,6 +12,7 @@
 
 #include <AMReX_DenseBins.H>
 #include <AMReX_Geometry.H>
+#include <AMReX_GpuContainers.H>
 #include <AMReX_Particles.H>
 #include <AMReX_Math.H>
 
@@ -682,18 +683,28 @@ namespace ParticleUtils {
                                   const amrex::Gpu::DeviceVector<int>& d_error_z,
                                   const int max_grid_crossings)
     {
-        const int h_error_x = d_error_x[0];
-        const int h_error_y = d_error_y[0];
-        const int h_error_z = d_error_z[0];
+        int h_error_x = 0;
+        amrex::Gpu::copy(amrex::Gpu::deviceToHost, d_error_x.begin(),
+                         d_error_x.begin() + 1, &h_error_x);
+        int h_error_y = 0;
+#if defined(WARPX_DIM_3D)
+        amrex::Gpu::copy(amrex::Gpu::deviceToHost, d_error_y.begin(),
+                         d_error_y.begin() + 1, &h_error_y);
+#endif
+        int h_error_z = 0;
+        amrex::Gpu::copy(amrex::Gpu::deviceToHost, d_error_z.begin(),
+                         d_error_z.begin() + 1, &h_error_z);
 
         if (h_error_x > 0 || h_error_y > 0 || h_error_z > 0) {
             std::string error_msg = "Villasenor deposition error: particles exceeded max_grid_crossings.\n";
             if (h_error_x > 0) {
                 error_msg += "  X-direction: " + std::to_string(h_error_x) + " particles\n";
             }
+#if defined(WARPX_DIM_3D)
             if (h_error_y > 0) {
                 error_msg += "  Y-direction: " + std::to_string(h_error_y) + " particles\n";
             }
+#endif
             if (h_error_z > 0) {
                 error_msg += "  Z-direction: " + std::to_string(h_error_z) + " particles\n";
             }

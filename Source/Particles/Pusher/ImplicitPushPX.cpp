@@ -695,10 +695,12 @@ PhysicalParticleContainer::ImplicitPushXP (WarpXParIter & pti,
 
     });
 
-    amrex::Gpu::streamSynchronize();
-    if (d_position_error_count[0] > 0) {
+    int h_position_error_count = 0;
+    amrex::Gpu::copy(amrex::Gpu::deviceToHost, d_position_error_count.begin(),
+                     d_position_error_count.begin() + 1, &h_position_error_count);
+    if (h_position_error_count > 0) {
         amrex::Abort("Implicit particle position exceeds the permitted range for " +
-                     std::to_string(d_position_error_count[0]) + " particle(s).");
+                     std::to_string(h_position_error_count) + " particle(s).");
     }
 
     // Setup for handling the unconverged particles. A list of their indices is
@@ -1303,12 +1305,13 @@ PhysicalParticleContainer::ImplicitPushXPSubOrbits (WarpXParIter& pti,
 
     });
 
-    amrex::Gpu::streamSynchronize();
-
     // Check for errors after kernel launch
-    if (d_position_error_count[0] > 0) {
+    int h_position_error_count = 0;
+    amrex::Gpu::copy(amrex::Gpu::deviceToHost, d_position_error_count.begin(),
+                     d_position_error_count.begin() + 1, &h_position_error_count);
+    if (h_position_error_count > 0) {
         amrex::Abort("Implicit suborbit particle position exceeds the permitted range for " +
-                     std::to_string(d_position_error_count[0]) + " particle(s).");
+                     std::to_string(h_position_error_count) + " particle(s).");
     }
     ParticleUtils::CheckGridCrossingErrors(d_error_x, d_error_y, d_error_z, max_grid_crossings);
 }
