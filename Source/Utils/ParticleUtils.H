@@ -684,27 +684,28 @@ namespace ParticleUtils {
                                   const int max_grid_crossings)
     {
         int h_error_x = 0;
+#if !defined(WARPX_DIM_1D_Z)
         amrex::Gpu::copy(amrex::Gpu::deviceToHost, d_error_x.begin(),
                          d_error_x.begin() + 1, &h_error_x);
+#endif
         int h_error_y = 0;
 #if defined(WARPX_DIM_3D)
         amrex::Gpu::copy(amrex::Gpu::deviceToHost, d_error_y.begin(),
                          d_error_y.begin() + 1, &h_error_y);
 #endif
         int h_error_z = 0;
+#if defined(WARPX_ZINDEX)
         amrex::Gpu::copy(amrex::Gpu::deviceToHost, d_error_z.begin(),
                          d_error_z.begin() + 1, &h_error_z);
-
+#endif
         if (h_error_x > 0 || h_error_y > 0 || h_error_z > 0) {
             std::string error_msg = "Villasenor deposition error: particles exceeded max_grid_crossings.\n";
             if (h_error_x > 0) {
                 error_msg += "  X-direction: " + std::to_string(h_error_x) + " particles\n";
             }
-#if defined(WARPX_DIM_3D)
             if (h_error_y > 0) {
                 error_msg += "  Y-direction: " + std::to_string(h_error_y) + " particles\n";
             }
-#endif
             if (h_error_z > 0) {
                 error_msg += "  Z-direction: " + std::to_string(h_error_z) + " particles\n";
             }
