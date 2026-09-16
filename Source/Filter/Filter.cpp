@@ -11,12 +11,14 @@
 #include "WarpX.H"
 
 #include <ablastr/profiler/ProfilerWrapper.H>
+#include <AMReX_Arena.H>
 #include <AMReX_Array4.H>
 #include <AMReX_Box.H>
 #include <AMReX_Config.H>
 #include <AMReX_Extension.H>
 #include <AMReX_FArrayBox.H>
 #include <AMReX_FabArray.H>
+#include <AMReX_IntVect.H>
 #include <AMReX_MFIter.H>
 #include <AMReX_MultiFab.H>
 
@@ -270,58 +272,144 @@ void Filter::DoFilter (const Box& tbx,
                        Array4<Real      > const& dst,
                        int scomp, int dcomp, int ncomp)
 {
-    const auto lo = amrex::lbound(tbx);
-    const auto hi = amrex::ubound(tbx);
     // tmp and dst are of type Array4 (Fortran ordering)
     AMREX_D_TERM(
     amrex::Real const* AMREX_RESTRICT s0 = m_stencil_0.data();,
     amrex::Real const* AMREX_RESTRICT s1 = m_stencil_1.data();,
     amrex::Real const* AMREX_RESTRICT s2 = m_stencil_2.data();
     )
+
+    // The stencil is a tensor product of one 1D stencil per direction, so the
+    // filter is applied as a sequence of 1D passes writing into scratch. This
+    // replaces the sum over (i0,i1,i2) sweep of the whole destination box,
+    // which read and wrote dst slen.x*slen.y*slen.z times. The caller grew tmp
+    // by stencil_length_each_dir-1 and zero-filled it, so every read is in
+    // bounds. Scratch is grown in the not-yet-filtered directions so that the
+    // later passes are in bounds too, and no guard cell exchange is needed.
+
+#if AMREX_SPACEDIM == 3
+    const int rx = slen.x - 1;
+    const int ry = slen.y - 1;
+    const int rz = slen.z - 1;
+
+    const Box xbx = amrex::grow(tbx, IntVect(0, ry, rz));
+    const Box ybx = amrex::grow(tbx, IntVect(0,  0, rz));
+    FArrayBox xfab(xbx, ncomp, The_Async_Arena());
+    FArrayBox yfab(ybx, ncomp, The_Async_Arena());
+    const Array4<Real> xtmp = xfab.array();
+    const Array4<Real> ytmp = yfab.array();
+
+    const auto xlo = amrex::lbound(xbx);
+    const auto xhi = amrex::ubound(xbx);
+    const auto ylo = amrex::lbound(ybx);
+    const auto yhi = amrex::ubound(ybx);
+    const auto lo = amrex::lbound(tbx);
+    const auto hi = amrex::ubound(tbx);
+
     for (int n = 0; n < ncomp; ++n) {
-        // Set dst value to 0.
-        for         (int k = lo.z; k <= hi.z; ++k) {
-            for     (int j = lo.y; j <= hi.y; ++j) {
-                for (int i = lo.x; i <= hi.x; ++i) {
-                    dst(i,j,k,dcomp+n) = 0.0;
+        // pass in x: tmp -> xtmp
+        for     (int k = xlo.z; k <= xhi.z; ++k) {
+            for (int j = xlo.y; j <= xhi.y; ++j) {
+                AMREX_PRAGMA_SIMD
+                for (int i = xlo.x; i <= xhi.x; ++i) {
+                    Real d = 0.0;
+                    for (int i0 = 0; i0 <= rx; ++i0) {
+                        d += s0[i0]*(tmp(i-i0,j,k,scomp+n) + tmp(i+i0,j,k,scomp+n));
+                    }
+                    xtmp(i,j,k,n) = d;
                 }
             }
         }
-        // 3 nested loop on 3D stencil
-        for         (int i2=0; i2 < slen.z; ++i2){
-            for     (int i1=0; i1 < slen.y; ++i1){
-                for (int i0=0; i0 < slen.x; ++i0){
-                    const Real sss = AMREX_D_TERM(s0[i0], *s1[i1], *s2[i2]);
-                    // 3 nested loop on 3D array
-                    for         (int k = lo.z; k <= hi.z; ++k) {
-                        for     (int j = lo.y; j <= hi.y; ++j) {
-                            AMREX_PRAGMA_SIMD
-                            for (int i = lo.x; i <= hi.x; ++i) {
-#if AMREX_SPACEDIM == 3
-                                dst(i,j,k,dcomp+n) += sss*(tmp(i-i0,j-i1,k-i2,scomp+n)
-                                                          +tmp(i+i0,j-i1,k-i2,scomp+n)
-                                                          +tmp(i-i0,j+i1,k-i2,scomp+n)
-                                                          +tmp(i+i0,j+i1,k-i2,scomp+n)
-                                                          +tmp(i-i0,j-i1,k+i2,scomp+n)
-                                                          +tmp(i+i0,j-i1,k+i2,scomp+n)
-                                                          +tmp(i-i0,j+i1,k+i2,scomp+n)
-                                                          +tmp(i+i0,j+i1,k+i2,scomp+n));
-#elif AMREX_SPACEDIM == 2
-                                dst(i,j,k,dcomp+n) += sss*(tmp(i-i0,j-i1,k,scomp+n)
-                                                          +tmp(i+i0,j-i1,k,scomp+n)
-                                                          +tmp(i-i0,j+i1,k,scomp+n)
-                                                          +tmp(i+i0,j+i1,k,scomp+n));
-#elif AMREX_SPACEDIM == 1
-                                dst(i,j,k,dcomp+n) += sss*(tmp(i-i0,j,k,scomp+n)
-                                                          +tmp(i+i0,j,k,scomp+n));
-#endif
-                            }
-                        }
+        // pass in y: xtmp -> ytmp
+        for     (int k = ylo.z; k <= yhi.z; ++k) {
+            for (int j = ylo.y; j <= yhi.y; ++j) {
+                AMREX_PRAGMA_SIMD
+                for (int i = ylo.x; i <= yhi.x; ++i) {
+                    Real d = 0.0;
+                    for (int i1 = 0; i1 <= ry; ++i1) {
+                        d += s1[i1]*(xtmp(i,j-i1,k,n) + xtmp(i,j+i1,k,n));
                     }
+                    ytmp(i,j,k,n) = d;
+                }
+            }
+        }
+        // pass in z: ytmp -> dst
+        for     (int k = lo.z; k <= hi.z; ++k) {
+            for (int j = lo.y; j <= hi.y; ++j) {
+                AMREX_PRAGMA_SIMD
+                for (int i = lo.x; i <= hi.x; ++i) {
+                    Real d = 0.0;
+                    for (int i2 = 0; i2 <= rz; ++i2) {
+                        d += s2[i2]*(ytmp(i,j,k-i2,n) + ytmp(i,j,k+i2,n));
+                    }
+                    dst(i,j,k,dcomp+n) = d;
                 }
             }
         }
     }
+#elif AMREX_SPACEDIM == 2
+    const int rx = slen.x - 1;
+    const int ry = slen.y - 1;
+
+    const Box xbx = amrex::grow(tbx, IntVect(0, ry));
+    FArrayBox xfab(xbx, ncomp, The_Async_Arena());
+    const Array4<Real> xtmp = xfab.array();
+
+    const auto xlo = amrex::lbound(xbx);
+    const auto xhi = amrex::ubound(xbx);
+    const auto lo = amrex::lbound(tbx);
+    const auto hi = amrex::ubound(tbx);
+
+    for (int n = 0; n < ncomp; ++n) {
+        // pass in x: tmp -> xtmp
+        for     (int k = xlo.z; k <= xhi.z; ++k) {
+            for (int j = xlo.y; j <= xhi.y; ++j) {
+                AMREX_PRAGMA_SIMD
+                for (int i = xlo.x; i <= xhi.x; ++i) {
+                    Real d = 0.0;
+                    for (int i0 = 0; i0 <= rx; ++i0) {
+                        d += s0[i0]*(tmp(i-i0,j,k,scomp+n) + tmp(i+i0,j,k,scomp+n));
+                    }
+                    xtmp(i,j,k,n) = d;
+                }
+            }
+        }
+        // pass in y: xtmp -> dst
+        for     (int k = lo.z; k <= hi.z; ++k) {
+            for (int j = lo.y; j <= hi.y; ++j) {
+                AMREX_PRAGMA_SIMD
+                for (int i = lo.x; i <= hi.x; ++i) {
+                    Real d = 0.0;
+                    for (int i1 = 0; i1 <= ry; ++i1) {
+                        d += s1[i1]*(xtmp(i,j-i1,k,n) + xtmp(i,j+i1,k,n));
+                    }
+                    dst(i,j,k,dcomp+n) = d;
+                }
+            }
+        }
+    }
+#elif AMREX_SPACEDIM == 1
+    const int rx = slen.x - 1;
+
+    const auto lo = amrex::lbound(tbx);
+    const auto hi = amrex::ubound(tbx);
+
+    for (int n = 0; n < ncomp; ++n) {
+        // single pass in x: tmp -> dst
+        for     (int k = lo.z; k <= hi.z; ++k) {
+            for (int j = lo.y; j <= hi.y; ++j) {
+                AMREX_PRAGMA_SIMD
+                for (int i = lo.x; i <= hi.x; ++i) {
+                    Real d = 0.0;
+                    for (int i0 = 0; i0 <= rx; ++i0) {
+                        d += s0[i0]*(tmp(i-i0,j,k,scomp+n) + tmp(i+i0,j,k,scomp+n));
+                    }
+                    dst(i,j,k,dcomp+n) = d;
+                }
+            }
+        }
+    }
+#endif
 }
 
 #endif // #ifdef AMREX_USE_CUDA
