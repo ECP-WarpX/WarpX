@@ -1291,6 +1291,11 @@ void ImplicitSolver::FinishMassMatricesDeposition ()
     // matrices to only deposit half of the values. The remainder are computed
     // via copy here in this routine (see FoldMassMatrix).
 
+    // The full mass-matrix deposit leaves some diagonal-stencil components
+    // to be filled by symmetry in FoldMassMatrix. The PC-only deposit writes
+    // every retained stencil component directly, so no fold is needed.    
+    if (!m_use_mass_matrices_jacobian) { return; }
+
     using warpx::fields::FieldType;
 
     amrex::GpuArray<int,3> ncomp_xx = {1,1,1};
