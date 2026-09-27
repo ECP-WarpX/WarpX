@@ -1005,6 +1005,22 @@ void ImplicitSolver::InitializeMassMatrices ()
 
 }
 
+void ImplicitSolver::InitializeImplicitOptions ()
+{
+    // Called after mass-matrix allocation has finalized the component counts.
+    m_implicit_options.max_particle_iterations = m_max_particle_iterations;
+    m_implicit_options.particle_tolerance = m_particle_tolerance;
+    m_implicit_options.print_unconverged_particle_details = m_print_unconverged_particle_details;
+    m_implicit_options.use_mass_matrices_jacobian = m_use_mass_matrices_jacobian;
+    m_implicit_options.use_mass_matrices_pc = m_use_mass_matrices_pc;
+    m_implicit_options.ncomp_xx = m_ncomp_xx;
+    m_implicit_options.ncomp_yy = m_ncomp_yy;
+    m_implicit_options.ncomp_zz = m_ncomp_zz;
+    m_implicit_options.ncomp_pc_xx = m_ncomp_pc_xx;
+    m_implicit_options.ncomp_pc_yy = m_ncomp_pc_yy;
+    m_implicit_options.ncomp_pc_zz = m_ncomp_pc_zz;
+}
+
 void ImplicitSolver::PreLinearSolve (const bool update_pc)
 {
     BL_PROFILE("ImplicitSolver::PreLinearSolve()");
@@ -1048,9 +1064,10 @@ void ImplicitSolver::PreRHSOp (const amrex::Real a_cur_time,
     // This uses Efield_fp and Bfield_fp, the field at n+1/2 from the previous iteration.
     const bool skip_deposition = false;
 
-    // Set the implict solver options for particles and setting the current density
-    ImplicitOptions options;
+    // Copy stable options, then set values specific to this RHS evaluation.
+    ImplicitOptions options = m_implicit_options;
     options.linear_stage_of_jfnk = a_from_jacobian;
+
     // PC deposition and zeroing follow the same schedule as sparse assembly.
     options.use_mass_matrices_pc = m_use_mass_matrices_pc && update_pc && !a_from_jacobian;
     options.use_mass_matrices_jacobian = m_use_mass_matrices_jacobian;
@@ -1058,13 +1075,9 @@ void ImplicitSolver::PreRHSOp (const amrex::Real a_cur_time,
 
     if (a_nl_iter == 0 && !a_from_jacobian &&
         m_use_mass_matrices_jacobian && m_skip_particle_picard_init) {
-        // Only do a single Picard iteration for particles on the initial Newton step
+        // Only do a single Picard iteration for particles on the initial Newton step.
         options.max_particle_iterations = 1;
         options.particle_tolerance = 0.0;
-    }
-    else {
-        options.max_particle_iterations = m_max_particle_iterations;
-        options.particle_tolerance = m_particle_tolerance;
     }
 
     if (m_use_mass_matrices_jacobian && a_from_jacobian) { // Called from linear stage of JFNK and using mass matrices for Jacobian

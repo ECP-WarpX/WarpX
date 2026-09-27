@@ -302,7 +302,7 @@ WarpX::FinishImplicitField( ablastr::fields::MultiLevelVectorField const& Field_
 }
 
 void
-WarpX::DepositMassMatrices (amrex::Real a_dt)
+WarpX::DepositMassMatrices (amrex::Real a_dt, [[maybe_unused]] ImplicitOptions const& implicit_options)
 {
     ABLASTR_PROFILE("WarpX::DepositMassMatrices()");
 
