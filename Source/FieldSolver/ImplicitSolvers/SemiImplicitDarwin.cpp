@@ -348,16 +348,16 @@ void SemiImplicitDarwin::AccumulateCurrentAndMassMatrices ()
     // WarpX::DepositMassMatrices() -> MultiParticleContainer::DepositMassMatrices().
     m_WarpX->DepositMassMatrices();
 
+    // The deposit routine only fills half of each diagonal mass matrix's
+    // band (exploiting symmetry); mirror the other half to complete
+    // deposition before boundary summation.
+    FinishMassMatricesDeposition();
+
     // Sync current (filter and sum boundaries)
     m_WarpX->SyncCurrent("current_fp");
 
     // Sum boundaries for mass matrices
     m_WarpX->SyncMassMatrices();
-
-    // The deposit routine only fills half of each diagonal mass matrix's
-    // band (exploiting symmetry); mirror the other half back in now that
-    // deposition and boundary summation are complete.
-    FinishMassMatrices();
 }
 
 void SemiImplicitDarwin::CalculateSourceVector ()

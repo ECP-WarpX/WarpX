@@ -162,7 +162,7 @@ public:
     /**
      * \brief Finish filling the mass matrices after deposit
      */
-    void FinishMassMatrices ();
+    void FinishMassMatricesDeposition ();
 
     /**
      * \brief Finish the implicit particle update after the converged time-centered solve
