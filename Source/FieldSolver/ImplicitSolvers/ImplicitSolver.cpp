@@ -1188,10 +1188,11 @@ void ImplicitSolver::SyncMassMatricesPCAndApplyBCs ()
 
     // Apply BCs to MassMatrices_PC
     for (int lev = 0; lev < m_num_amr_levels; ++lev) {
-        m_WarpX->ApplyJfieldBoundary(lev,
+        m_WarpX->ApplyDiagonalMassMatricesBoundary(lev,
             m_WarpX->m_fields.get(FieldType::MassMatrices_PC, Direction{0}, lev),
             m_WarpX->m_fields.get(FieldType::MassMatrices_PC, Direction{1}, lev),
             m_WarpX->m_fields.get(FieldType::MassMatrices_PC, Direction{2}, lev),
+            m_ncomp_pc_xx, m_ncomp_pc_yy, m_ncomp_pc_zz,
             PatchType::fine);
     }
 }
