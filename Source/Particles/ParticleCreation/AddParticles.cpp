@@ -1509,7 +1509,8 @@ PhysicalParticleContainer::AddPlasmaFlux (PlasmaInjector const& plasma_injector,
 
                 // inj_mom would typically be InjectorMomentumGaussianFlux
                 XDim3 gamma_beta;
-                gamma_beta = inj_mom->getMomentum(pos.x, pos.y, pos.z, engine);
+                // Match the time used below to evaluate the injected number flux.
+                gamma_beta = inj_mom->getMomentum(pos.x, pos.y, pos.z, engine, t);
 
                 auto pu = XDim3(gamma_beta);
                 pu.x *= PhysConst::c;

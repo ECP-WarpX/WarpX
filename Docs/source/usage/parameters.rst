@@ -2074,6 +2074,15 @@ Particle initialization
       ``<species_name>.momentum_function_uy(x,y,z)`` and ``<species_name>.momentum_function_uz(x,y,z)``,
       which give the distribution of each component of the momentum as a function of space.
 
+      For ``injection_style = NFluxPerCell``, time-dependent momentum is also supported:
+      supply ``momentum_function_ux(x,y,z,t)``, ``momentum_function_uy(x,y,z,t)``,
+      and ``momentum_function_uz(x,y,z,t)`` instead. All three components must use
+      the same signature. Here ``t`` is the simulation time in seconds, evaluated
+      at the same timestep time as ``flux_function(x,y,z,t)``, rather than at each
+      particle's randomized substep injection time. The functions return normalized
+      momentum (gamma times velocity divided by c), not velocity. Existing spatial
+      functions are unchanged.
+
 .. pp:param:: <species_name>.zinject_plane
     :type: ``float``
 
