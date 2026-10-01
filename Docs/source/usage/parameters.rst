@@ -276,8 +276,10 @@ Overall simulation parameters
             Must be positive. Updates are allowed only when the zero-based simulation
             step index is divisible by this interval. Both interval conditions must
             hold. The first required linear solve always initializes the PC, including
-            after restart. During adaptive implicit substepping, PC updates are forced
-            on every Newton iteration, overriding both intervals.
+            after restart. These options control WarpX sparse PC assembly and PETSc KSP
+            refactorization, PC mass-matrix preparation, and suborbit PC deposition.
+            Jacobian mass-matrix updates remain independent. These options do not
+            control PETSc SNES.
           - ``newton.relative_tolerance`` (``float``, default: 1.0e-6)
           - ``newton.absolute_tolerance`` (``float``, default: 0.0)
           - ``newton.diagnostic_file`` (``string``, default: None)
