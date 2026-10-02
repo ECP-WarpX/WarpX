@@ -19,8 +19,8 @@
 /**
  * \brief Gather vector field F for a single particle
  *
- * \tparam depos_order_perp       Particle shape order in parallel direction
- * \tparam depos_order_para       Particle shape order in perpendicular direction
+ * \tparam depos_order_perp       Particle shape order in perpendicular direction
+ * \tparam depos_order_para       Particle shape order in parallel direction
  *
  * \param xp,yp,zp                Particle position coordinates
  * \param Fxp,Fyp,Fzp             Vector field on particle
@@ -326,6 +326,156 @@ void doDirectGatherVectorField (
 #endif
 #endif
 }
+
+#if defined(WARPX_EM_TEY)
+/**
+ * \brief Gather vector field Fy for a single particle
+ *
+ * \tparam depos_order_perp       Particle shape order in perp direction
+ *
+ * \param xp,yp,zp                Particle position coordinates
+ * \param Fxp,Fyp,Fzp             Vector field on particle
+ * \param Fx_arr,Fy_arr,Fz_arr    Array4 of the vector field, either full array or tile
+ * \param Fx_type,Fy_type,Fz_type Index type of the vector fields
+ * \param dinv                    3D cell size inverse
+ * \param xyzmin                  The lower bounds of the domain
+ * \param lo                      Index lower bounds of domain
+ * \param n_rz_azimuthal_modes    Number of azimuthal modes when using RZ geometry
+ */
+template <int depos_order_perp>
+AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
+void doDirectGatherFieldTEY (
+                     [[maybe_unused]] const amrex::ParticleReal xp,
+                     [[maybe_unused]] const amrex::ParticleReal yp,
+                     [[maybe_unused]] const amrex::ParticleReal zp,
+                     amrex::ParticleReal& Fxp,
+                     amrex::ParticleReal& Fyp,
+                     amrex::ParticleReal& Fzp,
+                     amrex::Array4<amrex::Real const> const& Fx_arr,
+                     amrex::Array4<amrex::Real const> const& Fy_arr,
+                     amrex::Array4<amrex::Real const> const& Fz_arr,
+                     const amrex::IndexType Fx_type,
+                     const amrex::IndexType Fy_type,
+                     const amrex::IndexType Fz_type,
+                     const amrex::XDim3 & dinv,
+                     const amrex::XDim3 & xyzmin,
+                     const amrex::Dim3& lo,
+                     [[maybe_unused]] const int n_rz_azimuthal_modes)
+{
+    using namespace amrex;
+    constexpr int NODE = amrex::IndexType::NODE;
+    constexpr int CELL = amrex::IndexType::CELL;
+
+    amrex::ignore_unused(Fxp,Fzp,Fx_arr,Fz_arr,Fx_type,Fz_type,n_rz_azimuthal_modes);
+
+    // Compute particle position in grid units
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
+    const double rp = std::sqrt(xp*xp + yp*yp);
+    const double x_bar = (rp - xyzmin.x)*dinv.x;
+#elif defined(WARPX_DIM_RSPHERE)
+    const double rp = std::sqrt(xp*xp + yp*yp + zp*zp);
+    const double x_bar = (rp - xyzmin.x)*dinv.x;
+#elif !defined(WARPX_DIM_1D_Z)
+    const double x_bar = (xp - xyzmin.x)*dinv.x;
+#endif
+#if !defined(WARPX_DIM_RCYLINDER) && !defined(WARPX_DIM_RSPHERE)
+    const double z_bar = (zp - xyzmin.z)*dinv.z;
+#endif
+
+    const Compute_shape_factor< depos_order_perp > shape_factor_perp;
+
+#if !defined(WARPX_DIM_RCYLINDER) && !defined(WARPX_DIM_RSPHERE)
+    constexpr int zdir = WARPX_ZINDEX;
+
+    // Compute shape factors for z-direction
+    int kp_node = 0;
+    int kp_cell = 0;
+    double sz_node[depos_order_perp+1] = {0.};
+    double sz_cell[depos_order_perp+1] = {0.};
+    if (Fy_type[zdir] == NODE) {
+        kp_node = shape_factor_perp(sz_node, z_bar);
+    }
+    if (Fy_type[zdir] == CELL) {
+        kp_cell = shape_factor_perp(sz_cell, z_bar - 0.5);
+    }
+
+    const int kp_Fy = ((Fy_type[zdir] == NODE) ? kp_node : kp_cell);
+    const double (&sz_Fy)[depos_order_perp+1] = ((Fy_type[zdir] == NODE) ? sz_node : sz_cell);
+
+#endif
+
+#if !defined(WARPX_DIM_1D_Z)
+    // Compute shape factors for x-direction
+    int ip_node = 0;
+    int ip_cell = 0;
+    double sx_node[depos_order_perp+1] = {0.};
+    double sx_cell[depos_order_perp+1] = {0.};
+    if (Fy_type[0] == NODE) {
+        ip_node = shape_factor_perp(sx_node, x_bar);
+    }
+    if (Fy_type[0] == CELL) {
+        ip_cell = shape_factor_perp(sx_cell, x_bar - 0.5);
+    }
+
+    const int ip_Fy = ((Fy_type[0] == NODE) ? ip_node : ip_cell);
+    const double (&sx_Fy)[depos_order_perp+1] = ((Fy_type[0] == NODE) ? sx_node : sx_cell);
+#endif
+
+#if defined(WARPX_DIM_3D)
+    // Should not be here
+#elif defined(WARPX_DIM_XZ)
+
+    // Gather vector field F
+    for (int k=0; k<=depos_order_perp; k++) {
+        for (int i=0; i<=depos_order_perp; i++) {
+            const auto weight_Fy = static_cast<amrex::Real>(sx_Fy[i]*sz_Fy[k]);
+            Fyp += Fy_arr(lo.x+ip_Fy+i, lo.y+kp_Fy+k, 0, 0)*weight_Fy;
+        }
+    }
+
+#elif defined(WARPX_DIM_1D_Z)
+
+    for (int k=0; k<=depos_order_perp; k++) {
+        const auto weight_Fy = static_cast<amrex::Real>(sz_Fy[k]);
+        Fyp += Fy_arr(lo.x+kp_Fy+k, 0, 0)*weight_Fy;
+    }
+
+#elif defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
+
+    amrex::ParticleReal Fthp = 0.;
+
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
+    const auto costheta = static_cast<amrex::Real>(rp > 0._rt ? xp/rp: 1._rt);
+    const auto sintheta = static_cast<amrex::Real>(rp > 0._rt ? yp/rp: 0._rt);
+#elif defined(WARPX_DIM_RSPHERE)
+    amrex::ParticleReal const rpxy = std::sqrt(xp*xp + yp*yp);
+    const auto costheta = static_cast<amrex::Real>(rpxy > 0. ? xp/rpxy : 1.);
+    const auto sintheta = static_cast<amrex::Real>(rpxy > 0. ? yp/rpxy : 0.);
+#endif
+
+#if defined(WARPX_DIM_RZ)
+    // Gather vector field F for azimuthal mode = 0
+    for (int k=0; k<=depos_order_perp; k++) {
+        for (int i=0; i<=depos_order_perp; i++) {
+            const auto weight_Fth = static_cast<amrex::Real>(sx_Fy[i]*sz_Fy[k]);
+            Fthp += Fy_arr(lo.x+ip_Fy+i, lo.y+kp_Fy+k, 0, 0)*weight_Fth;
+        }
+    }
+#elif defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
+    // Gather vector field F
+    for (int i=0; i<=depos_order_perp; i++) {
+        const auto weight_Fy = static_cast<amrex::Real>(sx_Fy[i]);
+        Fthp += Fy_arr(lo.x+ip_Fy+i, 0, 0)*weight_Fy;
+    }
+#endif
+
+    // Convert Fthp to Fxp and Fyp
+    Fxp += -sintheta*Fthp;
+    Fyp +=  costheta*Fthp;
+
+#endif
+}
+#endif
 
 /**
  * \brief Field gather for a single particle
@@ -2104,7 +2254,13 @@ void doGatherPicnicShapeN (
     amrex::ParticleReal B1p = 0._prt;
     amrex::ParticleReal B2p = 0._prt;
     amrex::ParticleReal B3p = 0._prt;
+
+#if defined(WARPX_EM_TEY)
+    amrex::ignore_unused(depos_order_para);
+    doDirectGatherFieldTEY<depos_order_perp>(
+#else
     doDirectGatherVectorField<depos_order_perp,depos_order_para>(
+#endif
 #if defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
                                     rp_mid, 0._prt, 0._prt,
 #elif defined(WARPX_DIM_RZ)

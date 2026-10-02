@@ -99,17 +99,31 @@ void setMassMatricesKernels (const amrex::ParticleReal qs,
     const amrex::ParticleReal arogp = alpha*rhop/(1.0_prt + bpsq);
 
     // Compute Mass Matrix kernels (non-relativistic for now)
-    fpxx = arogp*(bpx*bpx + 1.0_rt);
+#if defined(WARPX_EM_TEY)
+    fpxx = arogp*(bpx*bpx + 1.0_prt);
+    fpxy = arogp*(bpx*bpy);
+    fpxz = arogp*(0._prt - bpy);
+
+    fpyx = arogp*(bpy*bpx);
+    fpyy = arogp*(bpy*bpy + 1.0_prt);
+    fpyz = arogp*(0._prt + bpx);
+
+    fpzx = arogp*(0._prt + bpy);
+    fpzy = arogp*(0._prt - bpx);
+    fpzz = arogp*1.0_prt;
+#else
+    fpxx = arogp*(bpx*bpx + 1.0_prt);
     fpxy = arogp*(bpx*bpy + bpz);
     fpxz = arogp*(bpx*bpz - bpy);
 
     fpyx = arogp*(bpy*bpx - bpz);
-    fpyy = arogp*(bpy*bpy + 1.0_rt);
+    fpyy = arogp*(bpy*bpy + 1.0_prt);
     fpyz = arogp*(bpy*bpz + bpx);
 
     fpzx = arogp*(bpz*bpx + bpy);
     fpzy = arogp*(bpz*bpy - bpx);
-    fpzz = arogp*(bpz*bpz + 1.0_rt);
+    fpzz = arogp*(bpz*bpz + 1.0_prt);
+#endif
 
 #if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
 
@@ -119,6 +133,16 @@ void setMassMatricesKernels (const amrex::ParticleReal qs,
     const amrex::ParticleReal c2 = costh*costh;
     const amrex::ParticleReal s2 = sinth*sinth;
     const amrex::ParticleReal cs = costh*sinth;
+#if defined(WARPX_EM_TEY)
+    const amrex::ParticleReal fprr = c2*fpxx + cs*(fpxy + fpyx) + s2*fpyy;
+    const amrex::ParticleReal fprt = 0._prt;
+    const amrex::ParticleReal fprz = costh*fpxz + sinth*fpyz;
+    const amrex::ParticleReal fptr = 0._prt;
+    const amrex::ParticleReal fptt = 0._prt;
+    const amrex::ParticleReal fptz = 0._prt;
+    const amrex::ParticleReal fpzr =  costh*fpzx + sinth*fpzy;
+    const amrex::ParticleReal fpzt = 0._prt;
+#else
     const amrex::ParticleReal fprr = c2*fpxx + cs*(fpxy + fpyx) + s2*fpyy;
     const amrex::ParticleReal fprt = cs*(fpyy - fpxx) + c2*fpxy - s2*fpyx;
     const amrex::ParticleReal fprz = costh*fpxz + sinth*fpyz;
@@ -127,7 +151,7 @@ void setMassMatricesKernels (const amrex::ParticleReal qs,
     const amrex::ParticleReal fptz = -sinth*fpxz + costh*fpyz;
     const amrex::ParticleReal fpzr =  costh*fpzx + sinth*fpzy;
     const amrex::ParticleReal fpzt = -sinth*fpzx + costh*fpzy;
-
+#endif
     // Returned values are named for Cartesian, but they are indeed mapped
     fpxx = fprr;
     fpxy = fprt;
@@ -864,7 +888,11 @@ void doDirectSigmaDeposition (const GetParticlePosition<PIdx>& GetPosition,
             }
 
             // Gather magnetic field from the grid
+#if defined(WARPX_EM_TEY)
+            doDirectGatherFieldTEY<depos_order>(
+#else
             doDirectGatherVectorField</*depos_order_perp=*/depos_order,/*depos_order_para=*/depos_order>(
+#endif
                                     xp_nph, yp_nph, zp_nph,
                                     Bxp, Byp, Bzp,
                                     Bx_arr, By_arr, Bz_arr,
@@ -2211,7 +2239,13 @@ void doVillasenorSigmaDeposition ([[maybe_unused]] const amrex::ParticleReal* xp
             amrex::ParticleReal B1p = 0._prt;
             amrex::ParticleReal B2p = 0._prt;
             amrex::ParticleReal B3p = 0._prt;
+
+#if defined(WARPX_EM_TEY)
+            amrex::ignore_unused(depos_order_para);
+            doDirectGatherFieldTEY<depos_order_perp>(
+#else
             doDirectGatherVectorField<depos_order_perp,depos_order_para>(
+#endif
 #if defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
                                     rp_mid, 0._prt, 0._prt,
 #elif defined(WARPX_DIM_RZ)
