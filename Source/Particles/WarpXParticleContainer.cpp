@@ -1944,7 +1944,7 @@ WarpXParticleContainer::GetChargeDensity (int lev, bool local, bool finalize)
 
     auto rho = std::make_unique<MultiFab>(nba, dm, WarpX::ncomps,ng_rho);
     DepositChargeOnLevel(rho.get(), lev, local, /*reset=*/true, /*icomp=*/0);
-    if (finalize) {
+    if (finalize) { // Apply boundary conditions to rho, and then apply volume scaling
         WarpX::GetInstance().FinalizeRho(lev, rho.get(), PatchType::fine);
     }
     return rho;
