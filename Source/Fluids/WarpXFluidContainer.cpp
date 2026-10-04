@@ -1461,10 +1461,11 @@ void WarpXFluidContainer::DepositCharge (ablastr::fields::MultiFabRegister& fiel
             [=] AMREX_GPU_DEVICE(int i, int j, int k) noexcept
             {
                 if (owner_mask_rho_arr(i,j,k)) {
-                    amrex::Real volume_factor = 1.0_rt;
 #if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
-                    volume_factor = RadialVolumeFactor(
+                    const amrex::Real volume_factor = RadialVolumeFactor(
                         rmin + (i - irmin)*dr, dr, use_axis_correction);
+#else
+                    const amrex::Real volume_factor = 1.0_rt;
 #endif
                     // Match PIC deposits before radial inverse-volume scaling.
                     rho_arr(i,j,k,icomp) += volume_factor*q*N_arr(i,j,k);
