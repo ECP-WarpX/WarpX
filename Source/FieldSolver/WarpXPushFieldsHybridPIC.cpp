@@ -340,6 +340,7 @@ void WarpX::HybridPICDepositRhoAndJ ()
                         J_spec[lev][idim]->nGrowVect(), J_spec[lev][idim]->nGrowVect(),
                         WarpX::do_single_precision_comms, Geom(lev).periodicity());
                 }
+                // Apply boundary conditions to rho_spec, and then apply volume scaling
                 FinalizeRho(lev, rho_spec[lev], PatchType::fine);
             }
 #if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)

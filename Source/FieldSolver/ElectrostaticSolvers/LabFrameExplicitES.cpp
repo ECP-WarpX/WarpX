@@ -53,6 +53,7 @@ void LabFrameExplicitES::ComputeSpaceChargeField (
     warpx.SyncRho( rho_fp, rho_cp, amrex::GetVecOfPtrs(rho_buf) );
 
     for (int lev = 0; lev < num_levels; lev++) {
+        // Apply boundary conditions to rho_fp, and then apply volume scaling
         warpx.FinalizeRho(lev, rho_fp[lev], PatchType::fine);
     }
 

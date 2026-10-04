@@ -346,14 +346,14 @@ public:
                         bool local = false, bool reset = false,
                         bool interpolate_across_levels = true,
                         int icomp = 0);
+
     void DepositChargeOnLevel (amrex::MultiFab* rho, int lev,
                         bool local = false, bool reset = false,
                         int icomp = 0);
 
     /** Return physical charge density by default. Set finalize=false to obtain
      * unscaled deposits for filtering/synchronization followed by FinalizeRho. */
-    std::unique_ptr<amrex::MultiFab> GetChargeDensity(
-        int lev, bool local = false, bool finalize = true);
+    std::unique_ptr<amrex::MultiFab> GetChargeDensity(int lev, bool local = false, bool finalize = true);
 
     virtual void DepositCharge (WarpXParIter& pti,
                                RealVector const & wp,
