@@ -591,7 +591,8 @@ public:
                                                     int lev) const;
 
     void ApplyInverseVolumeScalingToChargeDensity (amrex::MultiFab* Rho,
-                                                   int lev) const;
+                                                   int lev, int scomp = 0,
+                                                   int ncomp = -1) const;
 #endif
 
     /**
@@ -600,7 +601,7 @@ public:
      * the simulation domain. This function performs that logic.
      */
     void ApplyRhofieldBoundary (int lev, amrex::MultiFab* Rho,
-                                PatchType patch_type);
+                                PatchType patch_type, int scomp = 0, int ncomp = -1);
 
     /**
      * \brief If a PEC boundary conditions is used the current
@@ -711,8 +712,10 @@ public:
     void SyncCurrentAndRho ();
     void FinalizeRho ();
     /** Fold physical boundaries and convert unscaled deposits to charge density.
-     * Call after filtering, guard summation, and transfers between levels. */
-    void FinalizeRho (int lev, amrex::MultiFab* rho, PatchType patch_type);
+     * Call after filtering, guard summation, and transfers between levels.
+     * scomp/ncomp select array components; ncomp=-1 selects all remaining components. */
+    void FinalizeRho (int lev, amrex::MultiFab* rho, PatchType patch_type,
+                      int scomp = 0, int ncomp = -1);
     [[nodiscard]] bool UseVerboncoeurAxisCorrection () const
     {
         return m_verboncoeur_axis_correction;

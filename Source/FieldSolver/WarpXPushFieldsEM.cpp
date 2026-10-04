@@ -1766,11 +1766,15 @@ WarpX::ApplyInverseVolumeScalingToMassMatricesPC (amrex::MultiFab* Sxx, amrex::M
 }
 
 void
-WarpX::ApplyInverseVolumeScalingToChargeDensity (amrex::MultiFab* Rho, int lev) const
+WarpX::ApplyInverseVolumeScalingToChargeDensity (amrex::MultiFab* Rho, int lev,
+                                                int scomp, int ncomp) const
 {
+    if (ncomp < 0) { ncomp = Rho->nComp() - scomp; }
+    AMREX_ALWAYS_ASSERT(scomp >= 0 && ncomp > 0 && scomp + ncomp <= Rho->nComp());
     const amrex::IntVect ngRho = Rho->nGrowVect();
     const std::array<amrex::Real,3>& dx = WarpX::CellSize(lev);
     const amrex::Real dr = dx[0];
+    const int mode_ncomp = WarpX::ncomps;
 
     constexpr int NODE = amrex::IndexType::NODE;
 
@@ -1833,6 +1837,7 @@ WarpX::ApplyInverseVolumeScalingToChargeDensity (amrex::MultiFab* Rho, int lev) 
         amrex::ParallelFor(tb,
         [=] AMREX_GPU_DEVICE (int i, int j, int /*k*/)
         {
+            const int icomp = scomp + n;
             // Wrap the charge density deposited in the guard cells around
             // to the cells above the axis.
             // Rho is located on the boundary

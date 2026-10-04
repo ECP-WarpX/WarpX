@@ -919,12 +919,13 @@ void WarpX::FinalizeRho ()
     }
 }
 
-void WarpX::FinalizeRho (int lev, amrex::MultiFab* rho, PatchType patch_type)
+void WarpX::FinalizeRho (int lev, amrex::MultiFab* rho, PatchType patch_type,
+                         int scomp, int ncomp)
 {
-    ApplyRhofieldBoundary(lev, rho, patch_type);
+    ApplyRhofieldBoundary(lev, rho, patch_type, scomp, ncomp);
 #if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
     const int glev = (patch_type == PatchType::fine) ? lev : lev - 1;
-    ApplyInverseVolumeScalingToChargeDensity(rho, glev);
+    ApplyInverseVolumeScalingToChargeDensity(rho, glev, scomp, ncomp);
 #endif
 }
 
@@ -1176,6 +1177,9 @@ WarpX::OneStep_sub1 (Real cur_time)
     using warpx::fields::FieldType;
 
     bool const skip_lev0_coarse_patch = true;
+    const ablastr::fields::MultiLevelScalarField rho_buf = m_fields.has(FieldType::rho_buf, fine_lev)
+        ? m_fields.get_mr_levels(FieldType::rho_buf, finest_level, skip_lev0_coarse_patch)
+        : ablastr::fields::MultiLevelScalarField{static_cast<size_t>(finest_level + 1)};
 
     // i) Push particles and fields on the fine patch (first fine step)
     PushParticlesandDeposit(fine_lev, cur_time, SubcyclingHalf::FirstHalf);
@@ -1196,6 +1200,7 @@ WarpX::OneStep_sub1 (Real cur_time)
             m_fields.get_mr_levels(FieldType::rho_fp, finest_level),
             m_fields.get_mr_levels(FieldType::rho_cp, finest_level, skip_lev0_coarse_patch),
             fine_lev, PatchType::fine, 0, 2*ncomps);
+        FinalizeRho(fine_lev, m_fields.get(FieldType::rho_fp, fine_lev), PatchType::fine);
     }
 
     EvolveB(fine_lev, PatchType::fine, 0.5_rt*dt[fine_lev], SubcyclingHalf::FirstHalf, cur_time);
@@ -1230,13 +1235,16 @@ WarpX::OneStep_sub1 (Real cur_time)
         m_fields.get_mr_levels_alldirs(FieldType::current_buf, finest_level, skip_lev0_coarse_patch), coarse_lev);
 
     if (m_fields.has(FieldType::rho_fp, finest_level) &&
-        m_fields.has(FieldType::rho_cp, finest_level) &&
-        m_fields.has(FieldType::rho_buf, finest_level)) {
+        m_fields.has(FieldType::rho_cp, finest_level)) {
         AddRhoFromFineLevelandSumBoundary(
             m_fields.get_mr_levels(FieldType::rho_fp, finest_level),
             m_fields.get_mr_levels(FieldType::rho_cp, finest_level, skip_lev0_coarse_patch),
-            m_fields.get_mr_levels(FieldType::rho_buf, finest_level, skip_lev0_coarse_patch),
+            rho_buf,
             coarse_lev, 0, ncomps);
+        FinalizeRho(coarse_lev, m_fields.get(FieldType::rho_fp, coarse_lev),
+                    PatchType::fine, 0, ncomps);
+        FinalizeRho(fine_lev, m_fields.get(FieldType::rho_cp, fine_lev),
+                    PatchType::coarse, 0, ncomps);
     }
 
     EvolveB(fine_lev, PatchType::coarse, dt[fine_lev], SubcyclingHalf::FirstHalf, cur_time);
@@ -1279,7 +1287,8 @@ WarpX::OneStep_sub1 (Real cur_time)
         ApplyFilterandSumBoundaryRho(
             m_fields.get_mr_levels(FieldType::rho_fp, finest_level),
             m_fields.get_mr_levels(FieldType::rho_cp, finest_level, skip_lev0_coarse_patch),
-            fine_lev, PatchType::fine, 0, ncomps);
+            fine_lev, PatchType::fine, 0, 2*ncomps);
+        FinalizeRho(fine_lev, m_fields.get(FieldType::rho_fp, fine_lev), PatchType::fine);
     }
 
     EvolveB(fine_lev, PatchType::fine, 0.5_rt*dt[fine_lev], SubcyclingHalf::FirstHalf, cur_time + dt[fine_lev]);
@@ -1314,13 +1323,16 @@ WarpX::OneStep_sub1 (Real cur_time)
         coarse_lev);
 
     if (m_fields.has(FieldType::rho_fp, finest_level) &&
-        m_fields.has(FieldType::rho_cp, finest_level) &&
-        m_fields.has(FieldType::rho_buf, finest_level)) {
+        m_fields.has(FieldType::rho_cp, finest_level)) {
         AddRhoFromFineLevelandSumBoundary(
             m_fields.get_mr_levels(FieldType::rho_fp, finest_level),
             m_fields.get_mr_levels(FieldType::rho_cp, finest_level, skip_lev0_coarse_patch),
-            m_fields.get_mr_levels(FieldType::rho_buf, finest_level, skip_lev0_coarse_patch),
+            rho_buf,
             coarse_lev, ncomps, ncomps);
+        FinalizeRho(coarse_lev, m_fields.get(FieldType::rho_fp, coarse_lev),
+                    PatchType::fine, ncomps, ncomps);
+        FinalizeRho(fine_lev, m_fields.get(FieldType::rho_cp, fine_lev),
+                    PatchType::coarse, ncomps, ncomps);
     }
 
     EvolveE(fine_lev, PatchType::coarse, dt[fine_lev], cur_time + 0.5_rt * dt[fine_lev]);
