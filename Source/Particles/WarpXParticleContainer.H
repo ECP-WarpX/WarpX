@@ -349,7 +349,7 @@ public:
                         bool apply_boundary_and_scale_volume = false,
                         bool interpolate_across_levels = true,
                         int icomp = 0);
-    void DepositCharge (amrex::MultiFab* rho, int lev,
+    void DepositChargeOnLevel (amrex::MultiFab* rho, int lev,
                         bool local = false, bool reset = false,
                         bool apply_boundary_and_scale_volume = false,
                         int icomp = 0);

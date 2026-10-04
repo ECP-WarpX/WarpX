@@ -1842,7 +1842,7 @@ WarpXParticleContainer::DepositCharge (const ablastr::fields::MultiLevelScalarFi
     auto const finest_level = static_cast<int>(rho.size() - 1);
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        DepositCharge (
+        DepositChargeOnLevel (
             rho[lev], lev, local, reset, apply_boundary_and_scale_volume, icomp
         );
     }
@@ -1871,7 +1871,7 @@ WarpXParticleContainer::DepositCharge (const ablastr::fields::MultiLevelScalarFi
 }
 
 void
-WarpXParticleContainer::DepositCharge (amrex::MultiFab* rho,
+WarpXParticleContainer::DepositChargeOnLevel (amrex::MultiFab* rho,
                                        const int lev, const bool local, const bool reset,
                                        const bool apply_boundary_and_scale_volume,
                                        const int icomp)
@@ -1960,7 +1960,7 @@ WarpXParticleContainer::GetChargeDensity (int lev, bool local)
     const int ng_rho = warpx.get_ng_depos_rho().max();
 
     auto rho = std::make_unique<MultiFab>(nba, dm, WarpX::ncomps,ng_rho);
-    DepositCharge(rho.get(), lev, local, true, true, 0);
+    DepositChargeOnLevel(rho.get(), lev, local, true, true, 0);
     return rho;
 }
 
