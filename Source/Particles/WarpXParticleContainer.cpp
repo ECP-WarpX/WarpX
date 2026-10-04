@@ -1911,13 +1911,6 @@ WarpXParticleContainer::DepositChargeOnLevel (amrex::MultiFab* rho,
     }
 #endif
 
-#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
-    if (apply_boundary_and_scale_volume)
-    {
-        WarpX::GetInstance().ApplyInverseVolumeScalingToChargeDensity(rho, lev);
-    }
-#endif
-
     // Exchange guard cells
     if ( !local ) {
         // Possible performance optimization:
@@ -1929,13 +1922,15 @@ WarpXParticleContainer::DepositChargeOnLevel (amrex::MultiFab* rho,
         );
     }
 
-#if !defined(WARPX_DIM_RZ) && !defined(WARPX_DIM_RCYLINDER) && !defined(WARPX_DIM_RSPHERE)
     if (apply_boundary_and_scale_volume)
     {
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
+        WarpX::GetInstance().ApplyInverseVolumeScalingToChargeDensity(rho, lev);
+#endif
         // Reflect density over PEC boundaries, if needed.
         WarpX::GetInstance().ApplyRhofieldBoundary(lev, rho, PatchType::fine);
     }
-#endif
+
 }
 
 std::unique_ptr<MultiFab>
