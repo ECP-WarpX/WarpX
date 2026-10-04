@@ -709,6 +709,14 @@ public:
      * Contains separate calls to WarpX::SyncCurrent and WarpX::SyncRho.
      */
     void SyncCurrentAndRho ();
+    void FinalizeRho ();
+    /** Fold physical boundaries and convert unscaled deposits to charge density.
+     * Call after filtering, guard summation, and transfers between levels. */
+    void FinalizeRho (int lev, amrex::MultiFab* rho, PatchType patch_type);
+    [[nodiscard]] bool UseVerboncoeurAxisCorrection () const
+    {
+        return m_verboncoeur_axis_correction;
+    }
 
     /**
      * \brief Apply filter and sum guard cells across MR levels.
@@ -947,9 +955,12 @@ public:
      * which conserves the volume integral exactly, leaves constants
      * untouched, has zero flux through the axis, and reduces to the
      * standard bilinear filter where the volumes are uniform. */
-    /** \returns the guard-cell width over which dst holds filtered data. */
+    /** \param is_volume_scaled Whether input contains physical density.
+     *  If false, input and output contain density times the radial volume factor.
+     *  \returns the guard-cell width over which dst holds filtered data. */
     amrex::IntVect ApplyVolumeWeightedFilter (amrex::MultiFab& dst, const amrex::MultiFab& src_mf,
-                                    int lev, int scomp, int dcomp, int ncomp);
+                                    int lev, int scomp, int dcomp, int ncomp,
+                                    bool is_volume_scaled = true);
 #endif
 
     /** Filter a current density. In radial geometries this dispatches to

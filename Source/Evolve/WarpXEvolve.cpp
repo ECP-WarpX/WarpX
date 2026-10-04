@@ -590,6 +590,7 @@ WarpX::OneStep_nosub (
     // filter (if used), exchange guard cells, interpolate across MR levels
     // and apply boundary conditions
     SyncCurrentAndRho();
+    FinalizeRho();
 
     // At this point, J is up-to-date inside the domain, and E and B are
     // up-to-date including enough guard cells for first step of the field
@@ -887,18 +888,12 @@ void WarpX::SyncCurrentAndRho ()
     // Reflect charge and current density over PEC boundaries, if needed.
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        if (m_fields.has(FieldType::rho_fp, lev)) {
-            ApplyRhofieldBoundary(lev, m_fields.get(FieldType::rho_fp,lev), PatchType::fine);
-        }
         ApplyJfieldBoundary(lev,
             m_fields.get(FieldType::current_fp, Direction{0}, lev),
             m_fields.get(FieldType::current_fp, Direction{1}, lev),
             m_fields.get(FieldType::current_fp, Direction{2}, lev),
             PatchType::fine);
         if (lev > 0) {
-            if (m_fields.has(FieldType::rho_cp, lev)) {
-                ApplyRhofieldBoundary(lev, m_fields.get(FieldType::rho_cp,lev), PatchType::coarse);
-            }
             ApplyJfieldBoundary(lev,
                 m_fields.get(FieldType::current_cp, Direction{0}, lev),
                 m_fields.get(FieldType::current_cp, Direction{1}, lev),
@@ -906,6 +901,31 @@ void WarpX::SyncCurrentAndRho ()
                 PatchType::coarse);
         }
     }
+
+}
+
+void WarpX::FinalizeRho ()
+{
+    using warpx::fields::FieldType;
+
+    for (int lev = 0; lev <= finest_level; ++lev)
+    {
+        if (m_fields.has(FieldType::rho_fp, lev)) {
+            FinalizeRho(lev, m_fields.get(FieldType::rho_fp, lev), PatchType::fine);
+        }
+        if (lev > 0 && m_fields.has(FieldType::rho_cp, lev)) {
+            FinalizeRho(lev, m_fields.get(FieldType::rho_cp, lev), PatchType::coarse);
+        }
+    }
+}
+
+void WarpX::FinalizeRho (int lev, amrex::MultiFab* rho, PatchType patch_type)
+{
+    ApplyRhofieldBoundary(lev, rho, patch_type);
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
+    const int glev = (patch_type == PatchType::fine) ? lev : lev - 1;
+    ApplyInverseVolumeScalingToChargeDensity(rho, glev);
+#endif
 }
 
 void
@@ -952,8 +972,8 @@ WarpX::OneStep_JRhom (const amrex::Real cur_time)
         // Deposit rho at relative time -dt
         // (dt[0] denotes the time step on mesh refinement level 0)
         mypc->DepositCharge(rho_fp, -dt[0]);
-        // Filter, exchange boundary, and interpolate across levels
-        SyncRho();
+        SyncRho();     // Filter, exchange boundary, and interpolate across levels
+        FinalizeRho(); // Apply boundary conditions to rho, and then apply volume scaling
         // Forward FFT of rho
         PSATDForwardTransformRho(rho_fp_string, rho_cp_string, 0, rho_new);
     }
@@ -1029,8 +1049,8 @@ WarpX::OneStep_JRhom (const amrex::Real cur_time)
 
             // Deposit rho at relative time t_deposit_charge
             mypc->DepositCharge(rho_fp, t_deposit_charge);
-            // Filter, exchange boundary, and interpolate across levels
-            SyncRho();
+            SyncRho();     // Filter, exchange boundary, and interpolate across levels
+            FinalizeRho(); // Apply boundary conditions to rho, and then apply volume scaling
             // Forward FFT of rho
             const int rho_idx = (time_dependency_rho != TimeDependencyRho::Constant) ? rho_new : rho_mid;
             PSATDForwardTransformRho(rho_fp_string, rho_cp_string, 0, rho_idx);
@@ -1039,7 +1059,8 @@ WarpX::OneStep_JRhom (const amrex::Real cur_time)
             {
                 PSATDMoveRhoNewToRhoMid();
                 mypc->DepositCharge(rho_fp, t_deposit_charge + 0.5_rt*sub_dt);
-                SyncRho();
+                SyncRho();     // Filter, exchange boundary, and interpolate across levels
+                FinalizeRho(); // Apply boundary conditions to rho, and then apply volume scaling
                 PSATDForwardTransformRho(rho_fp_string, rho_cp_string, 0, rho_new);
             }
         }
@@ -1477,15 +1498,6 @@ WarpX::PushParticlesandDeposit (
                     m_fields.get(FieldType::current_buf, Direction{1}, lev),
                     m_fields.get(FieldType::current_buf, Direction{2}, lev),
                     lev-1);
-            }
-        }
-        // Unlike J, the charge density has no post-deposition accumulation step:
-        // rho is reset and fully deposited within this call on both the explicit
-        // and implicit paths, so it is scaled here in all cases.
-        if (m_fields.has(FieldType::rho_fp, lev)) {
-            ApplyInverseVolumeScalingToChargeDensity(m_fields.get(FieldType::rho_fp, lev), lev);
-            if (m_fields.has(FieldType::rho_buf, lev)) {
-                ApplyInverseVolumeScalingToChargeDensity(m_fields.get(FieldType::rho_buf, lev), lev-1);
             }
         }
 // #else
