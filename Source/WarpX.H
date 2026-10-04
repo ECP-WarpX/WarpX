@@ -957,10 +957,18 @@ public:
      * volume factors (conventions of the inverse-volume-scaling routines),
      * which conserves the volume integral exactly, leaves constants
      * untouched, has zero flux through the axis, and reduces to the
-     * standard bilinear filter where the volumes are uniform. */
-    /** \param is_volume_scaled Whether input contains physical density.
-     *  If false, input and output contain density times the radial volume factor.
-     *  \returns the guard-cell width over which dst holds filtered data. */
+     * standard bilinear filter where the volumes are uniform.
+     *
+     * \param[out] dst The destination MultiFab to store filtered data
+     * \param[in] src_mf The source MultiFab containing data to be filtered
+     * \param[in] lev The mesh refinement level
+     * \param[in] scomp The starting component index in the source MultiFab
+     * \param[in] dcomp The starting component index in the destination MultiFab
+     * \param[in] ncomp The number of components to filter
+     * \param[in] is_volume_scaled Whether input contains physical density.
+     *            If false, input and output contain density times the radial volume factor.
+     * \returns the guard-cell width over which dst holds filtered data.
+     */
     amrex::IntVect ApplyVolumeWeightedFilter (amrex::MultiFab& dst, const amrex::MultiFab& src_mf,
                                     int lev, int scomp, int dcomp, int ncomp,
                                     bool is_volume_scaled = true);
