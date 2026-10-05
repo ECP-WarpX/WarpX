@@ -384,6 +384,9 @@ void doGatherShapeN ([[maybe_unused]] const amrex::ParticleReal xp,
     constexpr int zdir = WARPX_ZINDEX;
 #endif
 
+    constexpr int NODE = amrex::IndexType::NODE;
+    [[maybe_unused]] constexpr int CELL = amrex::IndexType::CELL;
+
 #if !defined(WARPX_DIM_1D_Z)
     // x direction
     // Get particle position
@@ -398,7 +401,6 @@ void doGatherShapeN ([[maybe_unused]] const amrex::ParticleReal xp,
 #endif
 
 #if defined(WARPX_DIM_RSPHERE)
-    constexpr int NODE = amrex::IndexType::NODE;
     Compute_shape_factor<depos_order - galerkin_interpolation > const compute_shape_factor_galerkin;
     amrex::Real sx_node_galerkin[depos_order + 1 - galerkin_interpolation] = {0._rt};
     amrex::Real sx_cell_galerkin[depos_order + 1 - galerkin_interpolation] = {0._rt};
@@ -414,8 +416,6 @@ void doGatherShapeN ([[maybe_unused]] const amrex::ParticleReal xp,
     }
     const amrex::Real (&sx_ex)[depos_order + 1 - galerkin_interpolation] = ((ex_type[0] == NODE) ? sx_node_galerkin : sx_cell_galerkin);
 #else
-    constexpr int NODE = amrex::IndexType::NODE;
-    constexpr int CELL = amrex::IndexType::CELL;
 
     Compute_shape_factor< depos_order > const compute_shape_factor;
     Compute_shape_factor<depos_order - galerkin_interpolation > const compute_shape_factor_galerkin;
