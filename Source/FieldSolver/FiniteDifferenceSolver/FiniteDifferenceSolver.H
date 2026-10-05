@@ -441,23 +441,6 @@ class FiniteDifferenceSolver
         template<typename T_Algo>
         void CalculateCurrentAmpereSpherical (
             ablastr::fields::VectorField& Jfield,
-            ablastr::fields::VectorField const& Bfield,
-            int lev
-        );
-
-        template<typename T_Algo>
-        void ComputeCurlASpherical (
-            ablastr::fields::VectorField& Bfield,
-            ablastr::fields::VectorField const& Afield,
-            std::array< std::unique_ptr<amrex::iMultiFab>,3> const& eb_update_B,
-            int lev
-        );
-
-        template<typename T_Algo>
-        void ComputeCurlBSpherical (
-            ablastr::fields::VectorField& Efield,
-            ablastr::fields::VectorField const& Bfield,
-            std::array< std::unique_ptr<amrex::iMultiFab>,3> const& eb_update_E,
             int lev
         );
 
@@ -473,22 +456,6 @@ class FiniteDifferenceSolver
         void ComputeLaplacianSpherical (
             ablastr::fields::ScalarField& out_field,
             ablastr::fields::ScalarField const& in_field,
-            std::array< std::unique_ptr<amrex::iMultiFab>,3> const& eb_update,
-            int lev
-        );
-
-        template<typename T_Algo>
-        void ComputeVectorLaplacianSpherical (
-            ablastr::fields::VectorField& out_field,
-            ablastr::fields::VectorField const& in_field,
-            std::array< std::unique_ptr<amrex::iMultiFab>,3> const& eb_update,
-            int lev
-        );
-
-        template<typename T_Algo>
-        void ComputeVectorBiLaplacianSpherical (
-            ablastr::fields::VectorField& out_field,
-            ablastr::fields::VectorField const& in_field,
             std::array< std::unique_ptr<amrex::iMultiFab>,3> const& eb_update,
             int lev
         );
