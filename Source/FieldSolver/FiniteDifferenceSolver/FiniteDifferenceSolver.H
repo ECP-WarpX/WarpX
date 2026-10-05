@@ -406,16 +406,8 @@ class FiniteDifferenceSolver
 
 #elif defined(WARPX_DIM_RSPHERE)
         template< typename T_Algo >
-        void EvolveBSpherical (
-            ablastr::fields::VectorField const& Bfield,
-            ablastr::fields::VectorField const& Efield,
-            int lev,
-            amrex::Real dt );
-
-        template< typename T_Algo >
         void EvolveESpherical (
             ablastr::fields::VectorField const& Efield,
-            ablastr::fields::VectorField const& Bfield,
             ablastr::fields::VectorField const& Jfield,
             amrex::MultiFab const* Ffield,
             int lev,
