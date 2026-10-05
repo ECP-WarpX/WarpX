@@ -409,13 +409,13 @@ void doGatherShapeN ([[maybe_unused]] const amrex::ParticleReal xp,
 
     int j_node_v = 0;
     int j_cell_v = 0;
-    int const j_ex = ((ex_type[0] == NODE) ? j_node_v : j_cell_v);
     if (ex_type[0] == NODE) {
         j_node_v = compute_shape_factor_galerkin(sx_node_galerkin, x);
     }
     else {
         j_cell_v = compute_shape_factor_galerkin(sx_cell_galerkin, x - 0.5_rt);
     }
+    int const j_ex = ((ex_type[0] == NODE) ? j_node_v : j_cell_v);
     const amrex::Real (&sx_ex)[depos_order + 1 - galerkin_interpolation] = ((ex_type[0] == NODE) ? sx_node_galerkin : sx_cell_galerkin);
 #else
 
