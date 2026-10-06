@@ -199,7 +199,7 @@ WarpX::Evolve (int numsteps)
         // (electrostatic and theta-implicit EM), provided const_dt is not specified.
         if (m_dt_update_interval.contains(step+1) || (step == 0 && m_max_dt.has_value())) {
             SynchronizeVelocityWithPosition();
-            ApplyDtLimiters();
+            ApplyDtLimiters(step);
             if (verbose_step) {
                 std::ostringstream oss;
                 oss << "updating timestep to DT = " << std::scientific << std::setprecision(6) << dt[0];
@@ -214,11 +214,16 @@ WarpX::Evolve (int numsteps)
         }
 
         // If needed, deposit the initial ion charge and current densities that
-        // will be used to update the E-field in Ohm's law.
-        if (step == step_begin &&
-            electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC
+        // will be used to update the E-field in Ohm's law.  Evolve() can be
+        // called repeatedly by a Python co-simulation.  This initialization is
+        // once per WarpX instance, not once per Evolve() call: repeating it can
+        // re-add split external fields and, with the QDSMC electron equation,
+        // replace the evolved electron temperature by its initial closure.
+        if (electromagnetic_solver_id == ElectromagneticSolverAlgo::HybridPIC &&
+            !m_hybrid_pic_model->m_evolve_initialized
         ) {
             HybridPICInitializeRhoJandB();
+            m_hybrid_pic_model->m_evolve_initialized = true;
         }
 
         // multi-physics: field ionization
@@ -234,7 +239,7 @@ WarpX::Evolve (int numsteps)
         ExecutePythonCallback("particleinjection");
 
         // perform collisions and advance fields and particles by one time step
-        OneStep(cur_time, dt[0], step);
+        OneStep(cur_time, dt[0], step, verbose_step);
 
         // Resample particles
         // +1 is necessary here because value of step seen by user (first step is 1) is different than
@@ -304,7 +309,7 @@ WarpX::Evolve (int numsteps)
             // loop (i.e. immediately after a `Redistribute` and before particle
             // positions are next pushed) so that the particles do not deposit out of bounds
             // and so that the fields are at the correct time in the output.
-            ComputeSpaceChargeField( reset_E_field, reset_B_field );
+            ComputeSpaceChargeField(reset_E_field, reset_B_field, verbose_step);
             if (electrostatic_solver_id == ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic) {
                 // Call Magnetostatic Solver to solve for the vector potential A and compute the
                 // B field.  Time varying A contribution to E field is neglected.
@@ -405,7 +410,8 @@ WarpX::Evolve (int numsteps)
 void WarpX::OneStep (
     amrex::Real a_cur_time,
     amrex::Real a_dt,
-    int a_step
+    int a_step,
+    bool verbose_step
 )
 {
     ABLASTR_PROFILE("WarpX::OneStep()");
@@ -413,7 +419,7 @@ void WarpX::OneStep (
     // implicit solver
     if (m_implicit_solver) {
         // advance fields and particles by one time step
-        const int exit_status = m_implicit_solver->OneStep(a_cur_time, a_dt, a_step);
+        const int exit_status = m_implicit_solver->OneStep(a_cur_time, a_dt, a_step, verbose_step);
         if (exit_status < 0) {
             std::stringstream solverMsg;
             solverMsg << "ImplicitSolver::OneStep() failed at step = " << a_step

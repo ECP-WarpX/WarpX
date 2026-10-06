@@ -59,11 +59,10 @@ void SemiImplicitEM::PrintParameters () const
 
 int SemiImplicitEM::OneStep (amrex::Real  start_time,
                              amrex::Real  a_dt,
-                             int          a_step)
+                             int          a_step,
+                             bool verbose_step)
 {
     BL_PROFILE("SemiImplicitEM::OneStep()");
-
-    amrex::ignore_unused(a_step);
 
     // Set the member time step
     m_dt = a_dt;
@@ -90,7 +89,7 @@ int SemiImplicitEM::OneStep (amrex::Real  start_time,
 
     // Solve nonlinear system for Eg at t_{n+1/2}
     // Particles will be advanced to t_{n+1/2}
-    m_nlsolver->Solve(m_E, m_Eold, start_time, m_dt, a_step);
+    m_nlsolver->Solve(m_E, m_Eold, start_time, m_dt, a_step, verbose_step);
 
     const int exit_status = m_nlsolver->GetExitStatus();
     if (exit_status < 0) { return exit_status; }
@@ -102,7 +101,7 @@ int SemiImplicitEM::OneStep (amrex::Real  start_time,
     const amrex::Real new_time = start_time + m_dt;
 
     // Advance particles from time n+1/2 to time n+1
-    m_WarpX->FinishImplicitParticleUpdate(new_time);
+    FinishImplicitParticleUpdate(new_time, a_step);
 
     // Advance Eg from time n+1/2 to time n+1
     // Eg^{n+1} = 2.0*Eg^{n+1/2} - Eg^n
