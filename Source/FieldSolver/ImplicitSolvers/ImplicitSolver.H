@@ -185,6 +185,14 @@ public:
      */
     void FinishMassMatricesDeposition ();
 
+#if defined(WARPX_EM_TEY)
+    /**
+     * \brief Construct Szx from the negative transpose of unscaled deposited Sxz.
+     * Entries whose source row lies outside the local Sxz box are left unchanged.
+     */
+    void CopyMassMatrixXZToZX ();
+#endif
+
     /**
      * \brief Finish the implicit particle update after the converged time-centered solve
      */

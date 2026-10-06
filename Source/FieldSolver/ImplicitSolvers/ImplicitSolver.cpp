@@ -1376,6 +1376,70 @@ namespace
     }
 }
 
+#if defined(WARPX_EM_TEY)
+void ImplicitSolver::CopyMassMatrixXZToZX ()
+{
+    BL_PROFILE("ImplicitSolver::CopyMassMatrixXZToZX()");
+
+    using warpx::fields::FieldType;
+
+    amrex::GpuArray<int,3> ncomp = {1,1,1};
+    for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
+        // Off-diagonal containers have no components when only the PC is deposited.
+        if (m_ncomp_xz[dir] == 0) { return; }
+        AMREX_ALWAYS_ASSERT(m_ncomp_xz[dir] == m_ncomp_zx[dir]);
+        ncomp[dir] = m_ncomp_zx[dir];
+    }
+    const int ncomp_tot = ncomp[0]*ncomp[1]*ncomp[2];
+
+    for (int lev = 0; lev < m_num_amr_levels; ++lev) {
+        const auto SX = m_WarpX->m_fields.get_alldirs(FieldType::MassMatrices_X, lev);
+        const auto SZ = m_WarpX->m_fields.get_alldirs(FieldType::MassMatrices_Z, lev);
+        const amrex::IntVect x_nodal = SX[2]->ixType().toIntVect();
+        const amrex::IntVect z_nodal = SZ[0]->ixType().toIntVect();
+        amrex::GpuArray<int,3> offset_zx = {0,0,0};
+        for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
+            offset_zx[dir] = (z_nodal[dir] > x_nodal[dir])
+                ? ncomp[dir]/2 : (ncomp[dir]-1)/2;
+        }
+
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+        for (amrex::MFIter mfi(*SZ[0], false); mfi.isValid(); ++mfi) {
+            const auto Sxz = SX[2]->const_array(mfi);
+            const auto Szx = SZ[0]->array(mfi);
+            amrex::Box Sxz_box = amrex::convert(mfi.validbox(), SX[2]->ixType());
+            Sxz_box.grow(SX[2]->nGrowVect());
+            const amrex::Box Szx_box = mfi.fabbox();
+
+            // Szx(q,c) = -Sxz(q + c - offset_zx, reversed(c)).
+            // The shifted Ex column becomes the source Jx row. Reversing each
+            // stencil index gives its Ez column at the original destination Jz row,
+            // since offset_xz + offset_zx = ncomp - 1 in each direction.
+            // Distinct arrays and one write per entry make these iterations independent.
+            amrex::ParallelFor(Szx_box, ncomp_tot,
+                [=] AMREX_GPU_DEVICE (int i, int j, int k, int c)
+            {
+                amrex::ignore_unused(j, k);
+                const int c0 = c % ncomp[0];
+                const int c1 = (c / ncomp[0]) % ncomp[1];
+                const int c2 = c / (ncomp[0]*ncomp[1]);
+                const int ii = c0 - offset_zx[0];
+                [[maybe_unused]] const int jj = c1 - offset_zx[1];
+                [[maybe_unused]] const int kk = c2 - offset_zx[2];
+                const amrex::IntVect iv_dst(AMREX_D_DECL(i,j,k));
+                const amrex::IntVect iv_src = iv_dst
+                    + amrex::IntVect(AMREX_D_DECL(ii,jj,kk));
+                // As in FoldMassMatrix, skip entries with no local source row.
+                if (!Sxz_box.contains(iv_src)) { return; }
+                Szx(iv_dst, c) = -Sxz(iv_src, ncomp_tot - 1 - c);
+            });
+        }
+    }
+}
+#endif
+
 void ImplicitSolver::FinishMassMatricesDeposition ()
 {
     BL_PROFILE("ImplicitSolver::FinishMassMatricesDeposition()");
@@ -1456,6 +1520,10 @@ void ImplicitSolver::FinishMassMatricesDeposition ()
             });
         }
     }
+
+#if defined(WARPX_EM_TEY) && !defined(WARPX_DIM_3D)
+    CopyMassMatrixXZToZX();
+#endif
 }
 
 void ImplicitSolver::PrintBaseImplicitSolverParameters () const
