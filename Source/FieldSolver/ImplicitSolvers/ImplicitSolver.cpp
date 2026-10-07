@@ -792,14 +792,9 @@ void ImplicitSolver::InitializeMassMatrices ()
             m_use_mass_matrices_pc = false;
         }
         if (pc_type == PreconditionerType::pc_curl_curl_mlmg) {
-#if defined(WARPX_DIM_RSPHERE)
-            WARPX_ABORT_WITH_MESSAGE(
-                "curl_curl_mlmg is not a valid pc_type for RSPHERE geometry, which is electrostatic.");
-#else
             // This PC does not yet support off-diagonal mass matrix terms
             if (m_use_mass_matrices_pc) { m_mass_matrices_pc_width = 0; }
             else { m_mass_matrices_pc_width = -1; }
-#endif
         }
     }
 
