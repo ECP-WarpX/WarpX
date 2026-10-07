@@ -804,6 +804,11 @@ void doDirectSigmaDeposition (const GetParticlePosition<PIdx>& GetPosition,
 {
     using namespace amrex::literals;
 
+#if defined(WARPX_DIM_RSPHERE)
+    amrex::ignore_unused(Bx_ext, By_ext, Bz_ext,
+                         Bx_arr, By_arr, Bz_arr, Bx_type, By_type, Bz_type);
+#endif
+
     const amrex::Real invvol = dinv.x*dinv.y*dinv.z;
 
     enum exteb_flags : int { no_exteb, has_exteb };
@@ -824,6 +829,7 @@ void doDirectSigmaDeposition (const GetParticlePosition<PIdx>& GetPosition,
             GetPosition(ip, xp_nph, yp_nph, zp_nph);
 
 #if defined(WARPX_DIM_RSPHERE)
+            amrex::ignore_unused(exteb_control);
             amrex::ParticleReal Bxp = 0._prt;
             amrex::ParticleReal Byp = 0._prt;
             amrex::ParticleReal Bzp = 0._prt;
