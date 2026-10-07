@@ -823,6 +823,11 @@ void doDirectSigmaDeposition (const GetParticlePosition<PIdx>& GetPosition,
             amrex::ParticleReal xp_nph, yp_nph, zp_nph;
             GetPosition(ip, xp_nph, yp_nph, zp_nph);
 
+#if defined(WARPX_DIM_RSPHERE)
+            amrex::ParticleReal Bxp = 0._prt;
+            amrex::ParticleReal Byp = 0._prt;
+            amrex::ParticleReal Bzp = 0._prt;
+#else
             // Initialize B on particle to uniform external B
             amrex::ParticleReal Bxp = Bx_ext;
             amrex::ParticleReal Byp = By_ext;
@@ -844,6 +849,7 @@ void doDirectSigmaDeposition (const GetParticlePosition<PIdx>& GetPosition,
                                     Bx_arr, By_arr, Bz_arr,
                                     Bx_type, By_type, Bz_type,
                                     dinv, xyzmin, lo, /*n_rz_azimuthal_modes=*/0 );
+#endif
 
             // Compute inverse Lorentz factor, the average of gamma at time levels n and n+1
             const amrex::ParticleReal gaminv = GetImplicitGammaInverse(uxp_n[ip], uyp_n[ip], uzp_n[ip],
