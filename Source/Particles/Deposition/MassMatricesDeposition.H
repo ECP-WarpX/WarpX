@@ -940,19 +940,19 @@ void doVillasenorJandSigmaDepositionKernel ([[maybe_unused]] const amrex::Partic
                                             [[maybe_unused]] const amrex::ParticleReal zp_new,
                                             const amrex::Real wqx,
                                             [[maybe_unused]] const amrex::Real wqy,
-                                            const amrex::Real wqz,
+                                            [[maybe_unused]] const amrex::Real wqz,
                                             const amrex::ParticleReal fpxx,
                                             [[maybe_unused]] const amrex::ParticleReal fpxy,
                                             [[maybe_unused]] const amrex::ParticleReal fpxz,
                                             [[maybe_unused]] const amrex::ParticleReal fpyx,
-                                            const amrex::ParticleReal fpyy,
+                                            [[maybe_unused]] const amrex::ParticleReal fpyy,
                                             [[maybe_unused]] const amrex::ParticleReal fpyz,
                                             [[maybe_unused]] const amrex::ParticleReal fpzx,
                                             [[maybe_unused]] const amrex::ParticleReal fpzy,
-                                            const amrex::ParticleReal fpzz,
+                                            [[maybe_unused]] const amrex::ParticleReal fpzz,
                                             amrex::Array4<amrex::Real> const& Jx_arr,
                                             [[maybe_unused]] amrex::Array4<amrex::Real> const& Jy_arr,
-                                            amrex::Array4<amrex::Real> const& Jz_arr,
+                                            [[maybe_unused]] amrex::Array4<amrex::Real> const& Jz_arr,
                                             [[maybe_unused]] int max_grid_crossings,
                                             [[maybe_unused]] int* error_count_x,
                                             [[maybe_unused]] int* error_count_y,
@@ -961,11 +961,11 @@ void doVillasenorJandSigmaDepositionKernel ([[maybe_unused]] const amrex::Partic
                                             [[maybe_unused]] amrex::Array4<amrex::Real> const& Sxy_arr,
                                             [[maybe_unused]] amrex::Array4<amrex::Real> const& Sxz_arr,
                                             [[maybe_unused]] amrex::Array4<amrex::Real> const& Syx_arr,
-                                            amrex::Array4<amrex::Real> const& Syy_arr,
+                                            [[maybe_unused]] amrex::Array4<amrex::Real> const& Syy_arr,
                                             [[maybe_unused]] amrex::Array4<amrex::Real> const& Syz_arr,
                                             [[maybe_unused]] amrex::Array4<amrex::Real> const& Szx_arr,
                                             [[maybe_unused]] amrex::Array4<amrex::Real> const& Szy_arr,
-                                            amrex::Array4<amrex::Real> const& Szz_arr,
+                                            [[maybe_unused]] amrex::Array4<amrex::Real> const& Szz_arr,
                                             const amrex::XDim3& dinv,
                                             const amrex::XDim3& xyzmin,
                                             const amrex::GpuArray<amrex::GpuArray<double,2>, AMREX_SPACEDIM> & domain_double,
@@ -1660,16 +1660,20 @@ void doVillasenorJandSigmaDepositionKernel ([[maybe_unused]] const amrex::Partic
 
     // loop over the number of segments and deposit
     const Compute_shape_factor< depos_order-1 > compute_shape_factor_cell;
+#if defined(WARPX_DIM_RCYLINDER)
     const Compute_shape_factor_pair< depos_order > compute_shape_factors_node;
+#endif
     double dxp_seg;
     double x0_new;
     double x0_old = x_old;
 
     // Save the start index and interpolation weights for each segment
     int i0_cell[max_num_segments];
-    int i0_node[max_num_segments];
     amrex::Real weight_cell[max_num_segments][depos_order];
+#if defined(WARPX_DIM_RCYLINDER)
+    int i0_node[max_num_segments];
     amrex::Real weight_node[max_num_segments][depos_order+1];
+#endif
 
     const auto i_mid = static_cast<int>(0.5*(x_new+x_old)-shift);
     int SegNum[max_num_segments];
@@ -1712,6 +1716,7 @@ void doVillasenorJandSigmaDepositionKernel ([[maybe_unused]] const amrex::Partic
             }
         }
 
+#if defined(WARPX_DIM_RCYLINDER)
         // Compute node-based weights using the old and new segment positions
         // Keep these double to avoid bug in single precision
         double sx_old_node[depos_order+1] = {0.};
@@ -1733,7 +1738,7 @@ void doVillasenorJandSigmaDepositionKernel ([[maybe_unused]] const amrex::Partic
                 amrex::Gpu::Atomic::AddNoRet( &Szz_arr(i_J, 0, 0, 0), fpzz*weight);
             }
         }
-
+#endif
         // deposit Jx and Sxx for this segment
         for (int i = 0; i <= depos_order - 1; i++) {
             const amrex::Real weight = sx_cell[i]*seg_factor;
@@ -1757,7 +1762,9 @@ void doVillasenorJandSigmaDepositionKernel ([[maybe_unused]] const amrex::Partic
     if constexpr (full_mass_matrices) {
 
     const int width_xx = depos_order - 1 + max_grid_crossings;
+#if defined(WARPX_DIM_RCYLINDER)
     const int width_yy = depos_order + max_grid_crossings;
+#endif
 
     // Loop over segments and deposit full mass matrices
     for (int ns = 0; ns < num_segments; ns++) {
@@ -1775,16 +1782,19 @@ void doVillasenorJandSigmaDepositionKernel ([[maybe_unused]] const amrex::Partic
                     const amrex::Real weight_E = weight_cell[ms][iE];
                     amrex::Gpu::Atomic::AddNoRet(&Sxx_arr(i_J, 0, 0, comp_xx), fpxx*weight_J*weight_E);
                 }
+#if defined(WARPX_DIM_RCYLINDER)
                 for (int iE = 0; iE <= depos_order; iE++) {
                     const amrex::Real weight_E = weight_node[ms][iE];
                     const int comp_xy = depos_order - 1 - i + iE + SegShift;
                     amrex::Gpu::Atomic::AddNoRet(&Sxz_arr(i_J, 0, 0, comp_xy), fpxz*weight_J*weight_E);
                     amrex::Gpu::Atomic::AddNoRet(&Sxy_arr(i_J, 0, 0, comp_xy), fpxy*weight_J*weight_E);
                 }
+#endif
             }
 
         }
 
+#if defined(WARPX_DIM_RCYLINDER)
         // Deposit Syx, Syy, Syz, Szx, Szy, and Szz for this segment
         for (int i = 0; i <= depos_order; i++) {
 
@@ -1811,7 +1821,7 @@ void doVillasenorJandSigmaDepositionKernel ([[maybe_unused]] const amrex::Partic
             }
 
         }
-
+#endif
     }
 
     }
