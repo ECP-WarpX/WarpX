@@ -58,8 +58,8 @@ void doDepositionShapeNKernel([[maybe_unused]] const amrex::ParticleReal xp,
                               [[maybe_unused]] amrex::Array4<amrex::Real> const& jy_arr,
                               [[maybe_unused]] amrex::Array4<amrex::Real> const& jz_arr,
                               amrex::IntVect const& jx_type,
-                              amrex::IntVect const& jy_type,
-                              amrex::IntVect const& jz_type,
+                              [[maybe_unused]] amrex::IntVect const& jy_type,
+                              [[maybe_unused]] amrex::IntVect const& jz_type,
                               const amrex::Real relative_time,
                               const amrex::XDim3 & dinv,
                               const amrex::XDim3 & xyzmin,
@@ -128,6 +128,20 @@ void doDepositionShapeNKernel([[maybe_unused]] const amrex::ParticleReal xp,
     double sx_cell[depos_order + 1] = {0.};
     int j_node = 0;
     int j_cell = 0;
+#if defined(WARPX_DIM_RSPHERE)
+    if (jx_type[0] == NODE) {
+        j_node = compute_shape_factor(sx_node, xmid);
+    }
+    if (jx_type[0] == CELL) {
+        j_cell = compute_shape_factor(sx_cell, xmid - 0.5);
+    }
+    amrex::Real sx_jx[depos_order + 1] = {0._rt};
+    for (int ix=0; ix<=depos_order; ix++)
+    {
+        sx_jx[ix] = ((jx_type[0] == NODE) ? amrex::Real(sx_node[ix]) : amrex::Real(sx_cell[ix]));
+    }
+    int const j_jx = ((jx_type[0] == NODE) ? j_node : j_cell);
+#else
     if (jx_type[0] == NODE || jy_type[0] == NODE || jz_type[0] == NODE) {
         j_node = compute_shape_factor(sx_node, xmid);
     }
@@ -146,10 +160,10 @@ void doDepositionShapeNKernel([[maybe_unused]] const amrex::ParticleReal xp,
     }
 
     int const j_jx = ((jx_type[0] == NODE) ? j_node : j_cell);
-#if !defined(WARPX_DIM_RSPHERE)
     int const j_jy = ((jy_type[0] == NODE) ? j_node : j_cell);
     int const j_jz = ((jz_type[0] == NODE) ? j_node : j_cell);
 #endif
+
 #endif //!defined(WARPX_DIM_1D_Z)
 
 #if defined(WARPX_DIM_3D)
