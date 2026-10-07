@@ -882,12 +882,10 @@ void ImplicitSolver::InitializeMassMatrices ()
             m_ncomp_zx[0] = 0 + 2*shape + 2*max_grid_crossings;
             m_ncomp_zy[0] = 0 + 2*shape + 2*max_grid_crossings;
             m_ncomp_zz[0] = 1 + 2*(shape-1) + 2*max_grid_crossings;
-#elif defined(WARPX_DIM_RSPHERE)
+#elif defined(WARPX_DIM_RSPHERE) || defined(WARPX_DIM_RCYLINDER)
             // x is centered, y and z are nodal
             m_ncomp_xx[0] = 1 + 2*(shape-1) + 2*max_grid_crossings;
-#elif defined(WARPX_DIM_RCYLINDER)
-            // x is centered, y and z are nodal
-            m_ncomp_xx[0] = 1 + 2*(shape-1) + 2*max_grid_crossings;
+#if defined(WARPX_DIM_RCYLINDER)
             m_ncomp_xy[0] = 0 + 2*shape + 2*max_grid_crossings;
             m_ncomp_xz[0] = 0 + 2*shape + 2*max_grid_crossings;
             m_ncomp_yx[0] = 0 + 2*shape + 2*max_grid_crossings;
@@ -896,6 +894,7 @@ void ImplicitSolver::InitializeMassMatrices ()
             m_ncomp_zx[0] = 0 + 2*shape + 2*max_grid_crossings;
             m_ncomp_zy[0] = 1 + 2*shape + 2*max_grid_crossings;
             m_ncomp_zz[0] = 1 + 2*shape + 2*max_grid_crossings;
+#endif
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
             // dir = 0: x is centered, y and z are nodal
             m_ncomp_xx[0] = 1 + 2*(shape-1) + 2*max_grid_crossings;

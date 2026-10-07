@@ -376,8 +376,8 @@ void doGatherShapeN ([[maybe_unused]] const amrex::ParticleReal xp,
     using namespace amrex;
 
 #if defined(WARPX_DIM_RSPHERE)
-    amrex::ignore_unused(Bxp, Byp, Bzp, ey_arr, ez_arr, bx_arr, by_arr, bz_arr);
-    amrex::ignore_unused(ey_type, ez_type, bx_type, by_type, bz_type);
+    amrex::ignore_unused(Bxp, Byp, Bzp, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
+                         ey_type, ez_type, bx_type, by_type, bz_type);
 #endif
 
 #ifdef WARPX_ZINDEX
@@ -385,9 +385,11 @@ void doGatherShapeN ([[maybe_unused]] const amrex::ParticleReal xp,
 #endif
 
     constexpr int NODE = amrex::IndexType::NODE;
-    [[maybe_unused]] constexpr int CELL = amrex::IndexType::CELL;
+#if !defined(WARPX_DIM_RSPHERE)
+    constexpr int CELL = amrex::IndexType::CELL;
 
-    [[maybe_unused]] Compute_shape_factor< depos_order > const compute_shape_factor;
+    Compute_shape_factor< depos_order > const compute_shape_factor;
+#endif
     Compute_shape_factor<depos_order - galerkin_interpolation > const compute_shape_factor_galerkin;
 
 #if !defined(WARPX_DIM_1D_Z)
@@ -1400,8 +1402,8 @@ void doGatherPicnicShapeN (
     using namespace amrex;
 
 #if defined(WARPX_DIM_RSPHERE)
-    ignore_unused(n_rz_azimuthal_modes, Ey_arr, Ez_arr, Bx_arr, By_arr, Bz_arr);
-    ignore_unused(Eyp, Ezp, Bxp, Byp, Bzp, Bx_type, By_type, Bz_type);
+    ignore_unused(n_rz_azimuthal_modes, Ey_arr, Ez_arr, Bx_arr, By_arr, Bz_arr,
+                  Eyp, Ezp, Bxp, Byp, Bzp, Bx_type, By_type, Bz_type);
 #elif !defined(WARPX_DIM_RZ)
     ignore_unused(n_rz_azimuthal_modes);
 #endif
