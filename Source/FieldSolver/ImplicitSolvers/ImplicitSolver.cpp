@@ -840,7 +840,6 @@ void ImplicitSolver::InitializeMassMatrices ()
                 m_ncomp_zy[dir] = 1 + 2*shape + ( (Jz_nodal[dir] + Jy_nodal[dir]) % 2 );
 #endif
                 Nc_tot_xx *= m_ncomp_xx[dir];
-#if !defined(WARPX_DIM_RSPHERE)
                 Nc_tot_xy *= m_ncomp_xy[dir];
                 Nc_tot_xz *= m_ncomp_xz[dir];
                 Nc_tot_yx *= m_ncomp_yx[dir];
@@ -849,7 +848,6 @@ void ImplicitSolver::InitializeMassMatrices ()
                 Nc_tot_zx *= m_ncomp_zx[dir];
                 Nc_tot_zy *= m_ncomp_zy[dir];
                 Nc_tot_zz *= m_ncomp_zz[dir];
-#endif
             }
         }
         else if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Villasenor) {
