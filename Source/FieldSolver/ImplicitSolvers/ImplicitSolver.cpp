@@ -989,8 +989,8 @@ void ImplicitSolver::InitializeMassMatrices ()
         if (m_use_mass_matrices_pc) {
             int ncomp_tot_pc_xx = 1;
 #if defined(WARPX_DIM_RSPHERE)
-            int ncomp_tot_pc_yy = 0;
-            int ncomp_tot_pc_zz = 0;
+            const int ncomp_tot_pc_yy = 0;
+            const int ncomp_tot_pc_zz = 0;
 #else
             int ncomp_tot_pc_yy = 1;
             int ncomp_tot_pc_zz = 1;
