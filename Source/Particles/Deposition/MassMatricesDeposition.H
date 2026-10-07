@@ -152,6 +152,9 @@ void setMassMatricesKernels (const amrex::ParticleReal qs,
     const amrex::ParticleReal cpst = cosph*sinth;
     const amrex::ParticleReal fprr = (cpct*cpct + cpst*cpst + sinph*sinph)*fpii;
 
+    // fptt and fppp are not computed because Eth and Eph are not advanced
+    // in 1D RSPHERE geometry, which is electrostatic by symmetry.
+
     // Returned values are named for Cartesian, but they are indeed mapped
     fpxx = fprr;
     fpxy = 0._rt;
