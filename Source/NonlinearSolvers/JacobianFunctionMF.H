@@ -166,7 +166,7 @@ void JacobianFunctionMF<T,Ops>::define ( const T& a_U,
 #if defined(WARPX_DIM_RSPHERE)
             WARPX_ABORT_WITH_MESSAGE(
                 "curl_curl_mlmg is not a valid pc_type for RSPHERE geometry, which is electrostatic.");
-#else
+#endif
             m_preCond = std::make_unique<CurlCurlMLMGPC<T,Ops>>();
         } else if (m_pc_type == PreconditionerType::pc_jacobi) {
             m_preCond = std::make_unique<JacobiPC<T,Ops>>();
