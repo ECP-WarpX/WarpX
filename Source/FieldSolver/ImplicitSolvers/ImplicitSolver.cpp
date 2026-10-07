@@ -1001,7 +1001,7 @@ void ImplicitSolver::InitializeMassMatrices ()
             for (int dir=0; dir<AMREX_SPACEDIM; dir++) {
                 m_ncomp_pc_xx[dir] = std::min(m_ncomp_xx[dir],ncomp_dir_pc);
                 ncomp_tot_pc_xx *= m_ncomp_pc_xx[dir];
-#if defined(WARPX_DIM_RSPHERE)
+#if !defined(WARPX_DIM_RSPHERE)
                 m_ncomp_pc_yy[dir] = std::min(m_ncomp_yy[dir],ncomp_dir_pc);
                 m_ncomp_pc_zz[dir] = std::min(m_ncomp_zz[dir],ncomp_dir_pc);
                 ncomp_tot_pc_yy *= m_ncomp_pc_yy[dir];
