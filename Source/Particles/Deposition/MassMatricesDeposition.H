@@ -155,6 +155,9 @@ void setMassMatricesKernels (const amrex::ParticleReal qs,
     // fptt and fppp are not computed because Eth and Eph are not advanced
     // in 1D RSPHERE geometry, which is electrostatic by symmetry.
 
+    // Caution: Dont simplify fprr above because sinph^2 + cosph^2 <= 1 when
+    // using the Villasenor deposition.
+
     // Returned values are named for Cartesian, but they are indeed mapped
     fpxx = fprr;
     fpxy = 0._rt;
