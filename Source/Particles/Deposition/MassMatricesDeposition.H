@@ -483,13 +483,8 @@ void doDirectJandSigmaDepositionKernel ([[maybe_unused]] const amrex::ParticleRe
         // Deposit mass matrices
         if constexpr (full_mass_matrices) {
             for (int aa = 0; aa <= depos_order; aa++) {
-
-                int col_base = depos_order + aa - ix;
-                int Nc;
-
-                // Reduced deposit for diagonal mass matrices
-                if (aa <= ix) {
-                    Nc = col_base;
+                if (aa <= ix) { // Reduced deposit for diagonal mass matrices
+                    const int Nc = depos_order + aa - ix;
                     amrex::Gpu::Atomic::AddNoRet(&Sxx_arr(lo.x+j_jx+ix, 0, 0, Nc), sx_jx[ix]*sx_jx[aa]*fpxx);
                 }
             }
