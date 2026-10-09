@@ -1,33 +1,33 @@
 {
   "electrons": {
-    "particle_momentum_x": 6.393189182038298e-18,
-    "particle_momentum_y": 6.391569850932609e-18,
-    "particle_momentum_z": 6.392408273296815e-18,
-    "particle_position_x": 0.013931435841850647,
-    "particle_position_y": 0.013931187312061636,
-    "particle_position_z": 0.013930051545275355,
-    "particle_weight": 2344809.3823441756
+    "particle_momentum_x": 7.99203648159959e-19,
+    "particle_momentum_y": 7.985045605106359e-19,
+    "particle_momentum_z": 7.988256866256834e-19,
+    "particle_position_x": 0.003482125772493579,
+    "particle_position_y": 0.003482950825094566,
+    "particle_position_z": 0.0034839300106515843,
+    "particle_weight": 18758475.058753405
   },
   "lev=0": {
-    "Bx": 24408.900894588674,
-    "By": 24457.072036917325,
-    "Bz": 23900.50248561972,
-    "Ex": 50251931176192.08,
-    "Ey": 51052978503015.31,
-    "Ez": 53191180606328.6,
-    "divE": 1.1617175563892199e+23,
-    "jx": 2.17470473536746e+19,
-    "jy": 2.158340723081744e+19,
-    "jz": 2.2090987718602023e+19,
-    "rho": 1154128804987.0972
+    "Bx": 10317.459133636847,
+    "By": 9005.555490936258,
+    "Bz": 9931.44076506184,
+    "Ex": 6302140390246.518,
+    "Ey": 5871056779967.801,
+    "Ez": 6758825299425.932,
+    "divE": 3.360612438529881e+21,
+    "jx": 2.9327350667951585e+18,
+    "jy": 2.947758974540593e+18,
+    "jz": 2.968490129125939e+18,
+    "rho": 43537568976.0462
   },
   "protons": {
-    "particle_momentum_x": 2.737482293357492e-16,
-    "particle_momentum_y": 2.7372247721159545e-16,
-    "particle_momentum_z": 2.7390978795293256e-16,
-    "particle_position_x": 0.013930575859698289,
-    "particle_position_y": 0.013930579378584409,
-    "particle_position_z": 0.01393057870071615,
-    "particle_weight": 2344809.3823441756
+    "particle_momentum_x": 3.432337621876211e-17,
+    "particle_momentum_y": 3.424792792405588e-17,
+    "particle_momentum_z": 3.423888729575654e-17,
+    "particle_position_x": 0.0034826596606598115,
+    "particle_position_y": 0.0034826310870714745,
+    "particle_position_z": 0.003482652610730529,
+    "particle_weight": 18758475.058753405
   }
 }
