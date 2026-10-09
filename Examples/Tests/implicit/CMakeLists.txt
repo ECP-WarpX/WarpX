@@ -191,7 +191,7 @@ if(AMReX_PETSC)
         3  # dims
         2  # nprocs
         inputs_test_3d_theta_implicit_jfnk_pcwidth  # inputs
-        "analysis_implicit_jfnk.py diags/diag1000020"  # analysis
+        "analysis_implicit_jfnk.py diags/diag1000020 --gmres-iters-tol 5 --newton-iters-tol 3"  # analysis
         "analysis_default_regression.py --path diags/diag1000020"  # checksum
         OFF  # dependency
     )

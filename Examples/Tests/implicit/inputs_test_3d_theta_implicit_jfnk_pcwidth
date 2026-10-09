@@ -2,6 +2,7 @@
 FILE = inputs_base_implicit_jfnk
 
 # test input parameters
+my_constants.dt = 1.0/wpe # simulation time step [s]
 my_constants.nppcx = 8  # number of particles/cell in x
 my_constants.nppcy = 8  # number of particles/cell in y
 my_constants.nppcz = 8  # number of particles/cell in z
@@ -9,10 +10,10 @@ my_constants.nppcz = 8  # number of particles/cell in z
 warpx.numprocs = 2 1 1
 
 max_step = 20
-amr.n_cell = 16 16 16
+amr.n_cell = 8 8 8
 geometry.dims = 3
 geometry.prob_lo = 0.0 0.0 0.0
-geometry.prob_hi = 2.5*de0 2.5*de0 2.5*de0
+geometry.prob_hi = 5.0*de0 5.0*de0 5.0*de0
 
 boundary.field_lo = periodic periodic periodic
 boundary.field_hi = periodic periodic periodic
@@ -26,8 +27,7 @@ jacobian.pc_type = pc_petsc
 pc_petsc.verbose = true
 pc_petsc.type = asm
 pc_petsc.asm_overlap = 2
-pc_petsc.sub_type = ilu
-pc_petsc.ilu_factor_levels = 2
+pc_petsc.sub_type = lu
 
 algo.current_deposition = "direct"
 
