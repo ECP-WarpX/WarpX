@@ -1200,7 +1200,9 @@ WarpXParticleContainer::DepositMassMatrices (WarpXParIter& pti, const RealVector
     auto& uyp_n = pti.GetAttribs("uy_n");
     auto& uzp_n = pti.GetAttribs("uz_n");
 
-    const bool full_mass_matrices = (Szx->nComp() > 0);
+    // This flag controls whether the full set of mass matrices with the full stencil width
+    // are deposited, or a reduce subset that is only used for the PC.
+    const bool full_mass_matrices = implicit_options.use_mass_matrices_jacobian;
 
     const int* nsuborbits = (HasiAttrib("nsuborbits") ? pti.GetiAttribs("nsuborbits").dataPtr() + offset : nullptr);
 
