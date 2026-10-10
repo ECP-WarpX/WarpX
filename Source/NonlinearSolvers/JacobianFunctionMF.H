@@ -170,6 +170,8 @@ void JacobianFunctionMF<T,Ops>::define ( const T& a_U,
             m_preCond = std::make_unique<JacobiPC<T,Ops>>();
         } else if (m_pc_type == PreconditionerType::pc_chebyshev) {
             m_preCond = std::make_unique<ChebyshevPC<T,Ops>>();
+        } else if (m_pc_type == PreconditionerType::pc_algmg) {
+            m_preCond = std::make_unique<AlgMGPC<T,Ops>>();
         } else {
             m_preCond = std::make_unique<ExternLibPC<T,Ops>>();
             m_preCond->setName(amrex::getEnumNameString(m_pc_type));
