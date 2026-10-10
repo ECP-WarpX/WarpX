@@ -2042,7 +2042,7 @@ void VillasenorDepositionShapeNKernel ([[maybe_unused]] amrex::ParticleReal cons
         const int j0_node = compute_shape_factors_node( sy_old_node, sy_new_node, y0_old, y0_new );
         const int k0_node = compute_shape_factors_node( sz_old_node, sz_new_node, z0_old, z0_new );
 
-        if constexpr ((components & JComponents::x) != 0) {
+        if constexpr (JComponents::has(components, JComponents::x)) {
             // deposit Jx for this segment
             amrex::Real this_Jx;
             for (int i=0; i<=depos_order-1; i++) {
@@ -2058,7 +2058,7 @@ void VillasenorDepositionShapeNKernel ([[maybe_unused]] amrex::ParticleReal cons
             }
         }
 
-        if constexpr ((components & JComponents::y) != 0) {
+        if constexpr (JComponents::has(components, JComponents::y)) {
             // deposit Jy for this segment
             amrex::Real this_Jy;
             for (int i=0; i<=depos_order; i++) {
@@ -2074,7 +2074,7 @@ void VillasenorDepositionShapeNKernel ([[maybe_unused]] amrex::ParticleReal cons
             }
         }
 
-        if constexpr ((components & JComponents::z) != 0) {
+        if constexpr (JComponents::has(components, JComponents::z)) {
             // deposit Jz for this segment
             amrex::Real this_Jz;
             for (int i=0; i<=depos_order; i++) {
@@ -2195,7 +2195,7 @@ void VillasenorDepositionShapeNKernel ([[maybe_unused]] amrex::ParticleReal cons
         const int i0_node = compute_shape_factors_node( sx_old_node, sx_new_node, x0_old, x0_new );
         const int k0_node = compute_shape_factors_node( sz_old_node, sz_new_node, z0_old, z0_new );
 
-        if constexpr ((components & JComponents::x) != 0) {
+        if constexpr (JComponents::has(components, JComponents::x)) {
             // deposit Jx for this segment
             amrex::Real this_Jx;
             for (int i=0; i<=depos_order-1; i++) {
@@ -2216,7 +2216,7 @@ void VillasenorDepositionShapeNKernel ([[maybe_unused]] amrex::ParticleReal cons
             }
         }
 
-        if constexpr ((components & JComponents::y) != 0) {
+        if constexpr (JComponents::has(components, JComponents::y)) {
             // deposit out-of-plane Jy for this segment
             const auto seg_factor_y = std::min(seg_factor_x,seg_factor_z);
             amrex::Real this_Jy;
@@ -2242,7 +2242,7 @@ void VillasenorDepositionShapeNKernel ([[maybe_unused]] amrex::ParticleReal cons
             }
         }
 
-        if constexpr ((components & JComponents::z) != 0) {
+        if constexpr (JComponents::has(components, JComponents::z)) {
             // deposit Jz for this segment
             amrex::Real this_Jz;
             for (int i=0; i<=depos_order; i++) {
@@ -2329,15 +2329,15 @@ void VillasenorDepositionShapeNKernel ([[maybe_unused]] amrex::ParticleReal cons
         // deposit out-of-plane Jx and Jy for this segment
         for (int k=0; k<=depos_order; k++) {
             const amrex::Real weight = 0.5_rt*(sz_old_node[k] + sz_new_node[k])*seg_factor;
-            if constexpr ((components & JComponents::x) != 0) {
+            if constexpr (JComponents::has(components, JComponents::x)) {
                 amrex::Gpu::Atomic::AddNoRet( &Jx_arr(lo.x+k0_node+k, 0, 0), wqx*weight);
             }
-            if constexpr ((components & JComponents::y) != 0) {
+            if constexpr (JComponents::has(components, JComponents::y)) {
                 amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+k0_node+k, 0, 0), wqy*weight);
             }
         }
 
-        if constexpr ((components & JComponents::z) != 0) {
+        if constexpr (JComponents::has(components, JComponents::z)) {
             // deposit Jz for this segment
             for (int k=0; k<=depos_order-1; k++) {
                 const amrex::Real this_Jz = wqz*sz_cell[k]*seg_factor;
@@ -2410,15 +2410,15 @@ void VillasenorDepositionShapeNKernel ([[maybe_unused]] amrex::ParticleReal cons
         // deposit out-of-plane Jy and Jz for this segment
         for (int i=0; i<=depos_order; i++) {
             const amrex::Real weight = 0.5_rt*(sx_old_node[i] + sx_new_node[i])*seg_factor;
-            if constexpr ((components & JComponents::y) != 0) {
+            if constexpr (JComponents::has(components, JComponents::y)) {
                 amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+i0_node+i, 0, 0), wqy*weight);
             }
-            if constexpr ((components & JComponents::z) != 0) {
+            if constexpr (JComponents::has(components, JComponents::z)) {
                 amrex::Gpu::Atomic::AddNoRet( &Jz_arr(lo.x+i0_node+i, 0, 0), wqz*weight);
             }
         }
 
-        if constexpr ((components & JComponents::x) != 0) {
+        if constexpr (JComponents::has(components, JComponents::x)) {
             // deposit Jx for this segment
             for (int i=0; i<=depos_order-1; i++) {
                 const amrex::Real this_Jx = wqx*sx_cell[i]*seg_factor;
