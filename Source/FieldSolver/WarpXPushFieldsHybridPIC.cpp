@@ -399,8 +399,9 @@ void WarpX::HybridPICDepositRhoAndJ ()
     // filter (if used), exchange guard cells, interpolate across MR levels
     SyncCurrentAndRho();
 
-    // Apply BCs to rho and then apply volume scaling
+    // Apply boundary conditions and finalize rho volume scaling.
     FinalizeRho();
+    FinalizeJ();
 
     // SyncCurrent does not include a call to FillBoundary, but it is needed
     // for the hybrid-PIC solver since current values are interpolated to
