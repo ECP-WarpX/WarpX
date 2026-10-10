@@ -1495,7 +1495,7 @@ void WarpXParticleContainer::DepositCurrentOnLevel (
 ) {
     auto& warpx = WarpX::GetInstance();
     // allocate temporary multifab to deposit current density into
-    ablastr::fields::MultiLevelVectorField current {
+    const ablastr::fields::MultiLevelVectorField current {
         warpx.m_fields.get_alldirs(mf_name, lev)
     };
 
