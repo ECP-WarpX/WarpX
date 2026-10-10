@@ -2931,202 +2931,202 @@ void doVayDepositionShapeNKernel ([[maybe_unused]] const long ip,
 
     const amrex::Real invvol = dinv.x*dinv.y*dinv.z;
 
-    // Inverse of Lorentz factor gamma
-    const amrex::Real invgam = 1._rt / std::sqrt(1._rt + uxp[ip] * uxp[ip] * PhysConst::inv_c2
-                                                       + uyp[ip] * uyp[ip] * PhysConst::inv_c2
-                                                       + uzp[ip] * uzp[ip] * PhysConst::inv_c2);
-    // Product of particle charges and weights
-    amrex::Real wq = q * wp[ip];
-    if (do_ionization) { wq *= ion_lev[ip]; }
+        // Inverse of Lorentz factor gamma
+        const amrex::Real invgam = 1._rt / std::sqrt(1._rt + uxp[ip] * uxp[ip] * PhysConst::inv_c2
+                                                           + uyp[ip] * uyp[ip] * PhysConst::inv_c2
+                                                           + uzp[ip] * uzp[ip] * PhysConst::inv_c2);
+        // Product of particle charges and weights
+        amrex::Real wq = q * wp[ip];
+        if (do_ionization) { wq *= ion_lev[ip]; }
 
-    // Current particle positions (in physical units)
-    amrex::ParticleReal xp, yp, zp;
-    GetPosition(ip, xp, yp, zp);
+        // Current particle positions (in physical units)
+        amrex::ParticleReal xp, yp, zp;
+        GetPosition(ip, xp, yp, zp);
 
-    // Particle velocities
-    const amrex::Real vx = uxp[ip] * invgam;
-    const amrex::Real vy = uyp[ip] * invgam;
-    const amrex::Real vz = uzp[ip] * invgam;
+        // Particle velocities
+        const amrex::Real vx = uxp[ip] * invgam;
+        const amrex::Real vy = uyp[ip] * invgam;
+        const amrex::Real vz = uzp[ip] * invgam;
 
-    // Modify the particle position to match the time of the deposition
-    xp += relative_time * vx;
-    yp += relative_time * vy;
-    zp += relative_time * vz;
+        // Modify the particle position to match the time of the deposition
+        xp += relative_time * vx;
+        yp += relative_time * vy;
+        zp += relative_time * vz;
 
-    // Current and old particle positions in grid units
-    // Keep these double to avoid bug in single precision.
-    double const x_new = (xp - xyzmin.x + 0.5_rt*dt*vx) * dinv.x;
-    double const x_old = (xp - xyzmin.x - 0.5_rt*dt*vx) * dinv.x;
+        // Current and old particle positions in grid units
+        // Keep these double to avoid bug in single precision.
+        double const x_new = (xp - xyzmin.x + 0.5_rt*dt*vx) * dinv.x;
+        double const x_old = (xp - xyzmin.x - 0.5_rt*dt*vx) * dinv.x;
 #if defined(WARPX_DIM_3D)
-    // Keep these double to avoid bug in single precision.
-    double const y_new = (yp - xyzmin.y + 0.5_rt*dt*vy) * dinv.y;
-    double const y_old = (yp - xyzmin.y - 0.5_rt*dt*vy) * dinv.y;
+        // Keep these double to avoid bug in single precision.
+        double const y_new = (yp - xyzmin.y + 0.5_rt*dt*vy) * dinv.y;
+        double const y_old = (yp - xyzmin.y - 0.5_rt*dt*vy) * dinv.y;
 #endif
-    // Keep these double to avoid bug in single precision.
-    double const z_new = (zp - xyzmin.z + 0.5_rt*dt*vz) * dinv.z;
-    double const z_old = (zp - xyzmin.z - 0.5_rt*dt*vz) * dinv.z;
+        // Keep these double to avoid bug in single precision.
+        double const z_new = (zp - xyzmin.z + 0.5_rt*dt*vz) * dinv.z;
+        double const z_old = (zp - xyzmin.z - 0.5_rt*dt*vz) * dinv.z;
 
-    // Shape factor arrays for current and old positions (nodal)
-    // Keep these double to avoid bug in single precision.
-    double sx_new[depos_order+1] = {0.};
-    double sx_old[depos_order+1] = {0.};
+        // Shape factor arrays for current and old positions (nodal)
+        // Keep these double to avoid bug in single precision.
+        double sx_new[depos_order+1] = {0.};
+        double sx_old[depos_order+1] = {0.};
 #if defined(WARPX_DIM_3D)
-    // Keep these double to avoid bug in single precision.
-    double sy_new[depos_order+1] = {0.};
-    double sy_old[depos_order+1] = {0.};
+        // Keep these double to avoid bug in single precision.
+        double sy_new[depos_order+1] = {0.};
+        double sy_old[depos_order+1] = {0.};
 #endif
-    // Keep these double to avoid bug in single precision.
-    double sz_new[depos_order+1] = {0.};
-    double sz_old[depos_order+1] = {0.};
+        // Keep these double to avoid bug in single precision.
+        double sz_new[depos_order+1] = {0.};
+        double sz_old[depos_order+1] = {0.};
 
-    // Compute shape factors for current positions
+        // Compute shape factors for current positions
 
-    // i_new leftmost grid point in x that the particle touches
-    // sx_new shape factor along x for the centering of each current
-    Compute_shape_factor< depos_order > const compute_shape_factor;
-    const int i_new = compute_shape_factor(sx_new, x_new);
+        // i_new leftmost grid point in x that the particle touches
+        // sx_new shape factor along x for the centering of each current
+        Compute_shape_factor< depos_order > const compute_shape_factor;
+        const int i_new = compute_shape_factor(sx_new, x_new);
 #if defined(WARPX_DIM_3D)
-    // j_new leftmost grid point in y that the particle touches
-    // sy_new shape factor along y for the centering of each current
-    const int j_new = compute_shape_factor(sy_new, y_new);
+        // j_new leftmost grid point in y that the particle touches
+        // sy_new shape factor along y for the centering of each current
+        const int j_new = compute_shape_factor(sy_new, y_new);
 #endif
-    // k_new leftmost grid point in z that the particle touches
-    // sz_new shape factor along z for the centering of each current
-    const int k_new = compute_shape_factor(sz_new, z_new);
+        // k_new leftmost grid point in z that the particle touches
+        // sz_new shape factor along z for the centering of each current
+        const int k_new = compute_shape_factor(sz_new, z_new);
 
-    // Compute shape factors for old positions
+        // Compute shape factors for old positions
 
-    // i_old leftmost grid point in x that the particle touches
-    // sx_old shape factor along x for the centering of each current
-    const int i_old = compute_shape_factor(sx_old, x_old);
+        // i_old leftmost grid point in x that the particle touches
+        // sx_old shape factor along x for the centering of each current
+        const int i_old = compute_shape_factor(sx_old, x_old);
 #if defined(WARPX_DIM_3D)
-    // j_old leftmost grid point in y that the particle touches
-    // sy_old shape factor along y for the centering of each current
-    const int j_old = compute_shape_factor(sy_old, y_old);
+        // j_old leftmost grid point in y that the particle touches
+        // sy_old shape factor along y for the centering of each current
+        const int j_old = compute_shape_factor(sy_old, y_old);
 #endif
-    // k_old leftmost grid point in z that the particle touches
-    // sz_old shape factor along z for the centering of each current
-    const int k_old = compute_shape_factor(sz_old, z_old);
+        // k_old leftmost grid point in z that the particle touches
+        // sz_old shape factor along z for the centering of each current
+        const int k_old = compute_shape_factor(sz_old, z_old);
 
-    // Deposit current into Dx_arr, Dy_arr and Dz_arr
+        // Deposit current into Dx_arr, Dy_arr and Dz_arr
 #if defined(WARPX_DIM_XZ)
 
-    const amrex::Real wqy = wq * vy * invvol;
-    for (int k=0; k<=depos_order; k++) {
-        for (int i=0; i<=depos_order; i++) {
+        const amrex::Real wqy = wq * vy * invvol;
+        for (int k=0; k<=depos_order; k++) {
+            for (int i=0; i<=depos_order; i++) {
 
-            // Re-casting sx_new and sz_new from double to amrex::Real so that
-            // Atomic::Add has consistent types in its argument
-            auto const sxn_szn = static_cast<amrex::Real>(sx_new[i] * sz_new[k]);
-            auto const sxo_szn = static_cast<amrex::Real>(sx_old[i] * sz_new[k]);
-            auto const sxn_szo = static_cast<amrex::Real>(sx_new[i] * sz_old[k]);
-            auto const sxo_szo = static_cast<amrex::Real>(sx_old[i] * sz_old[k]);
+                // Re-casting sx_new and sz_new from double to amrex::Real so that
+                // Atomic::Add has consistent types in its argument
+                auto const sxn_szn = static_cast<amrex::Real>(sx_new[i] * sz_new[k]);
+                auto const sxo_szn = static_cast<amrex::Real>(sx_old[i] * sz_new[k]);
+                auto const sxn_szo = static_cast<amrex::Real>(sx_new[i] * sz_old[k]);
+                auto const sxo_szo = static_cast<amrex::Real>(sx_old[i] * sz_old[k]);
 
-            if (i_new == i_old && k_new == k_old) {
-                // temp arrays for Dx and Dz
-                vayAddNoRet<VayArrays::t0, components>(t0_arr, lo.x + i_new + i, lo.y + k_new + k, 0,
-                    wq * invvol * invdt * (sxn_szn - sxo_szo));
+                if (i_new == i_old && k_new == k_old) {
+                    // temp arrays for Dx and Dz
+                    vayAddNoRet<VayArrays::t0, components>(t0_arr, lo.x + i_new + i, lo.y + k_new + k, 0,
+                        wq * invvol * invdt * (sxn_szn - sxo_szo));
 
-                vayAddNoRet<VayArrays::t1, components>(t1_arr, lo.x + i_new + i, lo.y + k_new + k, 0,
-                    wq * invvol * invdt * (sxn_szo - sxo_szn));
+                    vayAddNoRet<VayArrays::t1, components>(t1_arr, lo.x + i_new + i, lo.y + k_new + k, 0,
+                        wq * invvol * invdt * (sxn_szo - sxo_szn));
 
-                // Dy
-                vayAddNoRet<VayArrays::Dy, components>(Dy_arr, lo.x + i_new + i, lo.y + k_new + k, 0,
-                    wqy * 0.25_rt * (sxn_szn + sxn_szo + sxo_szn + sxo_szo));
-            } else {
-                // temp arrays for Dx and Dz
-                vayAddNoRet<VayArrays::t0, components>(t0_arr, lo.x + i_new + i, lo.y + k_new + k, 0,
-                    wq * invvol * invdt * sxn_szn);
+                    // Dy
+                    vayAddNoRet<VayArrays::Dy, components>(Dy_arr, lo.x + i_new + i, lo.y + k_new + k, 0,
+                        wqy * 0.25_rt * (sxn_szn + sxn_szo + sxo_szn + sxo_szo));
+                } else {
+                    // temp arrays for Dx and Dz
+                    vayAddNoRet<VayArrays::t0, components>(t0_arr, lo.x + i_new + i, lo.y + k_new + k, 0,
+                        wq * invvol * invdt * sxn_szn);
 
-                vayAddNoRet<VayArrays::t0, components>(t0_arr, lo.x + i_old + i, lo.y + k_old + k, 0,
-                    - wq * invvol * invdt * sxo_szo);
+                    vayAddNoRet<VayArrays::t0, components>(t0_arr, lo.x + i_old + i, lo.y + k_old + k, 0,
+                        - wq * invvol * invdt * sxo_szo);
 
-                vayAddNoRet<VayArrays::t1, components>(t1_arr, lo.x + i_new + i, lo.y + k_old + k, 0,
-                    wq * invvol * invdt * sxn_szo);
+                    vayAddNoRet<VayArrays::t1, components>(t1_arr, lo.x + i_new + i, lo.y + k_old + k, 0,
+                        wq * invvol * invdt * sxn_szo);
 
-                vayAddNoRet<VayArrays::t1, components>(t1_arr, lo.x + i_old + i, lo.y + k_new + k, 0,
-                    - wq * invvol * invdt * sxo_szn);
+                    vayAddNoRet<VayArrays::t1, components>(t1_arr, lo.x + i_old + i, lo.y + k_new + k, 0,
+                        - wq * invvol * invdt * sxo_szn);
 
-                // Dy
-                vayAddNoRet<VayArrays::Dy, components>(Dy_arr, lo.x + i_new + i, lo.y + k_new + k, 0,
-                    wqy * 0.25_rt * sxn_szn);
+                    // Dy
+                    vayAddNoRet<VayArrays::Dy, components>(Dy_arr, lo.x + i_new + i, lo.y + k_new + k, 0,
+                        wqy * 0.25_rt * sxn_szn);
 
-                vayAddNoRet<VayArrays::Dy, components>(Dy_arr, lo.x + i_new + i, lo.y + k_old + k, 0,
-                    wqy * 0.25_rt * sxn_szo);
+                    vayAddNoRet<VayArrays::Dy, components>(Dy_arr, lo.x + i_new + i, lo.y + k_old + k, 0,
+                        wqy * 0.25_rt * sxn_szo);
 
-                vayAddNoRet<VayArrays::Dy, components>(Dy_arr, lo.x + i_old + i, lo.y + k_new + k, 0,
-                    wqy * 0.25_rt * sxo_szn);
+                    vayAddNoRet<VayArrays::Dy, components>(Dy_arr, lo.x + i_old + i, lo.y + k_new + k, 0,
+                        wqy * 0.25_rt * sxo_szn);
 
-                vayAddNoRet<VayArrays::Dy, components>(Dy_arr, lo.x + i_old + i, lo.y + k_old + k, 0,
-                    wqy * 0.25_rt * sxo_szo);
+                    vayAddNoRet<VayArrays::Dy, components>(Dy_arr, lo.x + i_old + i, lo.y + k_old + k, 0,
+                        wqy * 0.25_rt * sxo_szo);
+                }
+
             }
-
         }
-    }
 
 #elif defined(WARPX_DIM_3D)
 
-    for (int k=0; k<=depos_order; k++) {
-        for (int j=0; j<=depos_order; j++) {
+        for (int k=0; k<=depos_order; k++) {
+            for (int j=0; j<=depos_order; j++) {
 
-            auto const syn_szn = static_cast<amrex::Real>(sy_new[j] * sz_new[k]);
-            auto const syo_szn = static_cast<amrex::Real>(sy_old[j] * sz_new[k]);
-            auto const syn_szo = static_cast<amrex::Real>(sy_new[j] * sz_old[k]);
-            auto const syo_szo = static_cast<amrex::Real>(sy_old[j] * sz_old[k]);
+                auto const syn_szn = static_cast<amrex::Real>(sy_new[j] * sz_new[k]);
+                auto const syo_szn = static_cast<amrex::Real>(sy_old[j] * sz_new[k]);
+                auto const syn_szo = static_cast<amrex::Real>(sy_new[j] * sz_old[k]);
+                auto const syo_szo = static_cast<amrex::Real>(sy_old[j] * sz_old[k]);
 
-            for (int i=0; i<=depos_order; i++) {
+                for (int i=0; i<=depos_order; i++) {
 
-                auto const sxn_syn_szn = static_cast<amrex::Real>(sx_new[i]) * syn_szn;
-                auto const sxo_syn_szn = static_cast<amrex::Real>(sx_old[i]) * syn_szn;
-                auto const sxn_syo_szn = static_cast<amrex::Real>(sx_new[i]) * syo_szn;
-                auto const sxo_syo_szn = static_cast<amrex::Real>(sx_old[i]) * syo_szn;
-                auto const sxn_syn_szo = static_cast<amrex::Real>(sx_new[i]) * syn_szo;
-                auto const sxo_syn_szo = static_cast<amrex::Real>(sx_old[i]) * syn_szo;
-                auto const sxn_syo_szo = static_cast<amrex::Real>(sx_new[i]) * syo_szo;
-                auto const sxo_syo_szo = static_cast<amrex::Real>(sx_old[i]) * syo_szo;
+                    auto const sxn_syn_szn = static_cast<amrex::Real>(sx_new[i]) * syn_szn;
+                    auto const sxo_syn_szn = static_cast<amrex::Real>(sx_old[i]) * syn_szn;
+                    auto const sxn_syo_szn = static_cast<amrex::Real>(sx_new[i]) * syo_szn;
+                    auto const sxo_syo_szn = static_cast<amrex::Real>(sx_old[i]) * syo_szn;
+                    auto const sxn_syn_szo = static_cast<amrex::Real>(sx_new[i]) * syn_szo;
+                    auto const sxo_syn_szo = static_cast<amrex::Real>(sx_old[i]) * syn_szo;
+                    auto const sxn_syo_szo = static_cast<amrex::Real>(sx_new[i]) * syo_szo;
+                    auto const sxo_syo_szo = static_cast<amrex::Real>(sx_old[i]) * syo_szo;
 
-                if (i_new == i_old && j_new == j_old && k_new == k_old) {
-                    // temp arrays for Dx, Dy and Dz
-                    vayAddNoRet<VayArrays::t0, components>(t0_arr, lo.x + i_new + i, lo.y + j_new + j, lo.z + k_new + k,
-                        wq * invvol * invdt * (sxn_syn_szn - sxo_syo_szo));
+                    if (i_new == i_old && j_new == j_old && k_new == k_old) {
+                        // temp arrays for Dx, Dy and Dz
+                        vayAddNoRet<VayArrays::t0, components>(t0_arr, lo.x + i_new + i, lo.y + j_new + j, lo.z + k_new + k,
+                            wq * invvol * invdt * (sxn_syn_szn - sxo_syo_szo));
 
-                    vayAddNoRet<VayArrays::t1, components>(t1_arr, lo.x + i_new + i, lo.y + j_new + j, lo.z + k_new + k,
-                        wq * invvol * invdt * (sxn_syn_szo - sxo_syo_szn));
+                        vayAddNoRet<VayArrays::t1, components>(t1_arr, lo.x + i_new + i, lo.y + j_new + j, lo.z + k_new + k,
+                            wq * invvol * invdt * (sxn_syn_szo - sxo_syo_szn));
 
-                    vayAddNoRet<VayArrays::t2, components>(t2_arr, lo.x + i_new + i, lo.y + j_new + j, lo.z + k_new + k,
-                        wq * invvol * invdt * (sxn_syo_szn - sxo_syn_szo));
+                        vayAddNoRet<VayArrays::t2, components>(t2_arr, lo.x + i_new + i, lo.y + j_new + j, lo.z + k_new + k,
+                            wq * invvol * invdt * (sxn_syo_szn - sxo_syn_szo));
 
-                    vayAddNoRet<VayArrays::t3, components>(t3_arr, lo.x + i_new + i, lo.y + j_new + j, lo.z + k_new + k,
-                        wq * invvol * invdt * (sxo_syn_szn - sxn_syo_szo));
-                } else {
-                    // temp arrays for Dx, Dy and Dz
-                    vayAddNoRet<VayArrays::t0, components>(t0_arr, lo.x + i_new + i, lo.y + j_new + j, lo.z + k_new + k,
-                        wq * invvol * invdt * sxn_syn_szn);
+                        vayAddNoRet<VayArrays::t3, components>(t3_arr, lo.x + i_new + i, lo.y + j_new + j, lo.z + k_new + k,
+                            wq * invvol * invdt * (sxo_syn_szn - sxn_syo_szo));
+                    } else {
+                        // temp arrays for Dx, Dy and Dz
+                        vayAddNoRet<VayArrays::t0, components>(t0_arr, lo.x + i_new + i, lo.y + j_new + j, lo.z + k_new + k,
+                            wq * invvol * invdt * sxn_syn_szn);
 
-                    vayAddNoRet<VayArrays::t0, components>(t0_arr, lo.x + i_old + i, lo.y + j_old + j, lo.z + k_old + k,
-                        - wq * invvol * invdt * sxo_syo_szo);
+                        vayAddNoRet<VayArrays::t0, components>(t0_arr, lo.x + i_old + i, lo.y + j_old + j, lo.z + k_old + k,
+                            - wq * invvol * invdt * sxo_syo_szo);
 
-                    vayAddNoRet<VayArrays::t1, components>(t1_arr, lo.x + i_new + i, lo.y + j_new + j, lo.z + k_old + k,
-                        wq * invvol * invdt * sxn_syn_szo);
+                        vayAddNoRet<VayArrays::t1, components>(t1_arr, lo.x + i_new + i, lo.y + j_new + j, lo.z + k_old + k,
+                            wq * invvol * invdt * sxn_syn_szo);
 
-                    vayAddNoRet<VayArrays::t1, components>(t1_arr, lo.x + i_old + i, lo.y + j_old + j, lo.z + k_new + k,
-                        - wq * invvol * invdt * sxo_syo_szn);
+                        vayAddNoRet<VayArrays::t1, components>(t1_arr, lo.x + i_old + i, lo.y + j_old + j, lo.z + k_new + k,
+                            - wq * invvol * invdt * sxo_syo_szn);
 
-                    vayAddNoRet<VayArrays::t2, components>(t2_arr, lo.x + i_new + i, lo.y + j_old + j, lo.z + k_new + k,
-                        wq * invvol * invdt * sxn_syo_szn);
+                        vayAddNoRet<VayArrays::t2, components>(t2_arr, lo.x + i_new + i, lo.y + j_old + j, lo.z + k_new + k,
+                            wq * invvol * invdt * sxn_syo_szn);
 
-                    vayAddNoRet<VayArrays::t2, components>(t2_arr, lo.x + i_old + i, lo.y + j_new + j, lo.z + k_old + k,
-                        - wq * invvol * invdt * sxo_syn_szo);
+                        vayAddNoRet<VayArrays::t2, components>(t2_arr, lo.x + i_old + i, lo.y + j_new + j, lo.z + k_old + k,
+                            - wq * invvol * invdt * sxo_syn_szo);
 
-                    vayAddNoRet<VayArrays::t3, components>(t3_arr, lo.x + i_old + i, lo.y + j_new + j, lo.z + k_new + k,
-                        wq * invvol * invdt * sxo_syn_szn);
+                        vayAddNoRet<VayArrays::t3, components>(t3_arr, lo.x + i_old + i, lo.y + j_new + j, lo.z + k_new + k,
+                            wq * invvol * invdt * sxo_syn_szn);
 
-                    vayAddNoRet<VayArrays::t3, components>(t3_arr, lo.x + i_new + i, lo.y + j_old + j, lo.z + k_old + k,
-                        - wq * invvol * invdt * sxn_syo_szo);
+                        vayAddNoRet<VayArrays::t3, components>(t3_arr, lo.x + i_new + i, lo.y + j_old + j, lo.z + k_old + k,
+                            - wq * invvol * invdt * sxn_syo_szo);
+                    }
                 }
             }
         }
-    }
 #endif
 #endif // #if !(defined WARPX_DIM_RZ || defined WARPX_DIM_1D_Z ...)
 }
@@ -3272,13 +3272,13 @@ void doVayDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
              amrex::Array4<amrex::Real> const& t2_arr, amrex::Array4<amrex::Real> const& t3_arr,
              amrex::Array4<amrex::Real> const& Dy_arr)
     {
-        // amrex::For: iterations scatter-add into shared nodes (no SIMD pragma, see issue #7097)
-        amrex::For(np_to_deposit, [=] AMREX_GPU_DEVICE (long ip)
-        {
-            doVayDepositionShapeNKernel<depos_order>(
-                ip, GetPosition, wp, uxp, uyp, uzp, ion_lev, t0_arr, t1_arr, t2_arr, t3_arr,
-                Dy_arr, dt, relative_time, dinv, xyzmin, lo, q);
-        } );
+    // amrex::For: iterations scatter-add into shared nodes (no SIMD pragma, see issue #7097)
+    amrex::For(np_to_deposit, [=] AMREX_GPU_DEVICE (long ip)
+    {
+        doVayDepositionShapeNKernel<depos_order>(
+            ip, GetPosition, wp, uxp, uyp, uzp, ion_lev, t0_arr, t1_arr, t2_arr, t3_arr,
+            Dy_arr, dt, relative_time, dinv, xyzmin, lo, q);
+    } );
     });
 
 #endif // #if !(defined WARPX_DIM_RZ || defined WARPX_DIM_1D_Z)
