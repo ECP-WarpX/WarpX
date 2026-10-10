@@ -52,21 +52,14 @@ JFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buffer*/
 
         // Sum deposited guard contributions without filtering.
         for (int idim = 0; idim < 3; ++idim) {
-            auto& current = *current_fp_temp[0][idim];
-            ablastr::utils::communication::SumBoundary(
-                current, 0, current.nComp(), current.nGrowVect(), current.nGrowVect(),
-                WarpX::do_single_precision_comms, warpx.Geom(m_lev).periodicity());
+            auto& J = *current_fp_temp[0][idim];
+            WarpXSumGuardCells(J, warpx.Geom(m_lev).periodicity(), J.nGrowVect(),
+                              0, J.nComp());
         }
 
         warpx.FinalizeJOnLevel(m_lev,
             current_fp_temp[0][0], current_fp_temp[0][1], current_fp_temp[0][2],
             PatchType::fine);
-
-        // Fill guard values for diagnostic interpolation.
-        for (int idim = 0; idim < 3; ++idim) {
-            auto& J = *current_fp_temp[0][idim];
-            WarpXSumGuardCells(J, warpx.Geom(m_lev).periodicity(), J.nGrowVect());
-        }
     }
 
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_mf_src != nullptr, "m_mf_src can't be a nullptr.");
