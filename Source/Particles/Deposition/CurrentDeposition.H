@@ -2844,8 +2844,20 @@ void doVillasenorDepositionShapeNImplicit ([[maybe_unused]]const amrex::Particle
 }
 
 /**
+ * \brief Bitmask of the arrays that the Vay deposition kernel deposits into: the temporary
+ *        arrays t0 to t3 (in 3D, all four; in 2D, t0 and t1) and, in 2D, Dy.
+ *
+ * As for JComponents, the shared memory deposition uses this to deposit into one array at
+ * a time when the buffers for all the arrays do not fit in shared memory.
+ */
+namespace VayArrays {
+    enum : int { t0 = 1, t1 = 2, t2 = 4, t3 = 8, Dy = 16, all = t0 | t1 | t2 | t3 | Dy };
+}
+
+/**
  * \brief Atomically add a value to an array element, if the bit \c bit is set in the bitmask
- *        \c components of the arrays to deposit into. Helper of doVayDepositionShapeNKernel.
+ *        \c components of the arrays to deposit into (see VayArrays). Helper of
+ *        doVayDepositionShapeNKernel.
  */
 template <int bit, int components>
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
@@ -2865,10 +2877,9 @@ void vayAddNoRet (amrex::Array4<amrex::Real> const& arr, int i, int j, int k, am
  * temporary arrays that are then combined into D (and, in 2D, directly into Dy).
  *
  * \tparam depos_order  deposition order
- * \tparam components   bitmask of the arrays to deposit into: 1, 2, 4, 8 for the
- *                      temporary arrays t0_arr, t1_arr, t2_arr, t3_arr, and 16 for Dy_arr.
- *                      In 3D, only t0_arr to t3_arr are used; in 2D (XZ), only t0_arr,
- *                      t1_arr and Dy_arr are used. The arrays not deposited into are not accessed.
+ * \tparam components   bitmask of the arrays to deposit into (see VayArrays). In 3D, only
+ *                      t0_arr to t3_arr are used; in 2D (XZ), only t0_arr, t1_arr and Dy_arr
+ *                      are used. The arrays not deposited into are not accessed.
  * \param[in] ip           Index of the particle
  * \param[in] GetPosition  Functor that returns the particle position
  * \param[in] wp           Pointer to array of particle weights
@@ -2884,7 +2895,7 @@ void vayAddNoRet (amrex::Array4<amrex::Real> const& arr, int i, int j, int k, am
  * \param[in] lo           Dimension-agnostic lower bounds of index domain
  * \param[in] q            Species charge
  */
-template <int depos_order, int components = 31>
+template <int depos_order, int components = VayArrays::all>
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 void doVayDepositionShapeNKernel ([[maybe_unused]] const long ip,
                                   [[maybe_unused]] const GetParticlePosition<PIdx>& GetPosition,
@@ -3009,40 +3020,40 @@ void doVayDepositionShapeNKernel ([[maybe_unused]] const long ip,
 
             if (i_new == i_old && k_new == k_old) {
                 // temp arrays for Dx and Dz
-                vayAddNoRet<1, components>(t0_arr, lo.x + i_new + i, lo.y + k_new + k, 0,
+                vayAddNoRet<VayArrays::t0, components>(t0_arr, lo.x + i_new + i, lo.y + k_new + k, 0,
                     wq * invvol * invdt * (sxn_szn - sxo_szo));
 
-                vayAddNoRet<2, components>(t1_arr, lo.x + i_new + i, lo.y + k_new + k, 0,
+                vayAddNoRet<VayArrays::t1, components>(t1_arr, lo.x + i_new + i, lo.y + k_new + k, 0,
                     wq * invvol * invdt * (sxn_szo - sxo_szn));
 
                 // Dy
-                vayAddNoRet<16, components>(Dy_arr, lo.x + i_new + i, lo.y + k_new + k, 0,
+                vayAddNoRet<VayArrays::Dy, components>(Dy_arr, lo.x + i_new + i, lo.y + k_new + k, 0,
                     wqy * 0.25_rt * (sxn_szn + sxn_szo + sxo_szn + sxo_szo));
             } else {
                 // temp arrays for Dx and Dz
-                vayAddNoRet<1, components>(t0_arr, lo.x + i_new + i, lo.y + k_new + k, 0,
+                vayAddNoRet<VayArrays::t0, components>(t0_arr, lo.x + i_new + i, lo.y + k_new + k, 0,
                     wq * invvol * invdt * sxn_szn);
 
-                vayAddNoRet<1, components>(t0_arr, lo.x + i_old + i, lo.y + k_old + k, 0,
+                vayAddNoRet<VayArrays::t0, components>(t0_arr, lo.x + i_old + i, lo.y + k_old + k, 0,
                     - wq * invvol * invdt * sxo_szo);
 
-                vayAddNoRet<2, components>(t1_arr, lo.x + i_new + i, lo.y + k_old + k, 0,
+                vayAddNoRet<VayArrays::t1, components>(t1_arr, lo.x + i_new + i, lo.y + k_old + k, 0,
                     wq * invvol * invdt * sxn_szo);
 
-                vayAddNoRet<2, components>(t1_arr, lo.x + i_old + i, lo.y + k_new + k, 0,
+                vayAddNoRet<VayArrays::t1, components>(t1_arr, lo.x + i_old + i, lo.y + k_new + k, 0,
                     - wq * invvol * invdt * sxo_szn);
 
                 // Dy
-                vayAddNoRet<16, components>(Dy_arr, lo.x + i_new + i, lo.y + k_new + k, 0,
+                vayAddNoRet<VayArrays::Dy, components>(Dy_arr, lo.x + i_new + i, lo.y + k_new + k, 0,
                     wqy * 0.25_rt * sxn_szn);
 
-                vayAddNoRet<16, components>(Dy_arr, lo.x + i_new + i, lo.y + k_old + k, 0,
+                vayAddNoRet<VayArrays::Dy, components>(Dy_arr, lo.x + i_new + i, lo.y + k_old + k, 0,
                     wqy * 0.25_rt * sxn_szo);
 
-                vayAddNoRet<16, components>(Dy_arr, lo.x + i_old + i, lo.y + k_new + k, 0,
+                vayAddNoRet<VayArrays::Dy, components>(Dy_arr, lo.x + i_old + i, lo.y + k_new + k, 0,
                     wqy * 0.25_rt * sxo_szn);
 
-                vayAddNoRet<16, components>(Dy_arr, lo.x + i_old + i, lo.y + k_old + k, 0,
+                vayAddNoRet<VayArrays::Dy, components>(Dy_arr, lo.x + i_old + i, lo.y + k_old + k, 0,
                     wqy * 0.25_rt * sxo_szo);
             }
 
@@ -3072,41 +3083,41 @@ void doVayDepositionShapeNKernel ([[maybe_unused]] const long ip,
 
                 if (i_new == i_old && j_new == j_old && k_new == k_old) {
                     // temp arrays for Dx, Dy and Dz
-                    vayAddNoRet<1, components>(t0_arr, lo.x + i_new + i, lo.y + j_new + j, lo.z + k_new + k,
+                    vayAddNoRet<VayArrays::t0, components>(t0_arr, lo.x + i_new + i, lo.y + j_new + j, lo.z + k_new + k,
                         wq * invvol * invdt * (sxn_syn_szn - sxo_syo_szo));
 
-                    vayAddNoRet<2, components>(t1_arr, lo.x + i_new + i, lo.y + j_new + j, lo.z + k_new + k,
+                    vayAddNoRet<VayArrays::t1, components>(t1_arr, lo.x + i_new + i, lo.y + j_new + j, lo.z + k_new + k,
                         wq * invvol * invdt * (sxn_syn_szo - sxo_syo_szn));
 
-                    vayAddNoRet<4, components>(t2_arr, lo.x + i_new + i, lo.y + j_new + j, lo.z + k_new + k,
+                    vayAddNoRet<VayArrays::t2, components>(t2_arr, lo.x + i_new + i, lo.y + j_new + j, lo.z + k_new + k,
                         wq * invvol * invdt * (sxn_syo_szn - sxo_syn_szo));
 
-                    vayAddNoRet<8, components>(t3_arr, lo.x + i_new + i, lo.y + j_new + j, lo.z + k_new + k,
+                    vayAddNoRet<VayArrays::t3, components>(t3_arr, lo.x + i_new + i, lo.y + j_new + j, lo.z + k_new + k,
                         wq * invvol * invdt * (sxo_syn_szn - sxn_syo_szo));
                 } else {
                     // temp arrays for Dx, Dy and Dz
-                    vayAddNoRet<1, components>(t0_arr, lo.x + i_new + i, lo.y + j_new + j, lo.z + k_new + k,
+                    vayAddNoRet<VayArrays::t0, components>(t0_arr, lo.x + i_new + i, lo.y + j_new + j, lo.z + k_new + k,
                         wq * invvol * invdt * sxn_syn_szn);
 
-                    vayAddNoRet<1, components>(t0_arr, lo.x + i_old + i, lo.y + j_old + j, lo.z + k_old + k,
+                    vayAddNoRet<VayArrays::t0, components>(t0_arr, lo.x + i_old + i, lo.y + j_old + j, lo.z + k_old + k,
                         - wq * invvol * invdt * sxo_syo_szo);
 
-                    vayAddNoRet<2, components>(t1_arr, lo.x + i_new + i, lo.y + j_new + j, lo.z + k_old + k,
+                    vayAddNoRet<VayArrays::t1, components>(t1_arr, lo.x + i_new + i, lo.y + j_new + j, lo.z + k_old + k,
                         wq * invvol * invdt * sxn_syn_szo);
 
-                    vayAddNoRet<2, components>(t1_arr, lo.x + i_old + i, lo.y + j_old + j, lo.z + k_new + k,
+                    vayAddNoRet<VayArrays::t1, components>(t1_arr, lo.x + i_old + i, lo.y + j_old + j, lo.z + k_new + k,
                         - wq * invvol * invdt * sxo_syo_szn);
 
-                    vayAddNoRet<4, components>(t2_arr, lo.x + i_new + i, lo.y + j_old + j, lo.z + k_new + k,
+                    vayAddNoRet<VayArrays::t2, components>(t2_arr, lo.x + i_new + i, lo.y + j_old + j, lo.z + k_new + k,
                         wq * invvol * invdt * sxn_syo_szn);
 
-                    vayAddNoRet<4, components>(t2_arr, lo.x + i_old + i, lo.y + j_new + j, lo.z + k_old + k,
+                    vayAddNoRet<VayArrays::t2, components>(t2_arr, lo.x + i_old + i, lo.y + j_new + j, lo.z + k_old + k,
                         - wq * invvol * invdt * sxo_syn_szo);
 
-                    vayAddNoRet<8, components>(t3_arr, lo.x + i_old + i, lo.y + j_new + j, lo.z + k_new + k,
+                    vayAddNoRet<VayArrays::t3, components>(t3_arr, lo.x + i_old + i, lo.y + j_new + j, lo.z + k_new + k,
                         wq * invvol * invdt * sxo_syn_szn);
 
-                    vayAddNoRet<8, components>(t3_arr, lo.x + i_new + i, lo.y + j_old + j, lo.z + k_old + k,
+                    vayAddNoRet<VayArrays::t3, components>(t3_arr, lo.x + i_new + i, lo.y + j_old + j, lo.z + k_old + k,
                         - wq * invvol * invdt * sxn_syo_szo);
                 }
             }
@@ -3410,13 +3421,13 @@ void doVayDepositionSharedShapeNImpl (
                 addLocalToGlobal(buffer_box, arr, buff);
                 __syncthreads();
             };
-            deposit_one(std::integral_constant<int, 1>{}, t0_arr);
-            deposit_one(std::integral_constant<int, 2>{}, t1_arr);
+            deposit_one(std::integral_constant<int, VayArrays::t0>{}, t0_arr);
+            deposit_one(std::integral_constant<int, VayArrays::t1>{}, t1_arr);
 #if defined(WARPX_DIM_3D)
-            deposit_one(std::integral_constant<int, 4>{}, t2_arr);
-            deposit_one(std::integral_constant<int, 8>{}, t3_arr);
+            deposit_one(std::integral_constant<int, VayArrays::t2>{}, t2_arr);
+            deposit_one(std::integral_constant<int, VayArrays::t3>{}, t3_arr);
 #else
-            deposit_one(std::integral_constant<int, 16>{}, Dy_arr);
+            deposit_one(std::integral_constant<int, VayArrays::Dy>{}, Dy_arr);
 #endif
         }
     });
