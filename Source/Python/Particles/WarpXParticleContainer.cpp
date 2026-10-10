@@ -132,7 +132,7 @@ void init_WarpXParticleContainer (py::module& m)
         .def("deposit_current",
             [](WarpXParticleContainer& pc, std::string mf_name, int lev, double dt, double relative_time)
             {
-                pc.DepositCurrent(mf_name, lev, dt, relative_time);
+                pc.DepositCurrentOnLevel(mf_name, lev, dt, relative_time);
             },
             py::arg("mf_name"), py::arg("lev"), py::arg("dt"), py::arg("relative_time"),
             R"pbdoc(Deposit current density, sum guard values, and apply boundary conditions

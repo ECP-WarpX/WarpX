@@ -1490,7 +1490,7 @@ WarpXParticleContainer::DepositCurrent (
     }
 }
 
-void WarpXParticleContainer::DepositCurrent (
+void WarpXParticleContainer::DepositCurrentOnLevel (
     const std::string& mf_name, int lev, const amrex::Real dt, const amrex::Real relative_time
 ) {
     auto& warpx = WarpX::GetInstance();
