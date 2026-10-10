@@ -588,11 +588,15 @@ WarpX::OneStep_nosub (
 
     SyncCurrentAndRho(); // Filter, exchange gurd cells, and interpolate across levels
     FinalizeRho(); // Apply boundary conditions and inverse volume scaling to rho
-    FinalizeJ(); // Apply boundary conditions and inverse volume scaling to J
 
-    // At this point, J is up-to-date inside the domain, and E and B are
-    // up-to-date including enough guard cells for first step of the field
-    // solve.
+    // Vay constructs J from D in PushPSATD, which finalizes the resulting J.
+    if (current_deposition_algo != CurrentDepositionAlgo::Vay) {
+        FinalizeJ(); // Apply boundary conditions and inverse volume scaling to J
+    }
+
+    // At this point, J is up-to-date inside the domain except with Vay deposition,
+    // and E and B are up-to-date including enough guard cells for the first
+    // step of the field solve.
 
     // For extended PML: copy J from regular grid to PML, and damp J in PML
     if (do_pml && pml_has_particles) { CopyJPML(); }
@@ -868,6 +872,10 @@ void WarpX::SyncCurrentAndRho ()
 
             if (current_deposition_algo == CurrentDepositionAlgo::Vay)
             {
+                // Nonperiodic physical-boundary support for Vay deposition is unestablished.
+                // With periodic domain boundaries, D needs filtering and periodic communication,
+                // but no physical-boundary finalization. Periodic domain boundaries do not
+                // require periodic_single_box_fft: local FFTs can also use a periodic domain.
                 // TODO This works only without mesh refinement
                 const int lev = 0;
                 if (use_filter) {
