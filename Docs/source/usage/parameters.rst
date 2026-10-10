@@ -4398,9 +4398,10 @@ Additional parameters
     space available for the temporary buffers. Performance is mostly improved
     when there is lots of contention between particles writing to the same cell
     (e.g. for high particles per cell). This feature is only available for CUDA
-    and HIP, and is only recommended for 3D or 2D. It supports the ``direct`` and
-    ``esirkepov`` values of :pp:param:`algo.current_deposition` with the explicit
-    particle push, and cannot be used with more than one azimuthal mode in RZ.
+    and HIP, and is only recommended for 3D or 2D. It supports the ``direct``,
+    ``esirkepov`` and ``villasenor`` values of :pp:param:`algo.current_deposition`
+    with the explicit particle push, and cannot be used with more than one azimuthal
+    mode in RZ.
 
 .. pp:param:: warpx.shared_tilesize
     :type: list of ``int``

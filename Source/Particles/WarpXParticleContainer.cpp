@@ -504,6 +504,8 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
             direct_current_dep_kernel);
     ABLASTR_PROFILE_VAR_NS("WarpXParticleContainer::DepositCurrent::EsirkepovCurrentDepKernel",
             esirkepov_current_dep_kernel);
+    ABLASTR_PROFILE_VAR_NS("WarpXParticleContainer::DepositCurrent::VillasenorCurrentDepKernel",
+            villasenor_current_dep_kernel);
     ABLASTR_PROFILE_VAR_NS("WarpXParticleContainer::DepositCurrent::CurrentDeposition", blp_deposit);
     ABLASTR_PROFILE_VAR_NS("WarpXParticleContainer::DepositCurrent::Accumulate", blp_accumulate);
 
@@ -690,11 +692,44 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
         if (push_type == PushType::Implicit) {
             amrex::Abort("Cannot do shared memory deposition with implicit algorithm");
         }
-        if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Villasenor) {
-            WARPX_ABORT_WITH_MESSAGE("Cannot do shared memory deposition with Villasenor algorithm");
-        }
-        else if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay) {
+        if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay) {
             WARPX_ABORT_WITH_MESSAGE("Cannot do shared memory deposition with Vay algorithm");
+        }
+        else if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Villasenor) {
+            ABLASTR_PROFILE_VAR_START(villasenor_current_dep_kernel);
+
+            const int threads_per_block = WarpX::shared_mem_current_tpb;
+
+            if        (WarpX::nox == 1){
+                doVillasenorDepositionSharedShapeN<1>(
+                        GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
+                        uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev_offset,
+                        jx_fab, jy_fab, jz_fab, dt, relative_time, dinv, xyzmin,
+                        domain_double, do_cropping, lo, q, WarpX::n_rz_azimuthal_modes,
+                        bins, box, geom, max_tbox_size, threads_per_block, bin_size);
+            } else if (WarpX::nox == 2){
+                doVillasenorDepositionSharedShapeN<2>(
+                        GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
+                        uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev_offset,
+                        jx_fab, jy_fab, jz_fab, dt, relative_time, dinv, xyzmin,
+                        domain_double, do_cropping, lo, q, WarpX::n_rz_azimuthal_modes,
+                        bins, box, geom, max_tbox_size, threads_per_block, bin_size);
+            } else if (WarpX::nox == 3){
+                doVillasenorDepositionSharedShapeN<3>(
+                        GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
+                        uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev_offset,
+                        jx_fab, jy_fab, jz_fab, dt, relative_time, dinv, xyzmin,
+                        domain_double, do_cropping, lo, q, WarpX::n_rz_azimuthal_modes,
+                        bins, box, geom, max_tbox_size, threads_per_block, bin_size);
+            } else if (WarpX::nox == 4){
+                doVillasenorDepositionSharedShapeN<4>(
+                        GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
+                        uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev_offset,
+                        jx_fab, jy_fab, jz_fab, dt, relative_time, dinv, xyzmin,
+                        domain_double, do_cropping, lo, q, WarpX::n_rz_azimuthal_modes,
+                        bins, box, geom, max_tbox_size, threads_per_block, bin_size);
+            }
+            ABLASTR_PROFILE_VAR_STOP(villasenor_current_dep_kernel);
         }
         else if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Esirkepov) {
             ABLASTR_PROFILE_VAR_START(esirkepov_current_dep_kernel);
