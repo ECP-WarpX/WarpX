@@ -308,7 +308,14 @@ void WarpX::ApplyDiagonalMassMatricesBoundary (
 {
     BL_PROFILE("WarpX::ApplyDiagonalMassMatricesBoundary()");
 
-    if (::isAnyBoundary<FieldBoundaryType::PMC>(field_boundary_lo, field_boundary_hi) ||
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
+    const bool has_axis = Geom(lev).ProbLo(0) == 0._rt;
+#else
+    const bool has_axis = false;
+#endif
+
+    if (has_axis ||
+        ::isAnyBoundary<FieldBoundaryType::PMC>(field_boundary_lo, field_boundary_hi) ||
         ::isAnyBoundary<FieldBoundaryType::PEC>(field_boundary_lo, field_boundary_hi) ||
         ::isAnyBoundary<FieldBoundaryType::PEC_Insulator>(field_boundary_lo, field_boundary_hi))
     {
@@ -323,7 +330,7 @@ void WarpX::ApplyDiagonalMassMatricesBoundary (
         }
         PEC::ApplyDiagonalMassMatricesBoundary(Sxx, Syy, Szz,
             ncomp_xx, ncomp_yy, ncomp_zz, field_boundary_lo, field_boundary_hi,
-            voltage_driven, Geom(lev), lev, patch_type, ref_ratio);
+            voltage_driven, has_axis, Geom(lev), lev, patch_type, ref_ratio);
     }
 
     if (::isAnyBoundary<FieldBoundaryType::PEC_Insulator>(field_boundary_lo, field_boundary_hi)) {

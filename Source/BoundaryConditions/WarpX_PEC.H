@@ -108,7 +108,8 @@ namespace PEC {
                         const amrex::Geometry& geom,
                         int lev, PatchType patch_type, const amrex::Vector<amrex::IntVect>& ref_ratios);
 
-    /** Fold both the current row and electric-field column of diagonal PC mass matrices. */
+    /** Fold both the current row and electric-field column of diagonal PC mass matrices,
+     *  including the low radial axis when has_axis is true. */
     void ApplyDiagonalMassMatricesBoundary(
                         amrex::MultiFab* Sxx, amrex::MultiFab* Syy, amrex::MultiFab* Szz,
                         const amrex::IntVect& ncomp_xx, const amrex::IntVect& ncomp_yy,
@@ -116,6 +117,7 @@ namespace PEC {
                         const amrex::Array<FieldBoundaryType,AMREX_SPACEDIM>& field_boundary_lo,
                         const amrex::Array<FieldBoundaryType,AMREX_SPACEDIM>& field_boundary_hi,
                         const amrex::GpuArray<amrex::GpuArray<int,2>,AMREX_SPACEDIM>& voltage_driven,
+                        bool has_axis,
                         const amrex::Geometry& geom,
                         int lev, PatchType patch_type, const amrex::Vector<amrex::IntVect>& ref_ratios);
 
