@@ -1171,8 +1171,10 @@ namespace
 #endif
     }
 
-    // Transform one deposited J row and its E columns into a valid J row.
-    // When source == target, only columns outside this boundary are folded.
+    // S(row, offset) couples unscaled deposited current at row to E(row + offset).
+    // Fold both locations; the destination stencil offset is mapped E minus target row.
+    // Keeping the original component is generally incorrect for wider stencils.
+    // When source == target, only ghost E columns are moved and cleared.
     AMREX_GPU_DEVICE AMREX_FORCE_INLINE
     void AddDiagonalMassMatrixRow (
         const amrex::IntVect& target, const amrex::IntVect& source,
@@ -1196,6 +1198,8 @@ namespace
             const bool ghost_E = (iside == 0) ? E[idim] < domain_lo : E[idim] > domain_hi;
             if (only_ghost_E && !ghost_E) { continue; }
 
+            // row_factor carries the current reflection sign and any boundary multiplier;
+            // a ghost E column contributes its own reflection sign.
             const amrex::Real value = row_factor*S(source,n);
             if (ghost_E) { E[idim] = mirrorfac - E[idim]; }
             // The PC stores a reduced stencil; folded couplings outside it are omitted.
@@ -1204,6 +1208,8 @@ namespace
                 S(target,dest_comp) += (ghost_E && odd_E ? -value : value);
             }
             if (ghost_E && is_tangent && current_driven) {
+                // Current-driven tangential E obeys E_ghost = 2*E_boundary - E_mirror.
+                // Add 2*value to the boundary column alongside the signed mirror term.
                 E[idim] = boundary;
                 const int boundary_comp = MassMatrixComponent(E - target, ncomp);
                 if (boundary_comp >= 0) { S(target,boundary_comp) += 2._rt*value; }
@@ -1270,7 +1276,9 @@ namespace
                 }
             }
 
-            // Fold E columns of a valid J row before adding ghost J rows.
+            // Replace this valid J row's couplings to ghost E with couplings to their
+            // valid mirror E, applying the reflection sign and zeroing the original entries.
+            // Then add ghost J rows, mapping their E couplings into the target row's stencil.
             AddDiagonalMassMatrixRow(iv, iv, S, ncomp, idim, iside, mirrorfac,
                 boundary, domain_lo[idim], domain_hi[idim] - (1 - nodal[idim]),
                 is_tangent, odd_E, current_driven, 1._rt, true);
@@ -1416,8 +1424,8 @@ void PEC::ApplyDiagonalMassMatricesBoundary (
             amrex::Box box_xx = amrex::convert(mfi.validbox(), nodal_xx);
             amrex::Box box_yy = amrex::convert(mfi.validbox(), nodal_yy);
             amrex::Box box_zz = amrex::convert(mfi.validbox(), nodal_zz);
-            // Fold into transverse guard rows so the later boundary direction
-            // can fold their contributions at domain corners.
+            // Preserve contributions in transverse guard rows: they may lie outside
+            // another boundary and must participate in that direction's later fold.
             for (int jdim = 0; jdim < AMREX_SPACEDIM; ++jdim) {
                 if (jdim == idim) { continue; }
                 box_xx.grow(jdim, Sxx->nGrowVect()[jdim]);
@@ -1449,9 +1457,8 @@ void PEC::ApplyDiagonalMassMatricesBoundary (
                 });
         }
 
-        // A later directional fold can add to a row constrained by the axis or
-        // an earlier PEC face, so enforce constrained rows and axis E columns
-        // after all directions.
+        // Enforce constrained rows and axis E columns as exact zeros after all folds;
+        // later directional folds can otherwise reintroduce entries at corners.
         amrex::ParallelFor(amrex::convert(mfi.validbox(), nodal_xx),
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 amrex::ignore_unused(j,k);

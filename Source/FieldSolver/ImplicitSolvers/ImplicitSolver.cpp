@@ -1180,7 +1180,8 @@ void ImplicitSolver::SyncMassMatricesPCAndApplyBCs ()
 
     }
 
-    // Do addOp Exchange on MassMatrices_PC
+    // Sum raw coefficients, fold boundaries, then apply inverse-volume scaling
+    // using each destination current row's volume factor.
     m_WarpX->SyncMassMatricesPC();
 
     // Apply BCs to MassMatrices_PC
