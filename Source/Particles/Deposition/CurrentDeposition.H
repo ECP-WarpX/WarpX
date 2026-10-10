@@ -25,6 +25,7 @@
 #include <AMReX_Array4.H>
 #include <AMReX_Dim3.H>
 #include <AMReX_GpuAtomic.H>
+#include <AMReX_GpuQualifiers.H>
 #include <AMReX_REAL.H>
 
 /**
@@ -37,6 +38,10 @@
  */
 namespace JComponents {
     enum : int { x = 1, y = 2, z = 4, all = x | y | z };
+
+    /** \brief Whether the bitmask \c components includes the component \c c */
+    AMREX_GPU_HOST_DEVICE
+    constexpr bool has (int components, int c) noexcept { return (components & c) != 0; }
 }
 
 /**
@@ -964,7 +969,7 @@ void doEsirkepovDepositionShapeNKernel (const long ip,
 
 #if defined(WARPX_DIM_3D)
 
-    if constexpr ((components & JComponents::x) != 0) {
+    if constexpr (JComponents::has(components, JComponents::x)) {
         for (int k=dkl; k<=depos_order+2-dku; k++) {
             for (int j=djl; j<=depos_order+2-dju; j++) {
                 amrex::Real sdxi = 0._rt;
@@ -977,7 +982,7 @@ void doEsirkepovDepositionShapeNKernel (const long ip,
             }
         }
     }
-    if constexpr ((components & JComponents::y) != 0) {
+    if constexpr (JComponents::has(components, JComponents::y)) {
         for (int k=dkl; k<=depos_order+2-dku; k++) {
             for (int i=dil; i<=depos_order+2-diu; i++) {
                 amrex::Real sdyj = 0._rt;
@@ -990,7 +995,7 @@ void doEsirkepovDepositionShapeNKernel (const long ip,
             }
         }
     }
-    if constexpr ((components & JComponents::z) != 0) {
+    if constexpr (JComponents::has(components, JComponents::z)) {
         for (int j=djl; j<=depos_order+2-dju; j++) {
             for (int i=dil; i<=depos_order+2-diu; i++) {
                 amrex::Real sdzk = 0._rt;
@@ -1006,7 +1011,7 @@ void doEsirkepovDepositionShapeNKernel (const long ip,
 
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
 
-    if constexpr ((components & JComponents::x) != 0) {
+    if constexpr (JComponents::has(components, JComponents::x)) {
         for (int k=dkl; k<=depos_order+2-dku; k++) {
             amrex::Real sdxi = 0._rt;
             for (int i=dil; i<=depos_order+1-diu; i++) {
@@ -1025,7 +1030,7 @@ void doEsirkepovDepositionShapeNKernel (const long ip,
             }
         }
     }
-    if constexpr ((components & JComponents::y) != 0) {
+    if constexpr (JComponents::has(components, JComponents::y)) {
         for (int k=dkl; k<=depos_order+2-dku; k++) {
             for (int i=dil; i<=depos_order+2-diu; i++) {
                 Real const sdyj = wq*vy*invvol*(
@@ -1054,7 +1059,7 @@ void doEsirkepovDepositionShapeNKernel (const long ip,
             }
         }
     }
-    if constexpr ((components & JComponents::z) != 0) {
+    if constexpr (JComponents::has(components, JComponents::z)) {
         for (int i=dil; i<=depos_order+2-diu; i++) {
             Real sdzk = 0._rt;
             for (int k=dkl; k<=depos_order+1-dku; k++) {
@@ -1075,19 +1080,19 @@ void doEsirkepovDepositionShapeNKernel (const long ip,
     }
 #elif defined(WARPX_DIM_1D_Z)
 
-    if constexpr ((components & JComponents::x) != 0) {
+    if constexpr (JComponents::has(components, JComponents::x)) {
         for (int k=dkl; k<=depos_order+2-dku; k++) {
             amrex::Real const sdxi = wq*vx*invvol*0.5_rt*(sz_old[k] + sz_new[k]);
             amrex::Gpu::Atomic::AddNoRet( &Jx_arr(lo.x+k_new-1+k, 0, 0, 0), sdxi);
         }
     }
-    if constexpr ((components & JComponents::y) != 0) {
+    if constexpr (JComponents::has(components, JComponents::y)) {
         for (int k=dkl; k<=depos_order+2-dku; k++) {
             amrex::Real const sdyj = wq*vy*invvol*0.5_rt*(sz_old[k] + sz_new[k]);
             amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+k_new-1+k, 0, 0, 0), sdyj);
         }
     }
-    if constexpr ((components & JComponents::z) != 0) {
+    if constexpr (JComponents::has(components, JComponents::z)) {
         amrex::Real sdzk = 0._rt;
         for (int k=dkl; k<=depos_order+1-dku; k++) {
             sdzk += wq*invdtd.z*(sz_old[k] - sz_new[k]);
@@ -1097,20 +1102,20 @@ void doEsirkepovDepositionShapeNKernel (const long ip,
 
 #elif defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
 
-    if constexpr ((components & JComponents::x) != 0) {
+    if constexpr (JComponents::has(components, JComponents::x)) {
         amrex::Real sdri = 0._rt;
         for (int i=dil; i<=depos_order+1-diu; i++) {
             sdri += wq*invdtd.x*(sx_old[i] - sx_new[i]);
             amrex::Gpu::Atomic::AddNoRet( &Jx_arr(lo.x+i_new-1+i, 0, 0, 0), sdri);
         }
     }
-    if constexpr ((components & JComponents::y) != 0) {
+    if constexpr (JComponents::has(components, JComponents::y)) {
         for (int i=dil; i<=depos_order+2-diu; i++) {
             amrex::Real const sdyj = wq*vy*invvol*0.5_rt*(sx_old[i] + sx_new[i]);
             amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+i_new-1+i, 0, 0, 0), sdyj);
         }
     }
-    if constexpr ((components & JComponents::z) != 0) {
+    if constexpr (JComponents::has(components, JComponents::z)) {
         for (int i=dil; i<=depos_order+2-diu; i++) {
             amrex::Real const sdzi = wq*vz*invvol*0.5_rt*(sx_old[i] + sx_new[i]);
             amrex::Gpu::Atomic::AddNoRet( &Jz_arr(lo.x+i_new-1+i, 0, 0, 0), sdzi);
