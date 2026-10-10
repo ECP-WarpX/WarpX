@@ -2852,6 +2852,10 @@ void doVillasenorDepositionShapeNImplicit ([[maybe_unused]]const amrex::Particle
  */
 namespace VayArrays {
     enum : int { t0 = 1, t1 = 2, t2 = 4, t3 = 8, Dy = 16, all = t0 | t1 | t2 | t3 | Dy };
+
+    /** \brief Whether the bitmask \c components includes the array \c a */
+    AMREX_GPU_HOST_DEVICE
+    constexpr bool has (int components, int a) noexcept { return (components & a) != 0; }
 }
 
 /**
@@ -2863,7 +2867,7 @@ template <int bit, int components>
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 void vayAddNoRet (amrex::Array4<amrex::Real> const& arr, int i, int j, int k, amrex::Real value)
 {
-    if constexpr ((components & bit) != 0) {
+    if constexpr (VayArrays::has(components, bit)) {
         amrex::Gpu::Atomic::AddNoRet(&arr(i, j, k), value);
     } else {
         amrex::ignore_unused(arr, i, j, k, value);
