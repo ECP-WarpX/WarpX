@@ -1745,8 +1745,8 @@ void doChargeConservingDepositionShapeNImplicit ([[maybe_unused]]const amrex::Pa
  *        in a tighter stencil. The implementation is valid for an arbitrary number of cell crossings.
  *
  * \tparam depos_order  deposition order
- * \tparam components   bitmask of the components of J to deposit: 1 for Jx, 2 for Jy,
- *                      4 for Jz. The arrays of the other components are not accessed.
+ * \tparam components   bitmask of the components of J to deposit (see JComponents). The
+ *                      arrays of the other components are not accessed.
  * \param xp_old,yp_old,zp_old  Old particle positions (nominally at start of step)
  * \param xp_new,yp_new,zp_new  New particle positions (nominally at end of step)
  * \param wq           Pointer to array of particle weights.
@@ -1762,7 +1762,7 @@ void doChargeConservingDepositionShapeNImplicit ([[maybe_unused]]const amrex::Pa
  * \param invvol                One over cell volume
  * \param n_rz_azimuthal_modes  Number of azimuthal modes when using RZ geometry
  */
-template <int depos_order, int components = 7>
+template <int depos_order, int components = JComponents::all>
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
 void VillasenorDepositionShapeNKernel ([[maybe_unused]] amrex::ParticleReal const xp_old,
                                        [[maybe_unused]] amrex::ParticleReal const yp_old,
@@ -2042,7 +2042,7 @@ void VillasenorDepositionShapeNKernel ([[maybe_unused]] amrex::ParticleReal cons
         const int j0_node = compute_shape_factors_node( sy_old_node, sy_new_node, y0_old, y0_new );
         const int k0_node = compute_shape_factors_node( sz_old_node, sz_new_node, z0_old, z0_new );
 
-        if constexpr ((components & 1) != 0) {
+        if constexpr ((components & JComponents::x) != 0) {
             // deposit Jx for this segment
             amrex::Real this_Jx;
             for (int i=0; i<=depos_order-1; i++) {
@@ -2058,7 +2058,7 @@ void VillasenorDepositionShapeNKernel ([[maybe_unused]] amrex::ParticleReal cons
             }
         }
 
-        if constexpr ((components & 2) != 0) {
+        if constexpr ((components & JComponents::y) != 0) {
             // deposit Jy for this segment
             amrex::Real this_Jy;
             for (int i=0; i<=depos_order; i++) {
@@ -2074,7 +2074,7 @@ void VillasenorDepositionShapeNKernel ([[maybe_unused]] amrex::ParticleReal cons
             }
         }
 
-        if constexpr ((components & 4) != 0) {
+        if constexpr ((components & JComponents::z) != 0) {
             // deposit Jz for this segment
             amrex::Real this_Jz;
             for (int i=0; i<=depos_order; i++) {
@@ -2195,7 +2195,7 @@ void VillasenorDepositionShapeNKernel ([[maybe_unused]] amrex::ParticleReal cons
         const int i0_node = compute_shape_factors_node( sx_old_node, sx_new_node, x0_old, x0_new );
         const int k0_node = compute_shape_factors_node( sz_old_node, sz_new_node, z0_old, z0_new );
 
-        if constexpr ((components & 1) != 0) {
+        if constexpr ((components & JComponents::x) != 0) {
             // deposit Jx for this segment
             amrex::Real this_Jx;
             for (int i=0; i<=depos_order-1; i++) {
@@ -2216,7 +2216,7 @@ void VillasenorDepositionShapeNKernel ([[maybe_unused]] amrex::ParticleReal cons
             }
         }
 
-        if constexpr ((components & 2) != 0) {
+        if constexpr ((components & JComponents::y) != 0) {
             // deposit out-of-plane Jy for this segment
             const auto seg_factor_y = std::min(seg_factor_x,seg_factor_z);
             amrex::Real this_Jy;
@@ -2242,7 +2242,7 @@ void VillasenorDepositionShapeNKernel ([[maybe_unused]] amrex::ParticleReal cons
             }
         }
 
-        if constexpr ((components & 4) != 0) {
+        if constexpr ((components & JComponents::z) != 0) {
             // deposit Jz for this segment
             amrex::Real this_Jz;
             for (int i=0; i<=depos_order; i++) {
@@ -2329,15 +2329,15 @@ void VillasenorDepositionShapeNKernel ([[maybe_unused]] amrex::ParticleReal cons
         // deposit out-of-plane Jx and Jy for this segment
         for (int k=0; k<=depos_order; k++) {
             const amrex::Real weight = 0.5_rt*(sz_old_node[k] + sz_new_node[k])*seg_factor;
-            if constexpr ((components & 1) != 0) {
+            if constexpr ((components & JComponents::x) != 0) {
                 amrex::Gpu::Atomic::AddNoRet( &Jx_arr(lo.x+k0_node+k, 0, 0), wqx*weight);
             }
-            if constexpr ((components & 2) != 0) {
+            if constexpr ((components & JComponents::y) != 0) {
                 amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+k0_node+k, 0, 0), wqy*weight);
             }
         }
 
-        if constexpr ((components & 4) != 0) {
+        if constexpr ((components & JComponents::z) != 0) {
             // deposit Jz for this segment
             for (int k=0; k<=depos_order-1; k++) {
                 const amrex::Real this_Jz = wqz*sz_cell[k]*seg_factor;
@@ -2410,15 +2410,15 @@ void VillasenorDepositionShapeNKernel ([[maybe_unused]] amrex::ParticleReal cons
         // deposit out-of-plane Jy and Jz for this segment
         for (int i=0; i<=depos_order; i++) {
             const amrex::Real weight = 0.5_rt*(sx_old_node[i] + sx_new_node[i])*seg_factor;
-            if constexpr ((components & 2) != 0) {
+            if constexpr ((components & JComponents::y) != 0) {
                 amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+i0_node+i, 0, 0), wqy*weight);
             }
-            if constexpr ((components & 4) != 0) {
+            if constexpr ((components & JComponents::z) != 0) {
                 amrex::Gpu::Atomic::AddNoRet( &Jz_arr(lo.x+i0_node+i, 0, 0), wqz*weight);
             }
         }
 
-        if constexpr ((components & 1) != 0) {
+        if constexpr ((components & JComponents::x) != 0) {
             // deposit Jx for this segment
             for (int i=0; i<=depos_order-1; i++) {
                 const amrex::Real this_Jx = wqx*sx_cell[i]*seg_factor;
@@ -2444,8 +2444,8 @@ void VillasenorDepositionShapeNKernel ([[maybe_unused]] amrex::ParticleReal cons
  * VillasenorDepositionShapeNKernel.
  *
  * \tparam depos_order  deposition order
- * \tparam components   bitmask of the components of J to deposit: 1 for Jx, 2 for Jy,
- *                      4 for Jz. The arrays of the other components are not accessed.
+ * \tparam components   bitmask of the components of J to deposit (see JComponents). The
+ *                      arrays of the other components are not accessed.
  * \param ip           Index of the particle.
  * \param GetPosition  A functor for returning the particle position.
  * \param wp           Pointer to array of particle weights.
@@ -2463,7 +2463,7 @@ void VillasenorDepositionShapeNKernel ([[maybe_unused]] amrex::ParticleReal cons
  * \param invvol                One over cell volume
  * \param n_rz_azimuthal_modes  Number of azimuthal modes when using RZ geometry.
  */
-template <int depos_order, int components = 7>
+template <int depos_order, int components = JComponents::all>
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 void doVillasenorDepositionShapeNExplicitKernel (const long ip,
                                                  const GetParticlePosition<PIdx>& GetPosition,
@@ -2714,9 +2714,9 @@ void doVillasenorDepositionSharedShapeNImpl (
                 addLocalToGlobal(buffer_box, j_arr, j_buff);
                 __syncthreads();
             };
-            deposit_component(std::integral_constant<int, 1>{}, jx_arr);
-            deposit_component(std::integral_constant<int, 2>{}, jy_arr);
-            deposit_component(std::integral_constant<int, 4>{}, jz_arr);
+            deposit_component(std::integral_constant<int, JComponents::x>{}, jx_arr);
+            deposit_component(std::integral_constant<int, JComponents::y>{}, jy_arr);
+            deposit_component(std::integral_constant<int, JComponents::z>{}, jz_arr);
         }
     });
 #else // not using hip/cuda
