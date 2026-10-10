@@ -342,8 +342,8 @@ void WarpX::HybridPICDepositRhoAndJ ()
                 }
                 // Apply boundary conditions to rho_spec, and then apply volume scaling
                 FinalizeRho(lev, rho_spec[lev], PatchType::fine);
-                ApplyJfieldBoundary(lev, J_spec[lev][0], J_spec[lev][1],
-                                    J_spec[lev][2], PatchType::fine);
+                FinalizeJOnLevel(lev, J_spec[lev][0], J_spec[lev][1],
+                                  J_spec[lev][2], PatchType::fine);
             }
 #if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
             // Below-axis guard cells still hold raw deposit remnants after
