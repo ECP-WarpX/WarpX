@@ -1312,7 +1312,7 @@ namespace
     }
 
     AMREX_GPU_DEVICE AMREX_FORCE_INLINE
-    void ZeroConstrainedMassMatrixRow (
+    void ZeroConstrainedMassMatrixEntries (
         const amrex::IntVect& iv, const amrex::Array4<amrex::Real>& S,
         const amrex::IntVect& domain_lo, const amrex::IntVect& domain_hi,
         const amrex::IntVect& nodal, const amrex::GpuArray<int,3>& ncomp,
@@ -1337,6 +1337,19 @@ namespace
                         S(iv,n) = 0._rt;
                     }
                     return;
+                }
+            }
+        }
+
+        // An odd nodal E component is exactly zero on the axis. Remove its
+        // column from every J row whose stencil reaches the axis.
+        if (has_axis && nodal[0] && IsOddAtAxis(icomp)) {
+            const int radial_width = (ncomp[0] - 1)/2;
+            if (iv[0] > domain_lo[0] + radial_width) { return; }
+            for (int n = 0; n < ncomp[0]*ncomp[1]*ncomp[2]; ++n) {
+                const int radial_offset = n % ncomp[0] - radial_width;
+                if (iv[0] + radial_offset == domain_lo[0]) {
+                    S(iv,n) = 0._rt;
                 }
             }
         }
@@ -1437,23 +1450,24 @@ void PEC::ApplyDiagonalMassMatricesBoundary (
         }
 
         // A later directional fold can add to a row constrained by the axis or
-        // an earlier PEC face, so enforce constrained rows after all directions.
+        // an earlier PEC face, so enforce constrained rows and axis E columns
+        // after all directions.
         amrex::ParallelFor(amrex::convert(mfi.validbox(), nodal_xx),
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 amrex::ignore_unused(j,k);
-                ZeroConstrainedMassMatrixRow(amrex::IntVect(AMREX_D_DECL(i,j,k)),
+                ZeroConstrainedMassMatrixEntries(amrex::IntVect(AMREX_D_DECL(i,j,k)),
                     xx, domain_lo, domain_hi, nodal_xx, nc_xx, bc, voltage_driven, 0, has_axis);
             });
         amrex::ParallelFor(amrex::convert(mfi.validbox(), nodal_yy),
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 amrex::ignore_unused(j,k);
-                ZeroConstrainedMassMatrixRow(amrex::IntVect(AMREX_D_DECL(i,j,k)),
+                ZeroConstrainedMassMatrixEntries(amrex::IntVect(AMREX_D_DECL(i,j,k)),
                     yy, domain_lo, domain_hi, nodal_yy, nc_yy, bc, voltage_driven, 1, has_axis);
             });
         amrex::ParallelFor(amrex::convert(mfi.validbox(), nodal_zz),
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 amrex::ignore_unused(j,k);
-                ZeroConstrainedMassMatrixRow(amrex::IntVect(AMREX_D_DECL(i,j,k)),
+                ZeroConstrainedMassMatrixEntries(amrex::IntVect(AMREX_D_DECL(i,j,k)),
                     zz, domain_lo, domain_hi, nodal_zz, nc_zz, bc, voltage_driven, 2, has_axis);
             });
     }
