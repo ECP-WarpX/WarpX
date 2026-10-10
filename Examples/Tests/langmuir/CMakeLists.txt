@@ -229,6 +229,16 @@ endif()
 # Shared memory deposition is only available on CUDA and HIP
 if(WarpX_COMPUTE STREQUAL CUDA OR WarpX_COMPUTE STREQUAL HIP)
     add_warpx_test(
+        test_2d_langmuir_multi_shared_mem_direct  # name
+        2  # dims
+        2  # nprocs
+        inputs_test_2d_langmuir_multi_shared_mem_direct  # inputs
+        "analysis_2d.py diags/diag1000080"  # analysis
+        "analysis_default_regression.py --path diags/diag1000080"  # checksum
+        OFF  # dependency
+    )
+
+    add_warpx_test(
         test_2d_langmuir_multi_shared_mem_esirkepov  # name
         2  # dims
         2  # nprocs
@@ -427,6 +437,16 @@ endif()
 
 # Shared memory deposition is only available on CUDA and HIP
 if(WarpX_COMPUTE STREQUAL CUDA OR WarpX_COMPUTE STREQUAL HIP)
+    add_warpx_test(
+        test_3d_langmuir_multi_shared_mem_direct  # name
+        3  # dims
+        2  # nprocs
+        inputs_test_3d_langmuir_multi_shared_mem_direct  # inputs
+        "analysis_3d.py diags/diag1000040"  # analysis
+        "analysis_default_regression.py --path diags/diag1000040"  # checksum
+        OFF  # dependency
+    )
+
     add_warpx_test(
         test_3d_langmuir_multi_shared_mem_esirkepov  # name
         3  # dims

@@ -75,10 +75,12 @@ NVIDIA-H100:
     - |
       GPU_TESTS=(
         test_1d_langmuir_multi
+        test_2d_langmuir_multi_shared_mem_direct
         test_2d_langmuir_multi_shared_mem_esirkepov
         test_2d_langmuir_multi_psatd_vay_deposition_shared_mem
         test_2d_langmuir_multi_shared_mem_villasenor
         test_2d_refined_injection
+        test_3d_langmuir_multi_shared_mem_direct
         test_3d_langmuir_multi_shared_mem_esirkepov
         test_3d_langmuir_multi_psatd_vay_deposition_shared_mem
         test_3d_langmuir_multi_shared_mem_villasenor
@@ -140,10 +142,12 @@ AMD-MI300:
     - |
       GPU_TESTS=(
         test_1d_langmuir_multi
+        test_2d_langmuir_multi_shared_mem_direct
         test_2d_langmuir_multi_shared_mem_esirkepov
         test_2d_langmuir_multi_psatd_vay_deposition_shared_mem
         test_2d_langmuir_multi_shared_mem_villasenor
         test_2d_refined_injection
+        test_3d_langmuir_multi_shared_mem_direct
         test_3d_langmuir_multi_shared_mem_esirkepov
         test_3d_langmuir_multi_psatd_vay_deposition_shared_mem
         test_3d_langmuir_multi_shared_mem_villasenor
