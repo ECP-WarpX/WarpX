@@ -28,6 +28,18 @@
 #include <AMReX_REAL.H>
 
 /**
+ * \brief Bitmask of the components of J that a deposition kernel deposits.
+ *
+ * Kernels with a \c components template parameter deposit only the components whose bits
+ * are set, e.g. \c JComponents::x deposits only Jx. The shared memory depositions use this
+ * to deposit one component at a time into a single buffer when the buffers for all three
+ * components do not fit in shared memory.
+ */
+namespace JComponents {
+    enum : int { x = 1, y = 2, z = 4, all = x | y | z };
+}
+
+/**
  * \brief Kernel for the direct current deposition for thread thread_num
  * \tparam depos_order deposition order
  * \param xp, yp, zp    The particle positions.
@@ -659,8 +671,8 @@ void doDepositionSharedShapeN (const GetParticlePosition<PIdx>& GetPosition,
  * \tparam depos_order  deposition order
  * \tparam reduce_shape whether to use an order-1 shape in the cells flagged by
  *                      reduced_particle_shape_mask
- * \tparam components   bitmask of the components of J to deposit: 1 for Jx, 2 for Jy,
- *                      4 for Jz. The arrays of the other components are not accessed.
+ * \tparam components   bitmask of the components of J to deposit (see JComponents). The
+ *                      arrays of the other components are not accessed.
  * \param ip           Index of the particle.
  * \param GetPosition  A functor for returning the particle position.
  * \param wp           Pointer to array of particle weights.
@@ -678,7 +690,7 @@ void doDepositionSharedShapeN (const GetParticlePosition<PIdx>& GetPosition,
  * \param reduced_particle_shape_mask  Array4 of int, Mask that indicates whether a particle
  * should use its regular shape factor or a reduced, order-1 shape factor instead in a given cell.
  */
-template <int depos_order, bool reduce_shape, int components = 7>
+template <int depos_order, bool reduce_shape, int components = JComponents::all>
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 void doEsirkepovDepositionShapeNKernel (const long ip,
                                         const GetParticlePosition<PIdx>& GetPosition,
@@ -952,7 +964,7 @@ void doEsirkepovDepositionShapeNKernel (const long ip,
 
 #if defined(WARPX_DIM_3D)
 
-    if constexpr ((components & 1) != 0) {
+    if constexpr ((components & JComponents::x) != 0) {
         for (int k=dkl; k<=depos_order+2-dku; k++) {
             for (int j=djl; j<=depos_order+2-dju; j++) {
                 amrex::Real sdxi = 0._rt;
@@ -965,7 +977,7 @@ void doEsirkepovDepositionShapeNKernel (const long ip,
             }
         }
     }
-    if constexpr ((components & 2) != 0) {
+    if constexpr ((components & JComponents::y) != 0) {
         for (int k=dkl; k<=depos_order+2-dku; k++) {
             for (int i=dil; i<=depos_order+2-diu; i++) {
                 amrex::Real sdyj = 0._rt;
@@ -978,7 +990,7 @@ void doEsirkepovDepositionShapeNKernel (const long ip,
             }
         }
     }
-    if constexpr ((components & 4) != 0) {
+    if constexpr ((components & JComponents::z) != 0) {
         for (int j=djl; j<=depos_order+2-dju; j++) {
             for (int i=dil; i<=depos_order+2-diu; i++) {
                 amrex::Real sdzk = 0._rt;
@@ -994,7 +1006,7 @@ void doEsirkepovDepositionShapeNKernel (const long ip,
 
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
 
-    if constexpr ((components & 1) != 0) {
+    if constexpr ((components & JComponents::x) != 0) {
         for (int k=dkl; k<=depos_order+2-dku; k++) {
             amrex::Real sdxi = 0._rt;
             for (int i=dil; i<=depos_order+1-diu; i++) {
@@ -1013,7 +1025,7 @@ void doEsirkepovDepositionShapeNKernel (const long ip,
             }
         }
     }
-    if constexpr ((components & 2) != 0) {
+    if constexpr ((components & JComponents::y) != 0) {
         for (int k=dkl; k<=depos_order+2-dku; k++) {
             for (int i=dil; i<=depos_order+2-diu; i++) {
                 Real const sdyj = wq*vy*invvol*(
@@ -1042,7 +1054,7 @@ void doEsirkepovDepositionShapeNKernel (const long ip,
             }
         }
     }
-    if constexpr ((components & 4) != 0) {
+    if constexpr ((components & JComponents::z) != 0) {
         for (int i=dil; i<=depos_order+2-diu; i++) {
             Real sdzk = 0._rt;
             for (int k=dkl; k<=depos_order+1-dku; k++) {
@@ -1063,19 +1075,19 @@ void doEsirkepovDepositionShapeNKernel (const long ip,
     }
 #elif defined(WARPX_DIM_1D_Z)
 
-    if constexpr ((components & 1) != 0) {
+    if constexpr ((components & JComponents::x) != 0) {
         for (int k=dkl; k<=depos_order+2-dku; k++) {
             amrex::Real const sdxi = wq*vx*invvol*0.5_rt*(sz_old[k] + sz_new[k]);
             amrex::Gpu::Atomic::AddNoRet( &Jx_arr(lo.x+k_new-1+k, 0, 0, 0), sdxi);
         }
     }
-    if constexpr ((components & 2) != 0) {
+    if constexpr ((components & JComponents::y) != 0) {
         for (int k=dkl; k<=depos_order+2-dku; k++) {
             amrex::Real const sdyj = wq*vy*invvol*0.5_rt*(sz_old[k] + sz_new[k]);
             amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+k_new-1+k, 0, 0, 0), sdyj);
         }
     }
-    if constexpr ((components & 4) != 0) {
+    if constexpr ((components & JComponents::z) != 0) {
         amrex::Real sdzk = 0._rt;
         for (int k=dkl; k<=depos_order+1-dku; k++) {
             sdzk += wq*invdtd.z*(sz_old[k] - sz_new[k]);
@@ -1085,20 +1097,20 @@ void doEsirkepovDepositionShapeNKernel (const long ip,
 
 #elif defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
 
-    if constexpr ((components & 1) != 0) {
+    if constexpr ((components & JComponents::x) != 0) {
         amrex::Real sdri = 0._rt;
         for (int i=dil; i<=depos_order+1-diu; i++) {
             sdri += wq*invdtd.x*(sx_old[i] - sx_new[i]);
             amrex::Gpu::Atomic::AddNoRet( &Jx_arr(lo.x+i_new-1+i, 0, 0, 0), sdri);
         }
     }
-    if constexpr ((components & 2) != 0) {
+    if constexpr ((components & JComponents::y) != 0) {
         for (int i=dil; i<=depos_order+2-diu; i++) {
             amrex::Real const sdyj = wq*vy*invvol*0.5_rt*(sx_old[i] + sx_new[i]);
             amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+i_new-1+i, 0, 0, 0), sdyj);
         }
     }
-    if constexpr ((components & 4) != 0) {
+    if constexpr ((components & JComponents::z) != 0) {
         for (int i=dil; i<=depos_order+2-diu; i++) {
             amrex::Real const sdzi = wq*vz*invvol*0.5_rt*(sx_old[i] + sx_new[i]);
             amrex::Gpu::Atomic::AddNoRet( &Jz_arr(lo.x+i_new-1+i, 0, 0, 0), sdzi);
@@ -1306,9 +1318,9 @@ void doEsirkepovDepositionSharedShapeNImpl (
                 addLocalToGlobal(buffer_box, j_arr, j_buff);
                 __syncthreads();
             };
-            deposit_component(std::integral_constant<int, 1>{}, jx_arr);
-            deposit_component(std::integral_constant<int, 2>{}, jy_arr);
-            deposit_component(std::integral_constant<int, 4>{}, jz_arr);
+            deposit_component(std::integral_constant<int, JComponents::x>{}, jx_arr);
+            deposit_component(std::integral_constant<int, JComponents::y>{}, jy_arr);
+            deposit_component(std::integral_constant<int, JComponents::z>{}, jz_arr);
         }
     });
 #else // not using hip/cuda
