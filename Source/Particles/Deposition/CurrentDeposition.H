@@ -1406,8 +1406,7 @@ void doEsirkepovDepositionSharedShapeN (
                                      "Tile size too big for GPU shared memory current deposition");
 
     // Deposit the three components of J in a single pass if their buffers fit in shared memory
-    bool fused = (3*buffer_bytes <= max_shared_mem_bytes);
-    if (const char* e = std::getenv("WARPX_ESK_FUSED_TMP")) { fused = fused && (e[0] == '1'); } // TEMPORARY
+    const bool fused = (3*buffer_bytes <= max_shared_mem_bytes);
     const std::size_t shared_mem_bytes = fused ? 3*buffer_bytes : buffer_bytes;
 
     // Compile versions of the kernel with and without reduced shape, and with and
