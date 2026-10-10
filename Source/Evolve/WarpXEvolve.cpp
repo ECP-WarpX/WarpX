@@ -1001,6 +1001,7 @@ WarpX::OneStep_JRhom (const amrex::Real cur_time)
         // into 'current_fp' and then performs both filtering, if used, and exchange
         // of guard cells.
         SyncCurrent("current_fp");
+        FinalizeJ();
         // Forward FFT of J
         PSATDForwardTransformJ("current_fp", "current_cp");
     }
@@ -1035,14 +1036,17 @@ WarpX::OneStep_JRhom (const amrex::Real cur_time)
         // into 'current_fp' and then performs both filtering, if used, and exchange
         // of guard cells.
         SyncCurrent("current_fp");
+        FinalizeJ();
         // Forward FFT of J
         PSATDForwardTransformJ("current_fp", "current_cp");
 
         if (time_dependency_J == TimeDependencyJ::Quadratic)
         {
             PSATDMoveJNewToJMid();
-            mypc->DepositCurrent( m_fields.get_mr_levels_alldirs(current_string, finest_level),  dt[0], t_deposit_current + 0.5_rt*sub_dt);
+            mypc->DepositCurrent(m_fields.get_mr_levels_alldirs(current_string, finest_level),
+                                 dt[0], t_deposit_current + 0.5_rt*sub_dt);
             SyncCurrent("current_fp");
+            FinalizeJ();
             PSATDForwardTransformJ("current_fp", "current_cp");
         }
 
@@ -1184,6 +1188,7 @@ WarpX::OneStep_sub1 (Real cur_time)
         WARPX_ABORT_WITH_MESSAGE(msg.str());
     }
 
+    using ablastr::fields::Direction;
     using warpx::fields::FieldType;
 
     bool const skip_lev0_coarse_patch = true;
@@ -1203,6 +1208,11 @@ WarpX::OneStep_sub1 (Real cur_time)
     SumBoundaryJ(
         m_fields.get_mr_levels_alldirs(FieldType::current_fp, finest_level),
         fine_lev, Geom(fine_lev).periodicity());
+    FinalizeJOnLevel(fine_lev,
+        m_fields.get(FieldType::current_fp, Direction{0}, fine_lev),
+        m_fields.get(FieldType::current_fp, Direction{1}, fine_lev),
+        m_fields.get(FieldType::current_fp, Direction{2}, fine_lev),
+        PatchType::fine);
 
     if (m_fields.has(FieldType::rho_fp, finest_level) &&
         m_fields.has(FieldType::rho_cp, finest_level)) {
@@ -1243,6 +1253,16 @@ WarpX::OneStep_sub1 (Real cur_time)
         m_fields.get_mr_levels_alldirs(FieldType::current_fp, finest_level),
         m_fields.get_mr_levels_alldirs(FieldType::current_cp, finest_level, skip_lev0_coarse_patch),
         m_fields.get_mr_levels_alldirs(FieldType::current_buf, finest_level, skip_lev0_coarse_patch), coarse_lev);
+    FinalizeJOnLevel(coarse_lev,
+        m_fields.get(FieldType::current_fp, Direction{0}, coarse_lev),
+        m_fields.get(FieldType::current_fp, Direction{1}, coarse_lev),
+        m_fields.get(FieldType::current_fp, Direction{2}, coarse_lev),
+        PatchType::fine);
+    FinalizeJOnLevel(fine_lev,
+        m_fields.get(FieldType::current_cp, Direction{0}, fine_lev),
+        m_fields.get(FieldType::current_cp, Direction{1}, fine_lev),
+        m_fields.get(FieldType::current_cp, Direction{2}, fine_lev),
+        PatchType::coarse);
 
     if (m_fields.has(FieldType::rho_fp, finest_level) &&
         m_fields.has(FieldType::rho_cp, finest_level)) {
@@ -1291,6 +1311,11 @@ WarpX::OneStep_sub1 (Real cur_time)
         ApplyFilterJ( m_fields.get_mr_levels_alldirs(FieldType::current_fp, finest_level), fine_lev);
     }
     SumBoundaryJ( m_fields.get_mr_levels_alldirs(FieldType::current_fp, finest_level), fine_lev, Geom(fine_lev).periodicity());
+    FinalizeJOnLevel(fine_lev,
+        m_fields.get(FieldType::current_fp, Direction{0}, fine_lev),
+        m_fields.get(FieldType::current_fp, Direction{1}, fine_lev),
+        m_fields.get(FieldType::current_fp, Direction{2}, fine_lev),
+        PatchType::fine);
 
     if (m_fields.has(FieldType::rho_fp, finest_level) &&
         m_fields.has(FieldType::rho_cp, finest_level)) {
@@ -1331,6 +1356,16 @@ WarpX::OneStep_sub1 (Real cur_time)
         m_fields.get_mr_levels_alldirs(FieldType::current_cp, finest_level, skip_lev0_coarse_patch),
         m_fields.get_mr_levels_alldirs(FieldType::current_buf, finest_level, skip_lev0_coarse_patch),
         coarse_lev);
+    FinalizeJOnLevel(coarse_lev,
+        m_fields.get(FieldType::current_fp, Direction{0}, coarse_lev),
+        m_fields.get(FieldType::current_fp, Direction{1}, coarse_lev),
+        m_fields.get(FieldType::current_fp, Direction{2}, coarse_lev),
+        PatchType::fine);
+    FinalizeJOnLevel(fine_lev,
+        m_fields.get(FieldType::current_cp, Direction{0}, fine_lev),
+        m_fields.get(FieldType::current_cp, Direction{1}, fine_lev),
+        m_fields.get(FieldType::current_cp, Direction{2}, fine_lev),
+        PatchType::coarse);
 
     if (m_fields.has(FieldType::rho_fp, finest_level) &&
         m_fields.has(FieldType::rho_cp, finest_level)) {
