@@ -344,26 +344,26 @@ void doDepositionShapeNParticle (const long ip,
     // (do_ionization=1)
     const bool do_ionization = ion_lev;
 
-    amrex::ParticleReal xp, yp, zp;
-    GetPosition(ip, xp, yp, zp);
+            amrex::ParticleReal xp, yp, zp;
+            GetPosition(ip, xp, yp, zp);
 
-    // --- Get particle quantities
-    const amrex::Real gaminv = 1.0_rt/std::sqrt(1.0_rt + uxp[ip]*uxp[ip]*inv_c2
-                                                + uyp[ip]*uyp[ip]*inv_c2
-                                                + uzp[ip]*uzp[ip]*inv_c2);
-    const amrex::Real vx  = uxp[ip]*gaminv;
-    const amrex::Real vy  = uyp[ip]*gaminv;
-    const amrex::Real vz  = uzp[ip]*gaminv;
+            // --- Get particle quantities
+            const amrex::Real gaminv = 1.0_rt/std::sqrt(1.0_rt + uxp[ip]*uxp[ip]*inv_c2
+                                                        + uyp[ip]*uyp[ip]*inv_c2
+                                                        + uzp[ip]*uzp[ip]*inv_c2);
+            const amrex::Real vx  = uxp[ip]*gaminv;
+            const amrex::Real vy  = uyp[ip]*gaminv;
+            const amrex::Real vz  = uzp[ip]*gaminv;
 
-    amrex::Real wq  = q*wp[ip];
-    if (do_ionization){
-        wq *= ion_lev[ip];
-    }
+            amrex::Real wq  = q*wp[ip];
+            if (do_ionization){
+                wq *= ion_lev[ip];
+            }
 
-    doDepositionShapeNKernel<depos_order>(xp, yp, zp, wq, vx, vy, vz, jx_arr, jy_arr, jz_arr,
-                                          jx_type, jy_type, jz_type,
-                                          relative_time, dinv, xyzmin,
-                                          invvol, lo, n_rz_azimuthal_modes);
+            doDepositionShapeNKernel<depos_order>(xp, yp, zp, wq, vx, vy, vz, jx_arr, jy_arr, jz_arr,
+                                                  jx_type, jy_type, jz_type,
+                                                  relative_time, dinv, xyzmin,
+                                                  invvol, lo, n_rz_azimuthal_modes);
 }
 
 /**
@@ -424,9 +424,9 @@ void doDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
         [=] AMREX_GPU_DEVICE (long ip) {
             doDepositionShapeNParticle<depos_order>(ip, GetPosition, wp, uxp, uyp, uzp, ion_lev,
                                                     jx_arr, jy_arr, jz_arr,
-                                                    jx_type, jy_type, jz_type,
-                                                    relative_time, dinv, xyzmin,
-                                                    invvol, lo, q, n_rz_azimuthal_modes);
+                                                  jx_type, jy_type, jz_type,
+                                                  relative_time, dinv, xyzmin,
+                                                  invvol, lo, q, n_rz_azimuthal_modes);
         }
     );
 }
@@ -544,7 +544,7 @@ void doDepositionShapeNImplicit([[maybe_unused]] const amrex::ParticleReal * con
  * \brief Implementation of doDepositionSharedShapeN, for a given choice of the use of
  *        shared memory.
  *
- * \tparam depos_order  deposition order
+ * \tparam depos_order deposition order
  * \tparam fused        if true, deposit the three components of J in a single pass, into
  *                      three shared memory buffers; otherwise, deposit them one at a time
  *                      into a single buffer, which requires less shared memory but computes
@@ -654,59 +654,59 @@ void doDepositionSharedShapeNImpl (
             addLocalToGlobal(tbox_y, jy_arr, jy_buff);
             addLocalToGlobal(tbox_z, jz_arr, jz_buff);
         } else {
-            amrex::Array4<amrex::Real> const jx_buff(shared,
-                    amrex::begin(tbox_x), amrex::end(tbox_x), 1);
-            amrex::Array4<amrex::Real> const jy_buff(shared,
-                    amrex::begin(tbox_y), amrex::end(tbox_y), 1);
-            amrex::Array4<amrex::Real> const jz_buff(shared,
-                    amrex::begin(tbox_z), amrex::end(tbox_z), 1);
+        amrex::Array4<amrex::Real> const jx_buff(shared,
+                amrex::begin(tbox_x), amrex::end(tbox_x), 1);
+        amrex::Array4<amrex::Real> const jy_buff(shared,
+                amrex::begin(tbox_y), amrex::end(tbox_y), 1);
+        amrex::Array4<amrex::Real> const jz_buff(shared,
+                amrex::begin(tbox_z), amrex::end(tbox_z), 1);
 
-            // Zero-initialize the temporary array in shared memory
-            volatile amrex::Real* vs = shared;
-            for (int i = threadIdx.x; i < npts; i += blockDim.x){
-                vs[i] = 0.0;
-            }
-            __syncthreads();
-            for (unsigned int ip_orig = bin_start+threadIdx.x; ip_orig<bin_stop; ip_orig += blockDim.x)
-            {
-                const unsigned int ip = permutation[ip_orig];
-                depositComponent<depos_order>(GetPosition, wp, uxp, uyp, uzp, ion_lev, jx_buff, jx_type,
-                                              relative_time, dinv, xyzmin, lo, q, n_rz_azimuthal_modes,
-                                              ip, zdir, NODE, CELL, 0);
-            }
+        // Zero-initialize the temporary array in shared memory
+        volatile amrex::Real* vs = shared;
+        for (int i = threadIdx.x; i < npts; i += blockDim.x){
+            vs[i] = 0.0;
+        }
+        __syncthreads();
+        for (unsigned int ip_orig = bin_start+threadIdx.x; ip_orig<bin_stop; ip_orig += blockDim.x)
+        {
+            const unsigned int ip = permutation[ip_orig];
+            depositComponent<depos_order>(GetPosition, wp, uxp, uyp, uzp, ion_lev, jx_buff, jx_type,
+                                          relative_time, dinv, xyzmin, lo, q, n_rz_azimuthal_modes,
+                                          ip, zdir, NODE, CELL, 0);
+        }
 
-            __syncthreads();
-            addLocalToGlobal(tbox_x, jx_arr, jx_buff);
-            for (int i = threadIdx.x; i < npts; i += blockDim.x){
-                vs[i] = 0.0;
-            }
+        __syncthreads();
+        addLocalToGlobal(tbox_x, jx_arr, jx_buff);
+        for (int i = threadIdx.x; i < npts; i += blockDim.x){
+            vs[i] = 0.0;
+        }
 
-            __syncthreads();
-            for (unsigned int ip_orig = bin_start+threadIdx.x; ip_orig<bin_stop; ip_orig += blockDim.x)
-            {
-                const unsigned int ip = permutation[ip_orig];
-                depositComponent<depos_order>(GetPosition, wp, uxp, uyp, uzp, ion_lev, jy_buff, jy_type,
-                                              relative_time, dinv, xyzmin, lo, q, n_rz_azimuthal_modes,
-                                              ip, zdir, NODE, CELL, 1);
-            }
+        __syncthreads();
+        for (unsigned int ip_orig = bin_start+threadIdx.x; ip_orig<bin_stop; ip_orig += blockDim.x)
+        {
+            const unsigned int ip = permutation[ip_orig];
+            depositComponent<depos_order>(GetPosition, wp, uxp, uyp, uzp, ion_lev, jy_buff, jy_type,
+                                          relative_time, dinv, xyzmin, lo, q, n_rz_azimuthal_modes,
+                                          ip, zdir, NODE, CELL, 1);
+        }
 
-            __syncthreads();
-            addLocalToGlobal(tbox_y, jy_arr, jy_buff);
-            for (int i = threadIdx.x; i < npts; i += blockDim.x){
-                vs[i] = 0.0;
-            }
+        __syncthreads();
+        addLocalToGlobal(tbox_y, jy_arr, jy_buff);
+        for (int i = threadIdx.x; i < npts; i += blockDim.x){
+            vs[i] = 0.0;
+        }
 
-            __syncthreads();
-            for (unsigned int ip_orig = bin_start+threadIdx.x; ip_orig<bin_stop; ip_orig += blockDim.x)
-            {
-                const unsigned int ip = permutation[ip_orig];
-                depositComponent<depos_order>(GetPosition, wp, uxp, uyp, uzp, ion_lev, jz_buff, jz_type,
-                                              relative_time, dinv, xyzmin, lo, q, n_rz_azimuthal_modes,
-                                              ip, zdir, NODE, CELL, 2);
-            }
+        __syncthreads();
+        for (unsigned int ip_orig = bin_start+threadIdx.x; ip_orig<bin_stop; ip_orig += blockDim.x)
+        {
+            const unsigned int ip = permutation[ip_orig];
+            depositComponent<depos_order>(GetPosition, wp, uxp, uyp, uzp, ion_lev, jz_buff, jz_type,
+                                          relative_time, dinv, xyzmin, lo, q, n_rz_azimuthal_modes,
+                                          ip, zdir, NODE, CELL, 2);
+        }
 
-            __syncthreads();
-            addLocalToGlobal(tbox_z, jz_arr, jz_buff);
+        __syncthreads();
+        addLocalToGlobal(tbox_z, jz_arr, jz_buff);
         }
     });
 #else // not using hip/cuda
@@ -799,8 +799,8 @@ void doDepositionSharedShapeN (const GetParticlePosition<PIdx>& GetPosition,
     auto launch = [&] (auto single_pass) {
         doDepositionSharedShapeNImpl<depos_order, decltype(single_pass)::value>(
             GetPosition, wp, uxp, uyp, uzp, ion_lev, jx_fab, jy_fab, jz_fab,
-            relative_time, dinv, xyzmin, lo, q, n_rz_azimuthal_modes,
-            a_bins, box, threads_per_block, bin_size, npts, shared_mem_bytes);
+                                          relative_time, dinv, xyzmin, lo, q, n_rz_azimuthal_modes,
+                                          a_bins, box, threads_per_block, bin_size, npts, shared_mem_bytes);
     };
     if (fused) { launch(std::true_type{}); }
     else       { launch(std::false_type{}); }
