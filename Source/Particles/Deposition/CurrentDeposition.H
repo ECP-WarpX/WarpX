@@ -2043,49 +2043,49 @@ void VillasenorDepositionShapeNKernel ([[maybe_unused]] amrex::ParticleReal cons
         const int k0_node = compute_shape_factors_node( sz_old_node, sz_new_node, z0_old, z0_new );
 
         if constexpr (JComponents::has(components, JComponents::x)) {
-            // deposit Jx for this segment
-            amrex::Real this_Jx;
-            for (int i=0; i<=depos_order-1; i++) {
-                for (int j=0; j<=depos_order; j++) {
-                    for (int k=0; k<=depos_order; k++) {
-                        this_Jx = wqx*sx_cell[i]*( sy_old_node[j]*sz_old_node[k]*one_third
-                                                 + sy_old_node[j]*sz_new_node[k]*one_sixth
-                                                 + sy_new_node[j]*sz_old_node[k]*one_sixth
-                                                 + sy_new_node[j]*sz_new_node[k]*one_third )*seg_factor_x;
-                        amrex::Gpu::Atomic::AddNoRet( &Jx_arr(lo.x+i0_cell+i, lo.y+j0_node+j, lo.z+k0_node+k), this_Jx);
-                    }
+        // deposit Jx for this segment
+        amrex::Real this_Jx;
+        for (int i=0; i<=depos_order-1; i++) {
+            for (int j=0; j<=depos_order; j++) {
+                for (int k=0; k<=depos_order; k++) {
+                    this_Jx = wqx*sx_cell[i]*( sy_old_node[j]*sz_old_node[k]*one_third
+                                             + sy_old_node[j]*sz_new_node[k]*one_sixth
+                                             + sy_new_node[j]*sz_old_node[k]*one_sixth
+                                             + sy_new_node[j]*sz_new_node[k]*one_third )*seg_factor_x;
+                    amrex::Gpu::Atomic::AddNoRet( &Jx_arr(lo.x+i0_cell+i, lo.y+j0_node+j, lo.z+k0_node+k), this_Jx);
                 }
             }
+        }
         }
 
         if constexpr (JComponents::has(components, JComponents::y)) {
-            // deposit Jy for this segment
-            amrex::Real this_Jy;
-            for (int i=0; i<=depos_order; i++) {
-                for (int j=0; j<=depos_order-1; j++) {
-                    for (int k=0; k<=depos_order; k++) {
-                        this_Jy = wqy*sy_cell[j]*( sx_old_node[i]*sz_old_node[k]*one_third
-                                                 + sx_old_node[i]*sz_new_node[k]*one_sixth
-                                                 + sx_new_node[i]*sz_old_node[k]*one_sixth
-                                                 + sx_new_node[i]*sz_new_node[k]*one_third )*seg_factor_y;
-                        amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+i0_node+i, lo.y+j0_cell+j, lo.z+k0_node+k), this_Jy);
-                    }
+        // deposit Jy for this segment
+        amrex::Real this_Jy;
+        for (int i=0; i<=depos_order; i++) {
+            for (int j=0; j<=depos_order-1; j++) {
+                for (int k=0; k<=depos_order; k++) {
+                    this_Jy = wqy*sy_cell[j]*( sx_old_node[i]*sz_old_node[k]*one_third
+                                             + sx_old_node[i]*sz_new_node[k]*one_sixth
+                                             + sx_new_node[i]*sz_old_node[k]*one_sixth
+                                             + sx_new_node[i]*sz_new_node[k]*one_third )*seg_factor_y;
+                    amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+i0_node+i, lo.y+j0_cell+j, lo.z+k0_node+k), this_Jy);
                 }
             }
         }
+        }
 
         if constexpr (JComponents::has(components, JComponents::z)) {
-            // deposit Jz for this segment
-            amrex::Real this_Jz;
-            for (int i=0; i<=depos_order; i++) {
-                for (int j=0; j<=depos_order; j++) {
-                    for (int k=0; k<=depos_order-1; k++) {
-                        this_Jz = wqz*sz_cell[k]*( sx_old_node[i]*sy_old_node[j]*one_third
-                                                 + sx_old_node[i]*sy_new_node[j]*one_sixth
-                                                 + sx_new_node[i]*sy_old_node[j]*one_sixth
-                                                 + sx_new_node[i]*sy_new_node[j]*one_third )*seg_factor_z;
-                        amrex::Gpu::Atomic::AddNoRet( &Jz_arr(lo.x+i0_node+i, lo.y+j0_node+j, lo.z+k0_cell+k), this_Jz);
-                    }
+        // deposit Jz for this segment
+        amrex::Real this_Jz;
+        for (int i=0; i<=depos_order; i++) {
+            for (int j=0; j<=depos_order; j++) {
+                for (int k=0; k<=depos_order-1; k++) {
+                    this_Jz = wqz*sz_cell[k]*( sx_old_node[i]*sy_old_node[j]*one_third
+                                             + sx_old_node[i]*sy_new_node[j]*one_sixth
+                                             + sx_new_node[i]*sy_old_node[j]*one_sixth
+                                             + sx_new_node[i]*sy_new_node[j]*one_third )*seg_factor_z;
+                    amrex::Gpu::Atomic::AddNoRet( &Jz_arr(lo.x+i0_node+i, lo.y+j0_node+j, lo.z+k0_cell+k), this_Jz);
+                }
                 }
             }
         }
@@ -2196,70 +2196,70 @@ void VillasenorDepositionShapeNKernel ([[maybe_unused]] amrex::ParticleReal cons
         const int k0_node = compute_shape_factors_node( sz_old_node, sz_new_node, z0_old, z0_new );
 
         if constexpr (JComponents::has(components, JComponents::x)) {
-            // deposit Jx for this segment
-            amrex::Real this_Jx;
-            for (int i=0; i<=depos_order-1; i++) {
-                for (int k=0; k<=depos_order; k++) {
-                    this_Jx = wqx*sx_cell[i]*(sz_old_node[k] + sz_new_node[k])/2.0_rt*seg_factor_x;
-                    amrex::Gpu::Atomic::AddNoRet( &Jx_arr(lo.x+i0_cell+i, lo.y+k0_node+k, 0, 0), this_Jx);
+        // deposit Jx for this segment
+        amrex::Real this_Jx;
+        for (int i=0; i<=depos_order-1; i++) {
+            for (int k=0; k<=depos_order; k++) {
+                this_Jx = wqx*sx_cell[i]*(sz_old_node[k] + sz_new_node[k])/2.0_rt*seg_factor_x;
+                amrex::Gpu::Atomic::AddNoRet( &Jx_arr(lo.x+i0_cell+i, lo.y+k0_node+k, 0, 0), this_Jx);
 #if defined(WARPX_DIM_RZ)
-                    Complex xy_mid = xy_mid0; // Throughout the following loop, xy_mid takes the value e^{i m theta}
-                    for (int imode=1 ; imode < n_rz_azimuthal_modes ; imode++) {
-                        // The factor 2 comes from the normalization of the modes
-                        const Complex djr_cmplx = 2._rt*this_Jx*xy_mid;
-                        amrex::Gpu::Atomic::AddNoRet( &Jx_arr(lo.x+i0_cell+i, lo.y+k0_node+k, 0, 2*imode-1), djr_cmplx.real());
-                        amrex::Gpu::Atomic::AddNoRet( &Jx_arr(lo.x+i0_cell+i, lo.y+k0_node+k, 0, 2*imode), djr_cmplx.imag());
-                        xy_mid = xy_mid*xy_mid0;
-                    }
-#endif
+                Complex xy_mid = xy_mid0; // Throughout the following loop, xy_mid takes the value e^{i m theta}
+                for (int imode=1 ; imode < n_rz_azimuthal_modes ; imode++) {
+                    // The factor 2 comes from the normalization of the modes
+                    const Complex djr_cmplx = 2._rt*this_Jx*xy_mid;
+                    amrex::Gpu::Atomic::AddNoRet( &Jx_arr(lo.x+i0_cell+i, lo.y+k0_node+k, 0, 2*imode-1), djr_cmplx.real());
+                    amrex::Gpu::Atomic::AddNoRet( &Jx_arr(lo.x+i0_cell+i, lo.y+k0_node+k, 0, 2*imode), djr_cmplx.imag());
+                    xy_mid = xy_mid*xy_mid0;
                 }
+#endif
             }
+        }
         }
 
         if constexpr (JComponents::has(components, JComponents::y)) {
-            // deposit out-of-plane Jy for this segment
-            const auto seg_factor_y = std::min(seg_factor_x,seg_factor_z);
-            amrex::Real this_Jy;
-            for (int i=0; i<=depos_order; i++) {
-                for (int k=0; k<=depos_order; k++) {
-                    this_Jy = wqy*( sx_old_node[i]*sz_old_node[k]*one_third
-                                  + sx_old_node[i]*sz_new_node[k]*one_sixth
-                                  + sx_new_node[i]*sz_old_node[k]*one_sixth
-                                  + sx_new_node[i]*sz_new_node[k]*one_third )*seg_factor_y;
-                    amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+i0_node+i, lo.y+k0_node+k, 0, 0), this_Jy);
+        // deposit out-of-plane Jy for this segment
+        const auto seg_factor_y = std::min(seg_factor_x,seg_factor_z);
+        amrex::Real this_Jy;
+        for (int i=0; i<=depos_order; i++) {
+            for (int k=0; k<=depos_order; k++) {
+                this_Jy = wqy*( sx_old_node[i]*sz_old_node[k]*one_third
+                              + sx_old_node[i]*sz_new_node[k]*one_sixth
+                              + sx_new_node[i]*sz_old_node[k]*one_sixth
+                              + sx_new_node[i]*sz_new_node[k]*one_third )*seg_factor_y;
+                amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+i0_node+i, lo.y+k0_node+k, 0, 0), this_Jy);
 #if defined(WARPX_DIM_RZ)
-                    Complex xy_mid = xy_mid0;
-                    // Throughout the following loop, xy_ takes the value e^{i m theta_}
-                    for (int imode=1 ; imode < n_rz_azimuthal_modes ; imode++) {
-                        // The factor 2 comes from the normalization of the modes
-                        const Complex djy_cmplx = 2._rt*this_Jy*xy_mid;
-                        amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+i0_node+i, lo.y+k0_node+k, 0, 2*imode-1), djy_cmplx.real());
-                        amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+i0_node+i, lo.y+k0_node+k, 0, 2*imode), djy_cmplx.imag());
-                        xy_mid = xy_mid*xy_mid0;
-                    }
-#endif
+                Complex xy_mid = xy_mid0;
+                // Throughout the following loop, xy_ takes the value e^{i m theta_}
+                for (int imode=1 ; imode < n_rz_azimuthal_modes ; imode++) {
+                    // The factor 2 comes from the normalization of the modes
+                    const Complex djy_cmplx = 2._rt*this_Jy*xy_mid;
+                    amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+i0_node+i, lo.y+k0_node+k, 0, 2*imode-1), djy_cmplx.real());
+                    amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+i0_node+i, lo.y+k0_node+k, 0, 2*imode), djy_cmplx.imag());
+                    xy_mid = xy_mid*xy_mid0;
                 }
+#endif
             }
+        }
         }
 
         if constexpr (JComponents::has(components, JComponents::z)) {
-            // deposit Jz for this segment
-            amrex::Real this_Jz;
-            for (int i=0; i<=depos_order; i++) {
-                for (int k=0; k<=depos_order-1; k++) {
-                    this_Jz = wqz*sz_cell[k]*(sx_old_node[i] + sx_new_node[i])/2.0_rt*seg_factor_z;
-                    amrex::Gpu::Atomic::AddNoRet( &Jz_arr(lo.x+i0_node+i, lo.y+k0_cell+k, 0, 0), this_Jz);
+        // deposit Jz for this segment
+        amrex::Real this_Jz;
+        for (int i=0; i<=depos_order; i++) {
+            for (int k=0; k<=depos_order-1; k++) {
+                this_Jz = wqz*sz_cell[k]*(sx_old_node[i] + sx_new_node[i])/2.0_rt*seg_factor_z;
+                amrex::Gpu::Atomic::AddNoRet( &Jz_arr(lo.x+i0_node+i, lo.y+k0_cell+k, 0, 0), this_Jz);
 #if defined(WARPX_DIM_RZ)
-                    Complex xy_mid = xy_mid0; // Throughout the following loop, xy_mid takes the value e^{i m theta}
-                    for (int imode=1 ; imode < n_rz_azimuthal_modes ; imode++) {
-                        // The factor 2 comes from the normalization of the modes
-                        const Complex djz_cmplx = 2._rt*this_Jz*xy_mid;
-                        amrex::Gpu::Atomic::AddNoRet( &Jz_arr(lo.x+i0_node+i, lo.y+k0_cell+k, 0, 2*imode-1), djz_cmplx.real());
-                        amrex::Gpu::Atomic::AddNoRet( &Jz_arr(lo.x+i0_node+i, lo.y+k0_cell+k, 0, 2*imode), djz_cmplx.imag());
-                        xy_mid = xy_mid*xy_mid0;
-                    }
-#endif
+                Complex xy_mid = xy_mid0; // Throughout the following loop, xy_mid takes the value e^{i m theta}
+                for (int imode=1 ; imode < n_rz_azimuthal_modes ; imode++) {
+                    // The factor 2 comes from the normalization of the modes
+                    const Complex djz_cmplx = 2._rt*this_Jz*xy_mid;
+                    amrex::Gpu::Atomic::AddNoRet( &Jz_arr(lo.x+i0_node+i, lo.y+k0_cell+k, 0, 2*imode-1), djz_cmplx.real());
+                    amrex::Gpu::Atomic::AddNoRet( &Jz_arr(lo.x+i0_node+i, lo.y+k0_cell+k, 0, 2*imode), djz_cmplx.imag());
+                    xy_mid = xy_mid*xy_mid0;
                 }
+#endif
+            }
             }
         }
 
@@ -2330,19 +2330,19 @@ void VillasenorDepositionShapeNKernel ([[maybe_unused]] amrex::ParticleReal cons
         for (int k=0; k<=depos_order; k++) {
             const amrex::Real weight = 0.5_rt*(sz_old_node[k] + sz_new_node[k])*seg_factor;
             if constexpr (JComponents::has(components, JComponents::x)) {
-                amrex::Gpu::Atomic::AddNoRet( &Jx_arr(lo.x+k0_node+k, 0, 0), wqx*weight);
+            amrex::Gpu::Atomic::AddNoRet( &Jx_arr(lo.x+k0_node+k, 0, 0), wqx*weight);
             }
             if constexpr (JComponents::has(components, JComponents::y)) {
-                amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+k0_node+k, 0, 0), wqy*weight);
+            amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+k0_node+k, 0, 0), wqy*weight);
             }
         }
 
         if constexpr (JComponents::has(components, JComponents::z)) {
-            // deposit Jz for this segment
-            for (int k=0; k<=depos_order-1; k++) {
-                const amrex::Real this_Jz = wqz*sz_cell[k]*seg_factor;
-                amrex::Gpu::Atomic::AddNoRet( &Jz_arr(lo.x+k0_cell+k, 0, 0), this_Jz);
-            }
+        // deposit Jz for this segment
+        for (int k=0; k<=depos_order-1; k++) {
+            const amrex::Real this_Jz = wqz*sz_cell[k]*seg_factor;
+            amrex::Gpu::Atomic::AddNoRet( &Jz_arr(lo.x+k0_cell+k, 0, 0), this_Jz);
+        }
         }
 
         // update old segment values
@@ -2411,19 +2411,19 @@ void VillasenorDepositionShapeNKernel ([[maybe_unused]] amrex::ParticleReal cons
         for (int i=0; i<=depos_order; i++) {
             const amrex::Real weight = 0.5_rt*(sx_old_node[i] + sx_new_node[i])*seg_factor;
             if constexpr (JComponents::has(components, JComponents::y)) {
-                amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+i0_node+i, 0, 0), wqy*weight);
+            amrex::Gpu::Atomic::AddNoRet( &Jy_arr(lo.x+i0_node+i, 0, 0), wqy*weight);
             }
             if constexpr (JComponents::has(components, JComponents::z)) {
-                amrex::Gpu::Atomic::AddNoRet( &Jz_arr(lo.x+i0_node+i, 0, 0), wqz*weight);
+            amrex::Gpu::Atomic::AddNoRet( &Jz_arr(lo.x+i0_node+i, 0, 0), wqz*weight);
             }
         }
 
         if constexpr (JComponents::has(components, JComponents::x)) {
-            // deposit Jx for this segment
-            for (int i=0; i<=depos_order-1; i++) {
-                const amrex::Real this_Jx = wqx*sx_cell[i]*seg_factor;
-                amrex::Gpu::Atomic::AddNoRet( &Jx_arr(lo.x+i0_cell+i, 0, 0), this_Jx);
-            }
+        // deposit Jx for this segment
+        for (int i=0; i<=depos_order-1; i++) {
+            const amrex::Real this_Jx = wqx*sx_cell[i]*seg_factor;
+            amrex::Gpu::Atomic::AddNoRet( &Jx_arr(lo.x+i0_cell+i, 0, 0), this_Jx);
+        }
         }
 
         // update old segment values
@@ -2488,37 +2488,37 @@ void doVillasenorDepositionShapeNExplicitKernel (const long ip,
 {
     using namespace amrex::literals;
 
-    constexpr auto inv_c2 = PhysConst::inv_c2_v<amrex::ParticleReal>;
-    const amrex::Real gaminv = 1.0_rt/std::sqrt(1.0_rt + uxp[ip]*uxp[ip]*inv_c2
-                                                       + uyp[ip]*uyp[ip]*inv_c2
-                                                       + uzp[ip]*uzp[ip]*inv_c2);
+            constexpr auto inv_c2 = PhysConst::inv_c2_v<amrex::ParticleReal>;
+            const amrex::Real gaminv = 1.0_rt/std::sqrt(1.0_rt + uxp[ip]*uxp[ip]*inv_c2
+                                                               + uyp[ip]*uyp[ip]*inv_c2
+                                                               + uzp[ip]*uzp[ip]*inv_c2);
 
-    // Whether ion_lev is a null pointer (do_ionization=0) or a real pointer
-    // (do_ionization=1)
-    bool const do_ionization = ion_lev;
+            // Whether ion_lev is a null pointer (do_ionization=0) or a real pointer
+            // (do_ionization=1)
+            bool const do_ionization = ion_lev;
 
-    amrex::Real wq = q*wp[ip];
-    if (do_ionization){
-        wq *= ion_lev[ip];
-    }
+            amrex::Real wq = q*wp[ip];
+            if (do_ionization){
+                wq *= ion_lev[ip];
+            }
 
-    amrex::ParticleReal xp, yp, zp;
-    GetPosition(ip, xp, yp, zp);
+            amrex::ParticleReal xp, yp, zp;
+            GetPosition(ip, xp, yp, zp);
 
-    // computes current and old position
-    amrex::Real const xp_new = xp + (relative_time + 0.5_rt*dt)*uxp[ip]*gaminv;
-    amrex::Real const xp_old = xp_new - dt*uxp[ip]*gaminv;
-    amrex::Real const yp_new = yp + (relative_time + 0.5_rt*dt)*uyp[ip]*gaminv;
-    amrex::Real const yp_old = yp_new - dt*uyp[ip]*gaminv;
-    amrex::Real const zp_new = zp + (relative_time + 0.5_rt*dt)*uzp[ip]*gaminv;
-    amrex::Real const zp_old = zp_new - dt*uzp[ip]*gaminv;
+            // computes current and old position
+            amrex::Real const xp_new = xp + (relative_time + 0.5_rt*dt)*uxp[ip]*gaminv;
+            amrex::Real const xp_old = xp_new - dt*uxp[ip]*gaminv;
+            amrex::Real const yp_new = yp + (relative_time + 0.5_rt*dt)*uyp[ip]*gaminv;
+            amrex::Real const yp_old = yp_new - dt*uyp[ip]*gaminv;
+            amrex::Real const zp_new = zp + (relative_time + 0.5_rt*dt)*uzp[ip]*gaminv;
+            amrex::Real const zp_old = zp_new - dt*uzp[ip]*gaminv;
 
-    VillasenorDepositionShapeNKernel<depos_order, components>(
-        xp_old, yp_old, zp_old, xp_new, yp_new, zp_new, wq,
-        uxp[ip], uyp[ip], uzp[ip], gaminv,
-        Jx_arr, Jy_arr, Jz_arr,
-        dt, dinv, xyzmin, domain_double, do_cropping,
-        lo, invvol, n_rz_azimuthal_modes);
+            VillasenorDepositionShapeNKernel<depos_order, components>(
+                xp_old, yp_old, zp_old, xp_new, yp_new, zp_new, wq,
+                                                          uxp[ip], uyp[ip], uzp[ip], gaminv,
+                                                          Jx_arr, Jy_arr, Jz_arr,
+                                                          dt, dinv, xyzmin, domain_double, do_cropping,
+                                                          lo, invvol, n_rz_azimuthal_modes);
 }
 
 /**
