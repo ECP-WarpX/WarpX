@@ -1509,11 +1509,6 @@ void WarpXParticleContainer::DepositCurrentOnLevel (
 
     // Sum guard cells
     warpx.SyncCurrent(mf_name);
-
-    // Apply boundary conditions
-    warpx.ApplyJfieldBoundary(
-        lev, current[lev][0], current[lev][1], current[lev][2], PatchType::fine
-    );
 }
 
 /* \brief Charge Deposition for thread thread_num
