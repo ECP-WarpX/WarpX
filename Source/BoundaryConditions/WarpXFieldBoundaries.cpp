@@ -335,13 +335,6 @@ void WarpX::ApplyDiagonalMassMatricesBoundary (
             ncomp_xx, ncomp_yy, ncomp_zz, field_boundary_lo, field_boundary_hi,
             voltage_driven, insulator_area, has_axis, Geom(lev), lev, patch_type, ref_ratio);
     }
-
-    if (::isAnyBoundary<FieldBoundaryType::PEC_Insulator>(field_boundary_lo, field_boundary_hi)) {
-        // Preserve conductor row zeroing in transverse guard cells as well as valid cells.
-        pec_insulator_boundary->ZeroParallelFieldInConductor({Sxx, Syy, Szz},
-            field_boundary_lo, field_boundary_hi, get_ng_fieldgather(), Geom(lev),
-            lev, patch_type, ref_ratio);
-    }
 }
 
 #if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
