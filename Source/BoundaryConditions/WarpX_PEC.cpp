@@ -1143,6 +1143,9 @@ namespace
 #endif
     }
 
+    // Map offset = E location - current-row location to a stored stencil component.
+    // ncomp[idim] is the odd stencil extent; its half-width is (ncomp[idim] - 1)/2.
+    // Return -1 for offsets outside the allocated stencil.
     AMREX_GPU_DEVICE AMREX_FORCE_INLINE
     int MassMatrixComponent (const amrex::IntVect& offset,
                              const amrex::GpuArray<int,3>& ncomp)
@@ -1150,8 +1153,10 @@ namespace
         int comp = 0;
         int stride = 1;
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+            // Shift the signed offset to a zero-based index in this direction.
             const int c = offset[idim] + (ncomp[idim] - 1)/2;
             if (c < 0 || c >= ncomp[idim]) { return -1; }
+            // Flatten with direction 0 varying fastest: c0 + ncomp[0]*(c1 + ncomp[1]*c2).
             comp += stride*c;
             stride *= ncomp[idim];
         }
