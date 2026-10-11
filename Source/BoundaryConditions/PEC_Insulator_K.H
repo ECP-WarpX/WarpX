@@ -9,6 +9,8 @@
 
 #include <array>
 
+// Coordinate helpers shared by PEC-insulator field BCs and PC mass-matrix masking,
+// so both evaluate the area parsers with the same component staggering.
 namespace PEC_InsulatorUtils
 {
     // \brief Converts the grid indices to spatial coordinates

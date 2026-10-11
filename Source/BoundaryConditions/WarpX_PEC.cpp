@@ -1263,6 +1263,8 @@ namespace
             const bool on_boundary = nodal[idim] && iv[idim] == boundary;
             const bool current_driven = !is_axis && bc_type == FieldBoundaryType::PEC_Insulator &&
                                         !voltage_driven[iside];
+            // At non-axis PEC and PEC-insulator faces, normal J and E both reflect evenly.
+            // Drive-specific corrections below apply only to tangential components.
             const bool odd_E = is_axis ? IsOddAtAxis(icomp)
                 : (bc_type == FieldBoundaryType::PMC ? !is_tangent : is_tangent);
 
@@ -1334,6 +1336,8 @@ namespace
     }
 
     // The same nodal constraint applies to a current row and its coupled E columns.
+    // A true result removes the mass-matrix contribution to a constrained equation,
+    // or removes a column coupling to an E perturbation that is fixed at zero.
     AMREX_GPU_DEVICE AMREX_FORCE_INLINE
     bool IsConstrainedFieldNode (
         const amrex::IntVect& iv, const amrex::IntVect& domain_lo,
@@ -1361,6 +1365,7 @@ namespace
                 const auto coords =
                     PEC_InsulatorUtils::ConvertIndexToCoordinate(iv, xyzmin, dx, lo, nodal);
                 const auto tcoords = PEC_InsulatorUtils::GetTransverseCoordinates(idim, coords);
+                // Positive area denotes insulator; otherwise the node belongs to conductor.
                 if (!(insulator_area[idim][iside](tcoords.t1, tcoords.t2) > 0._rt)) {
                     return true;
                 }
