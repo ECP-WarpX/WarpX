@@ -5,6 +5,7 @@
 
 #include <AMReX_Array.H>
 #include <AMReX_Geometry.H>
+#include <AMReX_Parser.H>
 #include <AMReX_Vector.H>
 
 #include <AMReX_BaseFwd.H>
@@ -12,6 +13,9 @@
 #include <array>
 
 namespace PEC {
+    using InsulatorAreaParsers =
+        amrex::GpuArray<amrex::GpuArray<amrex::ParserExecutor<2>,2>,AMREX_SPACEDIM>;
+
     /**
      * \brief Sets the tangential electric field at the PEC boundary to zero.
      *        The guard cell values are set equal and opposite to the valid cell
@@ -117,6 +121,7 @@ namespace PEC {
                         const amrex::Array<FieldBoundaryType,AMREX_SPACEDIM>& field_boundary_lo,
                         const amrex::Array<FieldBoundaryType,AMREX_SPACEDIM>& field_boundary_hi,
                         const amrex::GpuArray<amrex::GpuArray<int,2>,AMREX_SPACEDIM>& voltage_driven,
+                        const InsulatorAreaParsers& insulator_area,
                         bool has_axis,
                         const amrex::Geometry& geom,
                         int lev, PatchType patch_type, const amrex::Vector<amrex::IntVect>& ref_ratios);

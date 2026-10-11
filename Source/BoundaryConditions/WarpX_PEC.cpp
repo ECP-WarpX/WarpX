@@ -1,5 +1,8 @@
 #include "BoundaryConditions/WarpX_PEC.H"
 
+#include "BoundaryConditions/PEC_Insulator_K.H"
+#include "WarpX.H"
+
 #include <ablastr/warn_manager/WarnManager.H>
 
 #include <AMReX_Array4.H>
@@ -1163,6 +1166,18 @@ namespace
         return comp;
     }
 
+    // Inverse of MassMatrixComponent: decode a stored component into E minus J offset.
+    AMREX_GPU_DEVICE AMREX_FORCE_INLINE
+    amrex::IntVect MassMatrixOffset (int component, const amrex::GpuArray<int,3>& ncomp)
+    {
+        amrex::IntVect offset;
+        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+            offset[idim] = component % ncomp[idim] - (ncomp[idim] - 1)/2;
+            component /= ncomp[idim];
+        }
+        return offset;
+    }
+
     // Mode-zero E and J have the same reflection parity at the axis:
     // r and theta are odd, z is even; in spherical geometry all three are odd.
     AMREX_GPU_DEVICE AMREX_FORCE_INLINE
@@ -1192,13 +1207,7 @@ namespace
     {
         const int ncomp_tot = ncomp[0]*ncomp[1]*ncomp[2];
         for (int n = 0; n < ncomp_tot; ++n) {
-            const int c0 = n % ncomp[0];
-            [[maybe_unused]] const int c1 = (n / ncomp[0]) % ncomp[1];
-            [[maybe_unused]] const int c2 = n / (ncomp[0]*ncomp[1]);
-            const amrex::IntVect offset(AMREX_D_DECL(
-                c0 - (ncomp[0]-1)/2,
-                c1 - (ncomp[1]-1)/2,
-                c2 - (ncomp[2]-1)/2));
+            const amrex::IntVect offset = MassMatrixOffset(n, ncomp);
             amrex::IntVect E = source + offset;
             const bool ghost_E = (iside == 0) ? E[idim] < domain_lo : E[idim] > domain_hi;
             if (only_ghost_E && !ghost_E) { continue; }
@@ -1324,6 +1333,42 @@ namespace
         }
     }
 
+    // The same nodal constraint applies to a current row and its coupled E columns.
+    AMREX_GPU_DEVICE AMREX_FORCE_INLINE
+    bool IsConstrainedFieldNode (
+        const amrex::IntVect& iv, const amrex::IntVect& domain_lo,
+        const amrex::IntVect& domain_hi, const amrex::IntVect& nodal,
+        const amrex::GpuArray<amrex::GpuArray<FieldBoundaryType,2>,AMREX_SPACEDIM>& bc,
+        const amrex::GpuArray<amrex::GpuArray<int,2>,AMREX_SPACEDIM>& voltage_driven,
+        const PEC::InsulatorAreaParsers& insulator_area,
+        const amrex::XDim3& xyzmin, const std::array<amrex::Real,3>& dx,
+        const amrex::IntVect& lo, const int icomp, const bool has_axis)
+    {
+        // Odd nodal components vanish on the axis.
+        if (has_axis && nodal[0] && iv[0] == domain_lo[0] && IsOddAtAxis(icomp)) {
+            return true;
+        }
+        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+            if (!nodal[idim] || !IsTangentToBoundary(icomp,idim)) { continue; }
+            for (int iside = 0; iside < 2; ++iside) {
+                const int boundary = (iside == 0) ? domain_lo[idim] : domain_hi[idim];
+                if (iv[idim] != boundary) { continue; }
+                // PEC and voltage-driven insulators prescribe tangential E on the whole face.
+                if (bc[idim][iside] == FieldBoundaryType::PEC) { return true; }
+                if (bc[idim][iside] != FieldBoundaryType::PEC_Insulator) { continue; }
+                if (voltage_driven[idim][iside]) { return true; }
+                // On a current-driven face, only the conductor portion is constrained.
+                const auto coords =
+                    PEC_InsulatorUtils::ConvertIndexToCoordinate(iv, xyzmin, dx, lo, nodal);
+                const auto tcoords = PEC_InsulatorUtils::GetTransverseCoordinates(idim, coords);
+                if (!(insulator_area[idim][iside](tcoords.t1, tcoords.t2) > 0._rt)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     AMREX_GPU_DEVICE AMREX_FORCE_INLINE
     void ZeroConstrainedMassMatrixEntries (
         const amrex::IntVect& iv, const amrex::Array4<amrex::Real>& S,
@@ -1331,39 +1376,34 @@ namespace
         const amrex::IntVect& nodal, const amrex::GpuArray<int,3>& ncomp,
         const amrex::GpuArray<amrex::GpuArray<FieldBoundaryType,2>,AMREX_SPACEDIM>& bc,
         const amrex::GpuArray<amrex::GpuArray<int,2>,AMREX_SPACEDIM>& voltage_driven,
-        const int icomp, const bool has_axis)
+        const PEC::InsulatorAreaParsers& insulator_area,
+        const amrex::XDim3& xyzmin, const std::array<amrex::Real,3>& dx,
+        const amrex::IntVect& lo, const int icomp, const bool has_axis)
     {
-        if (has_axis && nodal[0] && iv[0] == domain_lo[0] && IsOddAtAxis(icomp)) {
-            for (int n = 0; n < ncomp[0]*ncomp[1]*ncomp[2]; ++n) {
-                S(iv,n) = 0._rt;
+        // Interior stencils cannot contain a constrained boundary node.
+        bool reaches_boundary = false;
+        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
+            const int width = (ncomp[idim] - 1)/2;
+            if (nodal[idim] && (iv[idim] <= domain_lo[idim] + width ||
+                               iv[idim] >= domain_hi[idim] - width)) {
+                reaches_boundary = true;
             }
+        }
+        if (!reaches_boundary) { return; }
+
+        const int ncomp_tot = ncomp[0]*ncomp[1]*ncomp[2];
+        if (IsConstrainedFieldNode(iv, domain_lo, domain_hi, nodal, bc, voltage_driven,
+                                  insulator_area, xyzmin, dx, lo, icomp, has_axis)) {
+            for (int n = 0; n < ncomp_tot; ++n) { S(iv,n) = 0._rt; }
             return;
         }
-        for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-            if (!nodal[idim] || !IsTangentToBoundary(icomp,idim)) { continue; }
-            for (int iside = 0; iside < 2; ++iside) {
-                if (iv[idim] != (iside == 0 ? domain_lo[idim] : domain_hi[idim])) { continue; }
-                if (bc[idim][iside] == FieldBoundaryType::PEC ||
-                    (bc[idim][iside] == FieldBoundaryType::PEC_Insulator &&
-                     voltage_driven[idim][iside])) {
-                    for (int n = 0; n < ncomp[0]*ncomp[1]*ncomp[2]; ++n) {
-                        S(iv,n) = 0._rt;
-                    }
-                    return;
-                }
-            }
-        }
-
-        // An odd nodal E component is exactly zero on the axis. Remove its
-        // column from every J row whose stencil reaches the axis.
-        if (has_axis && nodal[0] && IsOddAtAxis(icomp)) {
-            const int radial_width = (ncomp[0] - 1)/2;
-            if (iv[0] > domain_lo[0] + radial_width) { return; }
-            for (int n = 0; n < ncomp[0]*ncomp[1]*ncomp[2]; ++n) {
-                const int radial_offset = n % ncomp[0] - radial_width;
-                if (iv[0] + radial_offset == domain_lo[0]) {
-                    S(iv,n) = 0._rt;
-                }
+        // Prescribed E has zero perturbation, even for a nonzero boundary value.
+        // Evaluate the constraint at each E location, including transverse offsets.
+        for (int n = 0; n < ncomp_tot; ++n) {
+            const amrex::IntVect E = iv + MassMatrixOffset(n, ncomp);
+            if (IsConstrainedFieldNode(E, domain_lo, domain_hi, nodal, bc, voltage_driven,
+                                      insulator_area, xyzmin, dx, lo, icomp, has_axis)) {
+                S(iv,n) = 0._rt;
             }
         }
     }
@@ -1376,6 +1416,7 @@ void PEC::ApplyDiagonalMassMatricesBoundary (
     const amrex::Array<FieldBoundaryType,AMREX_SPACEDIM>& field_boundary_lo,
     const amrex::Array<FieldBoundaryType,AMREX_SPACEDIM>& field_boundary_hi,
     const amrex::GpuArray<amrex::GpuArray<int,2>,AMREX_SPACEDIM>& voltage_driven,
+    const InsulatorAreaParsers& insulator_area,
     const bool has_axis, const amrex::Geometry& geom, const int lev, PatchType patch_type,
     const amrex::Vector<amrex::IntVect>& ref_ratios)
 {
@@ -1398,6 +1439,7 @@ void PEC::ApplyDiagonalMassMatricesBoundary (
         nc_yy[idim] = ncomp_yy[idim];
         nc_zz[idim] = ncomp_zz[idim];
     }
+    const std::array<amrex::Real,3> dx = WarpX::CellSize(lev);
 
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
@@ -1414,6 +1456,10 @@ void PEC::ApplyDiagonalMassMatricesBoundary (
         const auto& xx = Sxx->array(mfi);
         const auto& yy = Syy->array(mfi);
         const auto& zz = Szz->array(mfi);
+
+        const amrex::Box valid_box = mfi.validbox();
+        const amrex::IntVect lo = valid_box.smallEnd();
+        const amrex::XDim3 xyzmin = WarpX::LowerCorner(valid_box, lev, 0._rt);
 
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
             if ((!has_axis || idim != 0) &&
@@ -1462,25 +1508,28 @@ void PEC::ApplyDiagonalMassMatricesBoundary (
                 });
         }
 
-        // Enforce constrained rows and axis E columns as exact zeros after all folds;
+        // Enforce constrained rows and E columns as exact zeros after all folds;
         // later directional folds can otherwise reintroduce entries at corners.
         amrex::ParallelFor(amrex::convert(mfi.validbox(), nodal_xx),
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 amrex::ignore_unused(j,k);
                 ZeroConstrainedMassMatrixEntries(amrex::IntVect(AMREX_D_DECL(i,j,k)),
-                    xx, domain_lo, domain_hi, nodal_xx, nc_xx, bc, voltage_driven, 0, has_axis);
+                    xx, domain_lo, domain_hi, nodal_xx, nc_xx, bc, voltage_driven,
+                    insulator_area, xyzmin, dx, lo, 0, has_axis);
             });
         amrex::ParallelFor(amrex::convert(mfi.validbox(), nodal_yy),
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 amrex::ignore_unused(j,k);
                 ZeroConstrainedMassMatrixEntries(amrex::IntVect(AMREX_D_DECL(i,j,k)),
-                    yy, domain_lo, domain_hi, nodal_yy, nc_yy, bc, voltage_driven, 1, has_axis);
+                    yy, domain_lo, domain_hi, nodal_yy, nc_yy, bc, voltage_driven,
+                    insulator_area, xyzmin, dx, lo, 1, has_axis);
             });
         amrex::ParallelFor(amrex::convert(mfi.validbox(), nodal_zz),
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
                 amrex::ignore_unused(j,k);
                 ZeroConstrainedMassMatrixEntries(amrex::IntVect(AMREX_D_DECL(i,j,k)),
-                    zz, domain_lo, domain_hi, nodal_zz, nc_zz, bc, voltage_driven, 2, has_axis);
+                    zz, domain_lo, domain_hi, nodal_zz, nc_zz, bc, voltage_driven,
+                    insulator_area, xyzmin, dx, lo, 2, has_axis);
             });
     }
 }
