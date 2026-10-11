@@ -1411,7 +1411,7 @@ void PEC::ApplyDiagonalMassMatricesBoundary (
         const auto& zz = Szz->array(mfi);
 
         for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
-            if (!(has_axis && idim == 0) &&
+            if ((!has_axis || idim != 0) &&
                 bc[idim][0] != FieldBoundaryType::PEC &&
                 bc[idim][0] != FieldBoundaryType::PMC &&
                 bc[idim][0] != FieldBoundaryType::PEC_Insulator &&
