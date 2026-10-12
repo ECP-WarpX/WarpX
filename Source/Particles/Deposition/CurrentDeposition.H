@@ -1183,9 +1183,8 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
     amrex::For( amrex::TypeList<amrex::CompileTimeOptions<has_reduced_shape,no_reduced_shape>>{},
         {reduce_shape_runtime_flag},
         np_to_deposit, [=] AMREX_GPU_DEVICE (long ip, auto reduce_shape_control) {
-            constexpr bool reduce_shape =
-                (decltype(reduce_shape_control)::value == has_reduced_shape);
-            doEsirkepovDepositionShapeNKernel<depos_order, reduce_shape>(
+            doEsirkepovDepositionShapeNKernel<
+                depos_order, (decltype(reduce_shape_control)::value == has_reduced_shape)>(
                 ip, GetPosition, wp, uxp, uyp, uzp, ion_lev, Jx_arr, Jy_arr, Jz_arr,
                 dt, relative_time, dinv, xyzmin, lo, q, n_rz_azimuthal_modes,
                 reduced_particle_shape_mask);
