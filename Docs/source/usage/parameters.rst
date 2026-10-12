@@ -276,7 +276,8 @@ Overall simulation parameters
             Must be positive. Updates are allowed only when the zero-based simulation
             step index is divisible by this interval. Both interval conditions must
             hold. The first required linear solve always initializes the PC, including
-            after restart.
+            after restart. During adaptive implicit substepping, PC updates are forced
+            on every Newton iteration, overriding both intervals.
           - ``newton.relative_tolerance`` (``float``, default: 1.0e-6)
           - ``newton.absolute_tolerance`` (``float``, default: 0.0)
           - ``newton.diagnostic_file`` (``string``, default: None)

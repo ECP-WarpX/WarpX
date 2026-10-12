@@ -239,6 +239,12 @@ class SNES_impl : public PETScSolver_impl
         //! Evaluate the RHS
         void computeRHS(VecType&, const VecType&);
 
+        //! Allow the owner to force PC updates during adaptive substepping.
+        void setForcePreconditionerUpdate(bool force_update)
+        {
+            m_force_pc_update = force_update;
+        }
+
         //! Returns if a preconditioner is being used
         [[nodiscard]] bool usePC() const;
 
@@ -297,6 +303,9 @@ class SNES_impl : public PETScSolver_impl
         std::unique_ptr<LinOpType> m_linop;
 
     private:
+
+        //! Override the normal PC update decision until disabled by the owner.
+        bool m_force_pc_update = false;
 
         //! absolute tolerance
         amrex::Real m_atol = 0.;

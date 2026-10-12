@@ -80,6 +80,11 @@ public:
         return m_linear_function->pcType();
     }
 
+    void ForcePreconditionerUpdate (bool force_update) override
+    {
+        m_force_pc_update = force_update;
+    }
+
     void PrintParams () const override
     {
         amrex::Print() << "Newton verbose:             " << (this->m_verbose?"true":"false") << "\n";
@@ -139,6 +144,8 @@ private:
     int m_pc_update_time_step_interval = 1;
     //! Ensure the first required linear solve initializes the PC, including after restart.
     mutable bool m_pc_initialized = false;
+    //! Allow the owner to override both PC update intervals until disabled.
+    bool m_force_pc_update = false;
 
     /**
      * \brief Total nonlinear iterations for the diagnostic file
@@ -361,7 +368,8 @@ void NewtonSolver<Vec,Ops>::Solve (Vec&         a_U,
         const bool pc_update_step = (a_step % m_pc_update_time_step_interval == 0);
         const bool pc_update_iteration = (iter == 0) ||
             (m_pc_update_newton_interval > 0 && iter % m_pc_update_newton_interval == 0);
-        const bool update_pc = !m_pc_initialized || (pc_update_step && pc_update_iteration);
+        const bool update_pc = m_force_pc_update || !m_pc_initialized ||
+            (pc_update_step && pc_update_iteration);
 
         // Compute residual: F(U) = U - b - R(U)
         EvalResidual(m_F, a_U, a_b, a_time, iter, update_pc);

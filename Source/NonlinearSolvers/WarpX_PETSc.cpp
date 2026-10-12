@@ -848,11 +848,16 @@ void SNES_impl::computeRHS(VecType& a_F, const VecType& a_U)
     BL_PROFILE("SNES_impl::computeRHS()");
     AMREX_ALWAYS_ASSERT(isDefined());
 
+    // SNES always updates the PC for now. Once lagging is added, this flag
+    // must still force updates during substepping.
+    bool update_pc = true;
+    if (m_force_pc_update) { update_pc = true; }
+
     if (m_fd_jac_comput) {
-        m_op->ComputeRHS( a_F, a_U, m_time, m_iter, !m_rhs_first_call);
+        m_op->ComputeRHS( a_F, a_U, m_time, m_iter, !m_rhs_first_call, update_pc);
         m_rhs_first_call = false;
     } else {
-        m_op->ComputeRHS( a_F, a_U, m_time, m_iter, false);
+        m_op->ComputeRHS( a_F, a_U, m_time, m_iter, false, update_pc);
         m_iter++;
     }
 

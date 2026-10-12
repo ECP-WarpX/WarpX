@@ -197,7 +197,7 @@ int ImplicitSolver::OneStep (const amrex::Real  start_time,
 {
     BL_PROFILE("ImplicitSolver::OneStep()");
 
-    // Fields have Eg^{n} and Bg^{n}
+    // Fields have E^{n} and B^{n}
     // Particles have up^{n} and xp^{n}.
 
     // Set the member time step
@@ -221,6 +221,8 @@ int ImplicitSolver::OneStep (const amrex::Real  start_time,
             }
 
             // Solve nonlinear system at t_{n+theta}
+            // Disable PC lagging throughout adaptive substepping.
+            m_nlsolver->ForcePreconditionerUpdate(m_nsubsteps > 1);
             exit_status = DoSolve(substep_start_time, a_step, verbose_step);
 
             if (exit_status >= 0) {
