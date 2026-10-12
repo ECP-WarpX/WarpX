@@ -131,6 +131,10 @@ void SemiImplicitEM::ResetStep (amrex::Real start_time)
 
     m_WarpX->ResetImplicitParticleData();
 
+    // Restore E^n, including guards, before recomputing the magnetic half-step.
+    // The failed solve leaves Efield_fp containing its last nonlinear iterate.
+    CopyVectorField(FieldType::Efield_fp, FieldType::E_old);
+
     // Reset B field to start of step
     CopyVectorField(FieldType::Bfield_fp, FieldType::B_old);
 
