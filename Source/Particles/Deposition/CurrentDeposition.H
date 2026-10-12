@@ -3285,177 +3285,53 @@ void doVayDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
 }
 
 /**
- * \brief Implementation of doVayDepositionSharedShapeN, for a given choice of the use of
- *        shared memory.
+ * \brief Functor that deposits the temporary arrays of the Vay deposition of one particle,
+ *        for doSharedDeposition. See doVayDepositionShapeNKernel for the members.
+ *
+ * The arrays are, in this order, t0, t1, t2 and t3 in 3D, and t0, t1 and Dy in 2D (XZ).
  *
  * \tparam depos_order  deposition order
- * \tparam fused        if true, deposit into all the arrays in a single pass, with one shared
- *                      memory buffer per array; otherwise, deposit into them one at a time
- *                      using a single buffer, which requires less shared memory but computes
- *                      the shape factors of each particle several times.
- * \param[in] GetPosition  Functor that returns the particle position
- * \param[in] wp           Pointer to array of particle weights
- * \param[in] uxp,uyp,uzp  Pointer to arrays of particle momentum
- * \param[in] ion_lev      Pointer to array of particle ionization level, or null pointer
- * \param[in,out] t0_arr,t1_arr,t2_arr,t3_arr,Dy_arr  arrays to deposit into, see
- *                doVayDepositionShapeNKernel
- * \param[in] dt           Time step for particle level
- * \param[in] relative_time Time at which to deposit D, relative to the time of the
- *                          current positions of the particles.
- * \param[in] dinv         3D cell size inverse
- * \param[in] xyzmin       3D lower bounds of physical domain
- * \param[in] lo           Dimension-agnostic lower bounds of index domain
- * \param[in] q            Species charge
- * \param[in] a_bins             bins used for particle sorting
- * \param[in] box                the current box
- * \param[in] threads_per_block  number of threads to use per block in shared deposition
- * \param[in] bin_size           tileSize to use for shared current deposition operations
- * \param ngrow             number of cells by which the tiles are grown for the buffers
- * \param shared_mem_bytes  size of shared memory per block
  */
-template <int depos_order, bool fused>
-void doVayDepositionSharedShapeNImpl (
-    [[maybe_unused]] const GetParticlePosition<PIdx>& GetPosition,
-    [[maybe_unused]] const amrex::ParticleReal* const wp,
-    [[maybe_unused]] const amrex::ParticleReal* const uxp,
-    [[maybe_unused]] const amrex::ParticleReal* const uyp,
-    [[maybe_unused]] const amrex::ParticleReal* const uzp,
-    [[maybe_unused]] const int* const ion_lev,
-    [[maybe_unused]] amrex::Array4<amrex::Real> const& t0_arr,
-    [[maybe_unused]] amrex::Array4<amrex::Real> const& t1_arr,
-    [[maybe_unused]] amrex::Array4<amrex::Real> const& t2_arr,
-    [[maybe_unused]] amrex::Array4<amrex::Real> const& t3_arr,
-    [[maybe_unused]] amrex::Array4<amrex::Real> const& Dy_arr,
-    [[maybe_unused]] const amrex::Real dt,
-    [[maybe_unused]] const amrex::Real relative_time,
-    [[maybe_unused]] const amrex::XDim3 & dinv,
-    [[maybe_unused]] const amrex::XDim3 & xyzmin,
-    [[maybe_unused]] const amrex::Dim3 lo,
-    [[maybe_unused]] const amrex::Real q,
-    [[maybe_unused]] const amrex::DenseBins<WarpXParticleContainer::ParticleTileType::ParticleTileDataType>& a_bins,
-    [[maybe_unused]] const amrex::Box& box,
-    [[maybe_unused]] const int threads_per_block,
-    [[maybe_unused]] const amrex::IntVect bin_size,
-    [[maybe_unused]] const int ngrow,
-    [[maybe_unused]] const std::size_t shared_mem_bytes)
+template <int depos_order>
+struct VayParticleDeposit
 {
-#if (defined(AMREX_USE_HIP) || defined(AMREX_USE_CUDA)) && \
-    (defined(WARPX_DIM_3D) || defined(WARPX_DIM_XZ))
-    using namespace amrex;
-    using namespace amrex::literals;
+    //! Number of arrays deposited into
+    static constexpr int narrays = (AMREX_SPACEDIM == 3) ? 4 : 3;
 
-    auto permutation = a_bins.permutationPtr();
+    GetParticlePosition<PIdx> GetPosition;
+    const amrex::ParticleReal* wp;
+    const amrex::ParticleReal* uxp;
+    const amrex::ParticleReal* uyp;
+    const amrex::ParticleReal* uzp;
+    const int* ion_lev;
+    amrex::Real dt;
+    amrex::Real relative_time;
+    amrex::XDim3 dinv;
+    amrex::XDim3 xyzmin;
+    amrex::Dim3 lo;
+    amrex::Real q;
 
-    const int nblocks = a_bins.numBins();
-    const auto offsets_ptr = a_bins.offsetsPtr();
-
-    // Launch one thread-block per bin
-    amrex::launch(
-            nblocks, threads_per_block, shared_mem_bytes, amrex::Gpu::gpuStream(),
-            [=] AMREX_GPU_DEVICE () noexcept {
-        const int bin_id = blockIdx.x;
-        const unsigned int bin_start = offsets_ptr[bin_id];
-        const unsigned int bin_stop = offsets_ptr[bin_id+1];
-
-        if (bin_start == bin_stop) { return; /*this bin has no particles*/ }
-
-        // This box defines the index space for the shared memory buffers.
-        // Tile of this bin (the bins are numbered as by amrex::getTileIndex)
-        amrex::Box buffer_box = getTileBoxFromIndex(bin_id, box, bin_size);
-        buffer_box.grow(ngrow);
-        buffer_box.surroundingNodes();
-        const auto nbuffer = static_cast<int>(buffer_box.numPts());
-
-        Gpu::SharedMemory<amrex::Real> gsm;
-        amrex::Real* const shared = gsm.dataPtr();
-
-        auto make_buffer = [&] (int ibuffer) {
-            return amrex::Array4<amrex::Real>(shared + ibuffer*nbuffer,
-                amrex::begin(buffer_box), amrex::end(buffer_box), 1);
-        };
-
-        // Note: not `if constexpr`, since nvcc does not allow an extended __device__ lambda
-        // to first-capture variables in a constexpr-if context. `fused` is a template
-        // parameter, so the branch is still resolved at compile time.
-        if (fused) {
-            // Deposit into one buffer per array, then add them to the global arrays
+    /** \brief Deposit particle \c ip into the arrays in the bitmask \c arrays (bit n for
+     *         array n of \c A) */
+    template <int arrays>
+    AMREX_GPU_DEVICE AMREX_FORCE_INLINE
+    void deposit (const long ip,
+                  amrex::GpuArray<amrex::Array4<amrex::Real>, narrays> const& A) const
+    {
+        // The arrays not in the bitmask are not accessed: pass A[0] for them
 #if defined(WARPX_DIM_3D)
-            constexpr int nbuffers = 4;
-            amrex::Array4<amrex::Real> const t0_buff = make_buffer(0);
-            amrex::Array4<amrex::Real> const t1_buff = make_buffer(1);
-            amrex::Array4<amrex::Real> const t2_buff = make_buffer(2);
-            amrex::Array4<amrex::Real> const t3_buff = make_buffer(3);
-            amrex::Array4<amrex::Real> const Dy_buff; // not used
+        doVayDepositionShapeNKernel<depos_order, arrays>(
+            ip, GetPosition, wp, uxp, uyp, uzp, ion_lev, A[0], A[1], A[2], A[3], A[0],
+            dt, relative_time, dinv, xyzmin, lo, q);
 #else
-            constexpr int nbuffers = 3;
-            amrex::Array4<amrex::Real> const t0_buff = make_buffer(0);
-            amrex::Array4<amrex::Real> const t1_buff = make_buffer(1);
-            amrex::Array4<amrex::Real> const Dy_buff = make_buffer(2);
-            amrex::Array4<amrex::Real> const t2_buff, t3_buff; // not used
+        constexpr int components = (arrays & (VayArrays::t0 | VayArrays::t1)) |
+                                   ((arrays & 4) ? VayArrays::Dy : 0);
+        doVayDepositionShapeNKernel<depos_order, components>(
+            ip, GetPosition, wp, uxp, uyp, uzp, ion_lev, A[0], A[1], A[0], A[0], A[2],
+            dt, relative_time, dinv, xyzmin, lo, q);
 #endif
-            for (int i = threadIdx.x; i < nbuffers*nbuffer; i += blockDim.x) {
-                shared[i] = 0.0_rt;
-            }
-            __syncthreads();
-            for (unsigned int ip_orig = bin_start+threadIdx.x; ip_orig<bin_stop;
-                 ip_orig += blockDim.x)
-            {
-                const unsigned int ip = permutation[ip_orig];
-                doVayDepositionShapeNKernel<depos_order>(
-                    ip, GetPosition, wp, uxp, uyp, uzp, ion_lev,
-                    t0_buff, t1_buff, t2_buff, t3_buff, Dy_buff,
-                    dt, relative_time, dinv, xyzmin, lo, q);
-            }
-            __syncthreads();
-            addLocalToGlobal(buffer_box, t0_arr, t0_buff);
-            addLocalToGlobal(buffer_box, t1_arr, t1_buff);
-#if defined(WARPX_DIM_3D)
-            addLocalToGlobal(buffer_box, t2_arr, t2_buff);
-            addLocalToGlobal(buffer_box, t3_arr, t3_buff);
-#else
-            addLocalToGlobal(buffer_box, Dy_arr, Dy_buff);
-#endif
-        } else {
-            amrex::Array4<amrex::Real> const buff = make_buffer(0);
-
-            // Deposit into one array at a time: deposit into the buffer, then add the
-            // buffer to the global array
-            auto deposit_one = [&] (auto component, amrex::Array4<amrex::Real> const& arr)
-            {
-                constexpr int components = decltype(component)::value;
-                for (int i = threadIdx.x; i < nbuffer; i += blockDim.x) {
-                    shared[i] = 0.0_rt;
-                }
-                __syncthreads();
-                for (unsigned int ip_orig = bin_start+threadIdx.x; ip_orig<bin_stop;
-                     ip_orig += blockDim.x)
-                {
-                    const unsigned int ip = permutation[ip_orig];
-                    doVayDepositionShapeNKernel<depos_order, components>(
-                        ip, GetPosition, wp, uxp, uyp, uzp, ion_lev,
-                        buff, buff, buff, buff, buff,
-                        dt, relative_time, dinv, xyzmin, lo, q);
-                }
-                __syncthreads();
-                addLocalToGlobal(buffer_box, arr, buff);
-                __syncthreads();
-            };
-            deposit_one(std::integral_constant<int, VayArrays::t0>{}, t0_arr);
-            deposit_one(std::integral_constant<int, VayArrays::t1>{}, t1_arr);
-#if defined(WARPX_DIM_3D)
-            deposit_one(std::integral_constant<int, VayArrays::t2>{}, t2_arr);
-            deposit_one(std::integral_constant<int, VayArrays::t3>{}, t3_arr);
-#else
-            deposit_one(std::integral_constant<int, VayArrays::Dy>{}, Dy_arr);
-#endif
-        }
-    });
-#else // not using hip/cuda, or not 2D/3D
-    // Note, you should never reach this part of the code. This function cannot be called unless
-    // using HIP/CUDA, and those things are checked prior
-    WARPX_ABORT_WITH_MESSAGE("Shared memory Vay deposition only implemented for HIP/CUDA in 2D and 3D");
-#endif
-}
+    }
+};
 
 /**
  * \brief Vay current deposition using shared memory buffers: deposit \c D in real space and
@@ -3526,35 +3402,28 @@ void doVayDepositionSharedShapeN (
         ngrow = amrex::max(ngrow, depos_order + static_cast<int>(
             std::ceil(PhysConst::c*shift_time*dxiarr[idim])));
     }
-    amrex::Box sample_tbox(amrex::IntVect(AMREX_D_DECL(0,0,0)), a_tbox_max_size - 1);
-    sample_tbox.grow(ngrow);
-    sample_tbox.surroundingNodes();
-    const std::size_t buffer_bytes = sample_tbox.numPts()*sizeof(amrex::Real);
 
-    const std::size_t max_shared_mem_bytes = amrex::Gpu::Device::sharedMemPerBlock();
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(buffer_bytes <= max_shared_mem_bytes,
-                                     "Tile size too big for GPU shared memory current deposition");
-
-    // Deposit into all the arrays in a single pass if their buffers fit in shared memory
-    // (4 temporary arrays in 3D; 2 temporary arrays and Dy in 2D)
-    constexpr int nbuffers = (AMREX_SPACEDIM == 3) ? 4 : 3;
-    const bool fused = (nbuffers*buffer_bytes <= max_shared_mem_bytes);
-    const std::size_t shared_mem_bytes = fused ? nbuffers*buffer_bytes : buffer_bytes;
+    const VayParticleDeposit<depos_order> deposit_particle{
+        GetPosition, wp, uxp, uyp, uzp, ion_lev, dt, relative_time, dinv, xyzmin, lo, q};
+    constexpr int narrays = VayParticleDeposit<depos_order>::narrays;
+    const amrex::IntVect nodal = amrex::IntVect::TheNodeVector();
+    amrex::GpuArray<amrex::IntVect, narrays> types;
+    for (int n = 0; n < narrays; ++n) { types[n] = nodal; }
 
     doVayDepositionWithTempArrays(Dx_fab, Dy_fab, Dz_fab,
         [&] (amrex::Array4<amrex::Real> const& t0_arr, amrex::Array4<amrex::Real> const& t1_arr,
-             amrex::Array4<amrex::Real> const& t2_arr, amrex::Array4<amrex::Real> const& t3_arr,
-             amrex::Array4<amrex::Real> const& Dy_arr)
+             [[maybe_unused]] amrex::Array4<amrex::Real> const& t2_arr,
+             [[maybe_unused]] amrex::Array4<amrex::Real> const& t3_arr,
+             [[maybe_unused]] amrex::Array4<amrex::Real> const& Dy_arr)
     {
-        // Compile versions of the kernel with and without a single pass
-        auto launch = [&] (auto single_pass) {
-            doVayDepositionSharedShapeNImpl<depos_order, decltype(single_pass)::value>(
-                GetPosition, wp, uxp, uyp, uzp, ion_lev, t0_arr, t1_arr, t2_arr, t3_arr, Dy_arr,
-                dt, relative_time, dinv, xyzmin, lo, q, a_bins, box, threads_per_block,
-                bin_size, ngrow, shared_mem_bytes);
-        };
-        if (fused) { launch(std::true_type{}); }
-        else       { launch(std::false_type{}); }
+#if defined(WARPX_DIM_3D)
+        const amrex::GpuArray<amrex::Array4<amrex::Real>, narrays> arrays{
+            t0_arr, t1_arr, t2_arr, t3_arr};
+#else
+        const amrex::GpuArray<amrex::Array4<amrex::Real>, narrays> arrays{t0_arr, t1_arr, Dy_arr};
+#endif
+        doSharedDeposition<narrays>(deposit_particle, arrays, types, ngrow, a_bins, box,
+                                    a_tbox_max_size, threads_per_block, bin_size);
     });
 #else
     amrex::ignore_unused(GetPosition, wp, uxp, uyp, uzp, ion_lev, Dx_fab, Dy_fab, Dz_fab,
