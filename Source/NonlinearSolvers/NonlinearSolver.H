@@ -92,6 +92,12 @@ public:
     virtual void ForcePreconditionerUpdate (bool /* force_update */) {}
 
     /**
+     * \brief Require a PC update before the next linear solve.
+     * Solvers that always update the PC need no notification.
+     */
+    virtual void InvalidatePreconditioner () {}
+
+    /**
      * \brief Allow caller to dynamically change the verbosity flag. For
      * example, one may want to only print solver information every 100 steps.
      */

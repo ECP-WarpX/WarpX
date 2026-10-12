@@ -85,6 +85,11 @@ public:
         m_force_pc_update = force_update;
     }
 
+    void InvalidatePreconditioner () override
+    {
+        m_pc_initialized = false;
+    }
+
     void PrintParams () const override
     {
         amrex::Print() << "Newton verbose:             " << (this->m_verbose?"true":"false") << "\n";

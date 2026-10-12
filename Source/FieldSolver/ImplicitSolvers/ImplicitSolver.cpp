@@ -241,6 +241,7 @@ int ImplicitSolver::OneStep (const amrex::Real  start_time,
                 m_nsubsteps *= 2;
                 if (m_nsubsteps > max_substeps) {
                     // Give up and just return the bad exit status
+                    m_nlsolver->InvalidatePreconditioner();
                     return exit_status;
                 }
                 m_dt /= 2._rt;
@@ -253,6 +254,11 @@ int ImplicitSolver::OneStep (const amrex::Real  start_time,
 
         substep_start_time += m_dt;
 
+    }
+
+    if (m_nsubsteps > 1) {
+        // Rebuild the PC with the full timestep's dt on the next solve.
+        m_nlsolver->InvalidatePreconditioner();
     }
 
     return exit_status;
