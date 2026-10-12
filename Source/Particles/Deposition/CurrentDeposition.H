@@ -1205,6 +1205,25 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
  *                      three shared memory buffers; otherwise, deposit them one at a time
  *                      into a single buffer, which requires less shared memory but
  *                      computes the shape factors of each particle three times.
+ * \param GetPosition  A functor for returning the particle position.
+ * \param wp           Pointer to array of particle weights.
+ * \param uxp,uyp,uzp  Pointer to arrays of particle momentum.
+ * \param ion_lev      Pointer to array of particle ionization level, or null pointer.
+ * \param jx_fab,jy_fab,jz_fab FArrayBox of current density.
+ * \param dt           Time step for particle level
+ * \param relative_time Time at which to deposit J, relative to the time of the
+ *                      current positions of the particles.
+ * \param dinv         3D cell size inverse
+ * \param xyzmin       Physical lower bounds of domain.
+ * \param lo           Index lower bounds of domain.
+ * \param q            species charge.
+ * \param n_rz_azimuthal_modes Number of azimuthal modes when using RZ geometry; must be 1.
+ * \param reduced_particle_shape_mask  Array4 of int, Mask that indicates whether a particle
+ * should use its regular shape factor or a reduced, order-1 shape factor instead in a given cell.
+ * \param a_bins             bins used for particle sorting
+ * \param box                the current box
+ * \param threads_per_block  number of threads to use per block in shared deposition
+ * \param bin_size           tileSize to use for shared current deposition operations
  * \param ngrow             number of cells by which the tiles are grown for the buffers
  * \param shared_mem_bytes  size of shared memory per block
  */
