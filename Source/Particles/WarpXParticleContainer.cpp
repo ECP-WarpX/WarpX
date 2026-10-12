@@ -706,35 +706,16 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
                 eb_reduce_particle_shape = (*warpx.GetEBReduceParticleShapeFlag()[lev])[pti].array();
             }
 
-            if        (WarpX::nox == 1){
-                doEsirkepovDepositionSharedShapeN<1>(
+            amrex::AnyCTO(
+                amrex::TypeList<amrex::CompileTimeOptions<1,2,3,4>>{}, {WarpX::nox},
+                [&](auto depos_order) {
+                    doEsirkepovDepositionSharedShapeN<depos_order.value>(
                         GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                         uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev_offset,
                         jx_fab, jy_fab, jz_fab, dt, relative_time, dinv, xyzmin, lo, q,
                         WarpX::n_rz_azimuthal_modes, eb_reduce_particle_shape, EB::enabled(),
                         bins, box, geom, max_tbox_size, threads_per_block, bin_size);
-            } else if (WarpX::nox == 2){
-                doEsirkepovDepositionSharedShapeN<2>(
-                        GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
-                        uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev_offset,
-                        jx_fab, jy_fab, jz_fab, dt, relative_time, dinv, xyzmin, lo, q,
-                        WarpX::n_rz_azimuthal_modes, eb_reduce_particle_shape, EB::enabled(),
-                        bins, box, geom, max_tbox_size, threads_per_block, bin_size);
-            } else if (WarpX::nox == 3){
-                doEsirkepovDepositionSharedShapeN<3>(
-                        GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
-                        uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev_offset,
-                        jx_fab, jy_fab, jz_fab, dt, relative_time, dinv, xyzmin, lo, q,
-                        WarpX::n_rz_azimuthal_modes, eb_reduce_particle_shape, EB::enabled(),
-                        bins, box, geom, max_tbox_size, threads_per_block, bin_size);
-            } else if (WarpX::nox == 4){
-                doEsirkepovDepositionSharedShapeN<4>(
-                        GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
-                        uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev_offset,
-                        jx_fab, jy_fab, jz_fab, dt, relative_time, dinv, xyzmin, lo, q,
-                        WarpX::n_rz_azimuthal_modes, eb_reduce_particle_shape, EB::enabled(),
-                        bins, box, geom, max_tbox_size, threads_per_block, bin_size);
-            }
+                });
             ABLASTR_PROFILE_VAR_STOP(esirkepov_current_dep_kernel);
         }
         else {
