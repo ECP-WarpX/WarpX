@@ -255,16 +255,16 @@ void WarpX::ApplyBfieldBoundary (const int lev, PatchType patch_type, Subcycling
 }
 
 void WarpX::ApplyRhofieldBoundary (const int lev, MultiFab* rho,
-                                   PatchType patch_type, int start_comp, int ncomp)
+                                   PatchType patch_type, int scomp, int ncomp)
 {
-    if (ncomp < 0) { ncomp = rho->nComp() - start_comp; }
-    AMREX_ALWAYS_ASSERT(start_comp >= 0 && ncomp > 0 && start_comp + ncomp <= rho->nComp());
+    if (ncomp < 0) { ncomp = rho->nComp() - scomp; }
+    AMREX_ALWAYS_ASSERT(scomp >= 0 && ncomp > 0 && scomp + ncomp <= rho->nComp());
 
     // View only the requested components without copying field data.
-    // Component n of this view refers to component start_comp+n of rho;
+    // Component n of this view refers to component scomp+n of rho;
     // boundary updates through the view modify the original rho.
     // Subcycling finalizes the two coarse time components at different stages.
-    MultiFab rho_components(*rho, amrex::make_alias, start_comp, ncomp);
+    MultiFab rho_components(*rho, amrex::make_alias, scomp, ncomp);
 
     if (::isAnyBoundary<ParticleBoundaryType::Reflecting>(particle_boundary_lo, particle_boundary_hi) ||
         ::isAnyBoundary<ParticleBoundaryType::Thermal>(particle_boundary_lo, particle_boundary_hi) ||
