@@ -699,31 +699,15 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
 
             const int threads_per_block = WarpX::shared_mem_current_tpb;
 
-            if        (WarpX::nox == 1){
-                doVayDepositionSharedShapeN<1>(
+            amrex::AnyCTO(
+                amrex::TypeList<amrex::CompileTimeOptions<1,2,3,4>>{}, {WarpX::nox},
+                [&](auto depos_order) {
+                    doVayDepositionSharedShapeN<depos_order.value>(
                         GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
                         uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev_offset,
                         jx_fab, jy_fab, jz_fab, dt, relative_time, dinv, xyzmin, lo, q,
                         bins, box, geom, max_tbox_size, threads_per_block, bin_size);
-            } else if (WarpX::nox == 2){
-                doVayDepositionSharedShapeN<2>(
-                        GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
-                        uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev_offset,
-                        jx_fab, jy_fab, jz_fab, dt, relative_time, dinv, xyzmin, lo, q,
-                        bins, box, geom, max_tbox_size, threads_per_block, bin_size);
-            } else if (WarpX::nox == 3){
-                doVayDepositionSharedShapeN<3>(
-                        GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
-                        uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev_offset,
-                        jx_fab, jy_fab, jz_fab, dt, relative_time, dinv, xyzmin, lo, q,
-                        bins, box, geom, max_tbox_size, threads_per_block, bin_size);
-            } else if (WarpX::nox == 4){
-                doVayDepositionSharedShapeN<4>(
-                        GetPosition, wp.dataPtr() + offset, uxp.dataPtr() + offset,
-                        uyp.dataPtr() + offset, uzp.dataPtr() + offset, ion_lev_offset,
-                        jx_fab, jy_fab, jz_fab, dt, relative_time, dinv, xyzmin, lo, q,
-                        bins, box, geom, max_tbox_size, threads_per_block, bin_size);
-            }
+                });
             ABLASTR_PROFILE_VAR_STOP(vay_current_dep_kernel);
         }
         else if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Villasenor) {
