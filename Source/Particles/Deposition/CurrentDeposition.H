@@ -3151,7 +3151,7 @@ void doVayDepositionCombineTempArrays (
     using namespace amrex::literals;
 
     amrex::Array4<amrex::Real> const& Dx_arr = Dx_fab.array();
-    amrex::Array4<amrex::Real> const& Dy_arr = Dy_fab.array();
+    [[maybe_unused]] amrex::Array4<amrex::Real> const& Dy_arr = Dy_fab.array();
     amrex::Array4<amrex::Real> const& Dz_arr = Dz_fab.array();
 
 #if defined(WARPX_DIM_3D)
