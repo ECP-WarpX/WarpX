@@ -3938,6 +3938,8 @@ void doDepositionSharedShapeNImplicit (
     const int threads_per_block,
     const amrex::IntVect bin_size)
 {
+#if (defined(AMREX_USE_HIP) || defined(AMREX_USE_CUDA)) && \
+    !(defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE))
     // The direct deposition deposits at the position at time level n+1/2, used for binning
     const DirectImplicitParticleDeposit<depos_order> deposit_particle{
         xp_n, yp_n, zp_n, GetPosition, wp, uxp_n, uyp_n, uzp_n, uxp_nph, uyp_nph, uzp_nph,
@@ -3950,6 +3952,13 @@ void doDepositionSharedShapeNImplicit (
         jx_fab.box().type(), jy_fab.box().type(), jz_fab.box().type()};
     doSharedDeposition<3>(deposit_particle, J, types, depos_order, a_bins, box,
                           a_tbox_max_size, threads_per_block, bin_size);
+#else
+    amrex::ignore_unused(xp_n, yp_n, zp_n, GetPosition, wp, uxp_n, uyp_n, uzp_n, uxp_nph, uyp_nph,
+        uzp_nph, ion_lev, jx_fab, jy_fab, jz_fab, dinv, xyzmin, lo, q, n_rz_azimuthal_modes,
+        nodal_lo, nodal_hi, position_error_count, a_bins, box, a_tbox_max_size, threads_per_block,
+        bin_size);
+    WARPX_ABORT_WITH_MESSAGE("Shared memory only implemented for HIP/CUDA");
+#endif
 }
 
 /**
@@ -4017,6 +4026,8 @@ void doChargeConservingDepositionSharedShapeNImplicit (
     const int threads_per_block,
     const amrex::IntVect bin_size)
 {
+#if (defined(AMREX_USE_HIP) || defined(AMREX_USE_CUDA)) && \
+    !(defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE))
     const amrex::GpuArray<amrex::Array4<amrex::Real>, 3> J{
         jx_fab.array(), jy_fab.array(), jz_fab.array()};
     const amrex::IntVect nodal = amrex::IntVect::TheNodeVector();
@@ -4027,6 +4038,13 @@ void doChargeConservingDepositionSharedShapeNImplicit (
         nodal_lo, nodal_hi, position_error_count, J};
     doSharedDeposition<3>(deposit_particle, J, types, depos_order + 1, a_bins, box,
                           a_tbox_max_size, threads_per_block, bin_size);
+#else
+    amrex::ignore_unused(xp_n, yp_n, zp_n, GetPosition, wp, uxp_n, uyp_n, uzp_n, uxp_nph, uyp_nph,
+        uzp_nph, ion_lev, jx_fab, jy_fab, jz_fab, dt, dinv, xyzmin, domain_double, do_cropping,
+        lo, q, n_rz_azimuthal_modes, nodal_lo, nodal_hi, position_error_count, a_bins, box,
+        a_tbox_max_size, threads_per_block, bin_size);
+    WARPX_ABORT_WITH_MESSAGE("Shared memory only implemented for HIP/CUDA");
+#endif
 }
 
 /**
@@ -4095,6 +4113,8 @@ void doVillasenorDepositionSharedShapeNImplicit (
     const int threads_per_block,
     const amrex::IntVect bin_size)
 {
+#if (defined(AMREX_USE_HIP) || defined(AMREX_USE_CUDA)) && \
+    !(defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE))
     const amrex::GpuArray<amrex::Array4<amrex::Real>, 3> J{
         jx_fab.array(), jy_fab.array(), jz_fab.array()};
     const amrex::IntVect nodal = amrex::IntVect::TheNodeVector();
@@ -4105,5 +4125,12 @@ void doVillasenorDepositionSharedShapeNImplicit (
         nodal_lo, nodal_hi, position_error_count, J};
     doSharedDeposition<3>(deposit_particle, J, types, depos_order + 1, a_bins, box,
                           a_tbox_max_size, threads_per_block, bin_size);
+#else
+    amrex::ignore_unused(xp_n, yp_n, zp_n, GetPosition, wp, uxp_n, uyp_n, uzp_n, uxp_nph, uyp_nph,
+        uzp_nph, ion_lev, jx_fab, jy_fab, jz_fab, dt, dinv, xyzmin, domain_double, do_cropping,
+        lo, q, n_rz_azimuthal_modes, nodal_lo, nodal_hi, position_error_count, a_bins, box,
+        a_tbox_max_size, threads_per_block, bin_size);
+    WARPX_ABORT_WITH_MESSAGE("Shared memory only implemented for HIP/CUDA");
+#endif
 }
 #endif // WARPX_CURRENTDEPOSITION_H_
