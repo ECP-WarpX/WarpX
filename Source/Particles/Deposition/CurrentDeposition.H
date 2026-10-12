@@ -47,6 +47,8 @@ namespace JComponents {
 /**
  * \brief Kernel for the direct current deposition for thread thread_num
  * \tparam depos_order deposition order
+ * \tparam components  bitmask of the components of J to deposit (see JComponents). The
+ *                     arrays of the other components are not accessed.
  * \param xp, yp, zp    The particle positions.
  * \param wq            The charge of the macroparticle
  * \param vx,vy,vz      The particle velocities
@@ -62,7 +64,7 @@ namespace JComponents {
  * \param lo            Index lower bounds of domain.
  * \param n_rz_azimuthal_modes Number of azimuthal modes when using RZ geometry.
  */
-template <int depos_order>
+template <int depos_order, int components = JComponents::all>
 AMREX_GPU_HOST_DEVICE AMREX_INLINE
 void doDepositionShapeNKernel([[maybe_unused]] const amrex::ParticleReal xp,
                               [[maybe_unused]] const amrex::ParticleReal yp,
@@ -85,6 +87,8 @@ void doDepositionShapeNKernel([[maybe_unused]] const amrex::ParticleReal xp,
                               [[maybe_unused]] const int n_rz_azimuthal_modes)
 {
     using namespace amrex::literals;
+
+    amrex::ignore_unused(jx_arr, jy_arr, jz_arr);
 
     constexpr int NODE = amrex::IndexType::NODE;
     constexpr int CELL = amrex::IndexType::CELL;
@@ -229,44 +233,68 @@ void doDepositionShapeNKernel([[maybe_unused]] const amrex::ParticleReal xp,
     // Deposit current into jx_arr, jy_arr and jz_arr
 #if defined(WARPX_DIM_1D_Z)
     for (int iz=0; iz<=depos_order; iz++){
-        amrex::Gpu::Atomic::AddNoRet(
-            &jx_arr(lo.x+l_jx+iz, 0, 0, 0),
-            sz_jx[iz]*wqx);
-        amrex::Gpu::Atomic::AddNoRet(
-            &jy_arr(lo.x+l_jy+iz, 0, 0, 0),
-            sz_jy[iz]*wqy);
-        amrex::Gpu::Atomic::AddNoRet(
-            &jz_arr(lo.x+l_jz+iz, 0, 0, 0),
-            sz_jz[iz]*wqz);
+        if constexpr (JComponents::has(components, JComponents::x)) {
+            amrex::Gpu::Atomic::AddNoRet(
+                &jx_arr(lo.x+l_jx+iz, 0, 0, 0),
+                sz_jx[iz]*wqx);
+        }
+        if constexpr (JComponents::has(components, JComponents::y)) {
+            amrex::Gpu::Atomic::AddNoRet(
+                &jy_arr(lo.x+l_jy+iz, 0, 0, 0),
+                sz_jy[iz]*wqy);
+        }
+        if constexpr (JComponents::has(components, JComponents::z)) {
+            amrex::Gpu::Atomic::AddNoRet(
+                &jz_arr(lo.x+l_jz+iz, 0, 0, 0),
+                sz_jz[iz]*wqz);
+        }
     }
 #elif defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
     for (int ix=0; ix<=depos_order; ix++){
-        amrex::Gpu::Atomic::AddNoRet( &jx_arr(lo.x+j_jx+ix, 0, 0, 0), sx_jx[ix]*wqx);
-        amrex::Gpu::Atomic::AddNoRet( &jy_arr(lo.x+j_jy+ix, 0, 0, 0), sx_jy[ix]*wqy);
-        amrex::Gpu::Atomic::AddNoRet( &jz_arr(lo.x+j_jz+ix, 0, 0, 0), sx_jz[ix]*wqz);
+        if constexpr (JComponents::has(components, JComponents::x)) {
+            amrex::Gpu::Atomic::AddNoRet( &jx_arr(lo.x+j_jx+ix, 0, 0, 0), sx_jx[ix]*wqx);
+        }
+        if constexpr (JComponents::has(components, JComponents::y)) {
+            amrex::Gpu::Atomic::AddNoRet( &jy_arr(lo.x+j_jy+ix, 0, 0, 0), sx_jy[ix]*wqy);
+        }
+        if constexpr (JComponents::has(components, JComponents::z)) {
+            amrex::Gpu::Atomic::AddNoRet( &jz_arr(lo.x+j_jz+ix, 0, 0, 0), sx_jz[ix]*wqz);
+        }
     }
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     for (int iz=0; iz<=depos_order; iz++){
         for (int ix=0; ix<=depos_order; ix++){
-            amrex::Gpu::Atomic::AddNoRet(
-                &jx_arr(lo.x+j_jx+ix, lo.y+l_jx+iz, 0, 0),
-                sx_jx[ix]*sz_jx[iz]*wqx);
-            amrex::Gpu::Atomic::AddNoRet(
-                &jy_arr(lo.x+j_jy+ix, lo.y+l_jy+iz, 0, 0),
-                sx_jy[ix]*sz_jy[iz]*wqy);
-            amrex::Gpu::Atomic::AddNoRet(
-                &jz_arr(lo.x+j_jz+ix, lo.y+l_jz+iz, 0, 0),
-                sx_jz[ix]*sz_jz[iz]*wqz);
+            if constexpr (JComponents::has(components, JComponents::x)) {
+                amrex::Gpu::Atomic::AddNoRet(
+                    &jx_arr(lo.x+j_jx+ix, lo.y+l_jx+iz, 0, 0),
+                    sx_jx[ix]*sz_jx[iz]*wqx);
+            }
+            if constexpr (JComponents::has(components, JComponents::y)) {
+                amrex::Gpu::Atomic::AddNoRet(
+                    &jy_arr(lo.x+j_jy+ix, lo.y+l_jy+iz, 0, 0),
+                    sx_jy[ix]*sz_jy[iz]*wqy);
+            }
+            if constexpr (JComponents::has(components, JComponents::z)) {
+                amrex::Gpu::Atomic::AddNoRet(
+                    &jz_arr(lo.x+j_jz+ix, lo.y+l_jz+iz, 0, 0),
+                    sx_jz[ix]*sz_jz[iz]*wqz);
+            }
 #if defined(WARPX_DIM_RZ)
             Complex xy = xy0; // Note that xy is equal to e^{i m theta}
             for (int imode=1 ; imode < n_rz_azimuthal_modes ; imode++) {
                 // The factor 2 on the weighting comes from the normalization of the modes
-                amrex::Gpu::Atomic::AddNoRet( &jx_arr(lo.x+j_jx+ix, lo.y+l_jx+iz, 0, 2*imode-1), 2._rt*sx_jx[ix]*sz_jx[iz]*wqx*xy.real());
-                amrex::Gpu::Atomic::AddNoRet( &jx_arr(lo.x+j_jx+ix, lo.y+l_jx+iz, 0, 2*imode  ), 2._rt*sx_jx[ix]*sz_jx[iz]*wqx*xy.imag());
-                amrex::Gpu::Atomic::AddNoRet( &jy_arr(lo.x+j_jy+ix, lo.y+l_jy+iz, 0, 2*imode-1), 2._rt*sx_jy[ix]*sz_jy[iz]*wqy*xy.real());
-                amrex::Gpu::Atomic::AddNoRet( &jy_arr(lo.x+j_jy+ix, lo.y+l_jy+iz, 0, 2*imode  ), 2._rt*sx_jy[ix]*sz_jy[iz]*wqy*xy.imag());
-                amrex::Gpu::Atomic::AddNoRet( &jz_arr(lo.x+j_jz+ix, lo.y+l_jz+iz, 0, 2*imode-1), 2._rt*sx_jz[ix]*sz_jz[iz]*wqz*xy.real());
-                amrex::Gpu::Atomic::AddNoRet( &jz_arr(lo.x+j_jz+ix, lo.y+l_jz+iz, 0, 2*imode  ), 2._rt*sx_jz[ix]*sz_jz[iz]*wqz*xy.imag());
+                if constexpr (JComponents::has(components, JComponents::x)) {
+                    amrex::Gpu::Atomic::AddNoRet( &jx_arr(lo.x+j_jx+ix, lo.y+l_jx+iz, 0, 2*imode-1), 2._rt*sx_jx[ix]*sz_jx[iz]*wqx*xy.real());
+                    amrex::Gpu::Atomic::AddNoRet( &jx_arr(lo.x+j_jx+ix, lo.y+l_jx+iz, 0, 2*imode  ), 2._rt*sx_jx[ix]*sz_jx[iz]*wqx*xy.imag());
+                }
+                if constexpr (JComponents::has(components, JComponents::y)) {
+                    amrex::Gpu::Atomic::AddNoRet( &jy_arr(lo.x+j_jy+ix, lo.y+l_jy+iz, 0, 2*imode-1), 2._rt*sx_jy[ix]*sz_jy[iz]*wqy*xy.real());
+                    amrex::Gpu::Atomic::AddNoRet( &jy_arr(lo.x+j_jy+ix, lo.y+l_jy+iz, 0, 2*imode  ), 2._rt*sx_jy[ix]*sz_jy[iz]*wqy*xy.imag());
+                }
+                if constexpr (JComponents::has(components, JComponents::z)) {
+                    amrex::Gpu::Atomic::AddNoRet( &jz_arr(lo.x+j_jz+ix, lo.y+l_jz+iz, 0, 2*imode-1), 2._rt*sx_jz[ix]*sz_jz[iz]*wqz*xy.real());
+                    amrex::Gpu::Atomic::AddNoRet( &jz_arr(lo.x+j_jz+ix, lo.y+l_jz+iz, 0, 2*imode  ), 2._rt*sx_jz[ix]*sz_jz[iz]*wqz*xy.imag());
+                }
                 xy = xy*xy0;
             }
 #endif
@@ -276,15 +304,21 @@ void doDepositionShapeNKernel([[maybe_unused]] const amrex::ParticleReal xp,
     for (int iz=0; iz<=depos_order; iz++){
         for (int iy=0; iy<=depos_order; iy++){
             for (int ix=0; ix<=depos_order; ix++){
-                amrex::Gpu::Atomic::AddNoRet(
-                    &jx_arr(lo.x+j_jx+ix, lo.y+k_jx+iy, lo.z+l_jx+iz),
-                    sx_jx[ix]*sy_jx[iy]*sz_jx[iz]*wqx);
-                amrex::Gpu::Atomic::AddNoRet(
-                    &jy_arr(lo.x+j_jy+ix, lo.y+k_jy+iy, lo.z+l_jy+iz),
-                    sx_jy[ix]*sy_jy[iy]*sz_jy[iz]*wqy);
-                amrex::Gpu::Atomic::AddNoRet(
-                    &jz_arr(lo.x+j_jz+ix, lo.y+k_jz+iy, lo.z+l_jz+iz),
-                    sx_jz[ix]*sy_jz[iy]*sz_jz[iz]*wqz);
+                if constexpr (JComponents::has(components, JComponents::x)) {
+                    amrex::Gpu::Atomic::AddNoRet(
+                        &jx_arr(lo.x+j_jx+ix, lo.y+k_jx+iy, lo.z+l_jx+iz),
+                        sx_jx[ix]*sy_jx[iy]*sz_jx[iz]*wqx);
+                }
+                if constexpr (JComponents::has(components, JComponents::y)) {
+                    amrex::Gpu::Atomic::AddNoRet(
+                        &jy_arr(lo.x+j_jy+ix, lo.y+k_jy+iy, lo.z+l_jy+iz),
+                        sx_jy[ix]*sy_jy[iy]*sz_jy[iz]*wqy);
+                }
+                if constexpr (JComponents::has(components, JComponents::z)) {
+                    amrex::Gpu::Atomic::AddNoRet(
+                        &jz_arr(lo.x+j_jz+ix, lo.y+k_jz+iy, lo.z+l_jz+iz),
+                        sx_jz[ix]*sy_jz[iy]*sz_jz[iz]*wqz);
+                }
             }
         }
     }
@@ -297,6 +331,8 @@ void doDepositionShapeNKernel([[maybe_unused]] const amrex::ParticleReal xp,
  *        doDepositionSharedShapeN.
  *
  * \tparam depos_order  deposition order
+ * \tparam components   bitmask of the components of J to deposit (see JComponents). The
+ *                      arrays of the other components are not accessed.
  * \param ip           Index of the particle
  * \param GetPosition  A functor for returning the particle position.
  * \param wp           Pointer to array of particle weights.
@@ -313,7 +349,7 @@ void doDepositionShapeNKernel([[maybe_unused]] const amrex::ParticleReal xp,
  * \param q            species charge.
  * \param n_rz_azimuthal_modes Number of azimuthal modes when using RZ geometry.
  */
-template <int depos_order>
+template <int depos_order, int components = JComponents::all>
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 void doDepositionShapeNParticle (const long ip,
                                  const GetParticlePosition<PIdx>& GetPosition,
@@ -360,10 +396,9 @@ void doDepositionShapeNParticle (const long ip,
                 wq *= ion_lev[ip];
             }
 
-            doDepositionShapeNKernel<depos_order>(xp, yp, zp, wq, vx, vy, vz, jx_arr, jy_arr, jz_arr,
-                                                  jx_type, jy_type, jz_type,
-                                                  relative_time, dinv, xyzmin,
-                                                  invvol, lo, n_rz_azimuthal_modes);
+            doDepositionShapeNKernel<depos_order, components>(
+                xp, yp, zp, wq, vx, vy, vz, jx_arr, jy_arr, jz_arr, jx_type, jy_type, jz_type,
+                relative_time, dinv, xyzmin, invvol, lo, n_rz_azimuthal_modes);
 }
 
 /**
@@ -541,196 +576,43 @@ void doDepositionShapeNImplicit([[maybe_unused]] const amrex::ParticleReal * con
 }
 
 /**
- * \brief Implementation of doDepositionSharedShapeN, for a given choice of the use of
- *        shared memory.
+ * \brief Functor that deposits the current of one particle with the direct deposition, for
+ *        doSharedDeposition. See doDepositionShapeNParticle for the members.
  *
- * \tparam depos_order deposition order
- * \tparam fused        if true, deposit the three components of J in a single pass, into
- *                      three shared memory buffers; otherwise, deposit them one at a time
- *                      into a single buffer, which requires less shared memory but computes
- *                      the shape factors of each particle three times.
- * \param GetPosition  A functor for returning the particle position.
- * \param wp           Pointer to array of particle weights.
- * \param uxp,uyp,uzp  Pointer to arrays of particle momentum.
- * \param ion_lev      Pointer to array of particle ionization level, or null pointer.
- * \param jx_fab,jy_fab,jz_fab FArrayBox of current density.
- * \param relative_time Time at which to deposit J, relative to the time of the
- *                      current positions of the particles.
- * \param dinv         3D cell size inverse
- * \param xyzmin       Physical lower bounds of domain.
- * \param lo           Index lower bounds of domain.
- * \param q            species charge.
- * \param n_rz_azimuthal_modes Number of azimuthal modes when using RZ geometry; must be 1.
- * \param a_bins             bins used for particle sorting
- * \param box                the current box
- * \param threads_per_block  number of threads to use per block in shared deposition
- * \param bin_size           tileSize to use for shared current deposition operations
- * \param npts              number of points of the largest buffer, for the unfused version
- * \param shared_mem_bytes  size of shared memory per block
+ * \tparam depos_order  deposition order
  */
-template <int depos_order, bool fused>
-void doDepositionSharedShapeNImpl (
-    [[maybe_unused]] const GetParticlePosition<PIdx>& GetPosition,
-    [[maybe_unused]] const amrex::ParticleReal * const wp,
-    [[maybe_unused]] const amrex::ParticleReal * const uxp,
-    [[maybe_unused]] const amrex::ParticleReal * const uyp,
-    [[maybe_unused]] const amrex::ParticleReal * const uzp,
-    [[maybe_unused]] const int* ion_lev,
-    [[maybe_unused]] amrex::FArrayBox& jx_fab,
-    [[maybe_unused]] amrex::FArrayBox& jy_fab,
-    [[maybe_unused]] amrex::FArrayBox& jz_fab,
-    [[maybe_unused]] const amrex::Real relative_time,
-    [[maybe_unused]] const amrex::XDim3 & dinv,
-    [[maybe_unused]] const amrex::XDim3 & xyzmin,
-    [[maybe_unused]] const amrex::Dim3 lo,
-    [[maybe_unused]] const amrex::Real q,
-    [[maybe_unused]] const int n_rz_azimuthal_modes,
-    [[maybe_unused]] const amrex::DenseBins<WarpXParticleContainer::ParticleTileType::ParticleTileDataType>& a_bins,
-    [[maybe_unused]] const amrex::Box& box,
-    [[maybe_unused]] const int threads_per_block,
-    [[maybe_unused]] const amrex::IntVect bin_size,
-    [[maybe_unused]] const amrex::Long npts,
-    [[maybe_unused]] const std::size_t shared_mem_bytes)
+template <int depos_order>
+struct DirectParticleDeposit
 {
-#if (defined(AMREX_USE_HIP) || defined(AMREX_USE_CUDA)) && \
-    !(defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE))
-    using namespace amrex;
-    using namespace amrex::literals;
+    GetParticlePosition<PIdx> GetPosition;
+    const amrex::ParticleReal* wp;
+    const amrex::ParticleReal* uxp;
+    const amrex::ParticleReal* uyp;
+    const amrex::ParticleReal* uzp;
+    const int* ion_lev;
+    amrex::IntVect jx_type;
+    amrex::IntVect jy_type;
+    amrex::IntVect jz_type;
+    amrex::Real relative_time;
+    amrex::XDim3 dinv;
+    amrex::XDim3 xyzmin;
+    amrex::Real invvol;
+    amrex::Dim3 lo;
+    amrex::Real q;
+    int n_rz_azimuthal_modes;
 
-    auto permutation = a_bins.permutationPtr();
-
-    amrex::Array4<amrex::Real> const& jx_arr = jx_fab.array();
-    amrex::Array4<amrex::Real> const& jy_arr = jy_fab.array();
-    amrex::Array4<amrex::Real> const& jz_arr = jz_fab.array();
-    amrex::IntVect const jx_type = jx_fab.box().type();
-    amrex::IntVect const jy_type = jy_fab.box().type();
-    amrex::IntVect const jz_type = jz_fab.box().type();
-
-    constexpr int zdir = WARPX_ZINDEX;
-    constexpr int NODE = amrex::IndexType::NODE;
-    constexpr int CELL = amrex::IndexType::CELL;
-
-    const amrex::Real invvol = dinv.x*dinv.y*dinv.z;
-
-    const int nblocks = a_bins.numBins();
-    const auto offsets_ptr = a_bins.offsetsPtr();
-
-    // Launch one thread-block per bin
-    amrex::launch(
-            nblocks, threads_per_block, shared_mem_bytes, amrex::Gpu::gpuStream(),
-            [=] AMREX_GPU_DEVICE () noexcept {
-        const int bin_id = blockIdx.x;
-        const unsigned int bin_start = offsets_ptr[bin_id];
-        const unsigned int bin_stop = offsets_ptr[bin_id+1];
-
-        if (bin_start == bin_stop) { return; /*this bin has no particles*/ }
-
-        // These boxes define the index space for the shared memory buffers.
-        // Tile of this bin (the bins are numbered as by amrex::getTileIndex)
-        amrex::Box buffer_box = getTileBoxFromIndex(bin_id, box, bin_size);
-
-        buffer_box.grow(depos_order);
-        Box tbox_x = convert(buffer_box, jx_type);
-        Box tbox_y = convert(buffer_box, jy_type);
-        Box tbox_z = convert(buffer_box, jz_type);
-
-        Gpu::SharedMemory<amrex::Real> gsm;
-        amrex::Real* const shared = gsm.dataPtr();
-
-        // Note: not `if constexpr`, since nvcc does not allow an extended __device__ lambda
-        // to first-capture variables in a constexpr-if context. `fused` is a template
-        // parameter, so the branch is still resolved at compile time.
-        if (fused) {
-            // Deposit all components of J into three buffers, then add them to the global arrays
-            const auto nx = static_cast<int>(tbox_x.numPts());
-            const auto ny = static_cast<int>(tbox_y.numPts());
-            const auto nz = static_cast<int>(tbox_z.numPts());
-            amrex::Array4<amrex::Real> const jx_buff(shared,
-                    amrex::begin(tbox_x), amrex::end(tbox_x), 1);
-            amrex::Array4<amrex::Real> const jy_buff(shared + nx,
-                    amrex::begin(tbox_y), amrex::end(tbox_y), 1);
-            amrex::Array4<amrex::Real> const jz_buff(shared + nx + ny,
-                    amrex::begin(tbox_z), amrex::end(tbox_z), 1);
-            for (int i = threadIdx.x; i < nx + ny + nz; i += blockDim.x) {
-                shared[i] = 0.0_rt;
-            }
-            __syncthreads();
-            for (unsigned int ip_orig = bin_start+threadIdx.x; ip_orig<bin_stop;
-                 ip_orig += blockDim.x)
-            {
-                const unsigned int ip = permutation[ip_orig];
-                doDepositionShapeNParticle<depos_order>(ip, GetPosition, wp, uxp, uyp, uzp,
-                                                        ion_lev, jx_buff, jy_buff, jz_buff,
-                                                        jx_type, jy_type, jz_type,
-                                                        relative_time, dinv, xyzmin,
-                                                        invvol, lo, q, n_rz_azimuthal_modes);
-            }
-            __syncthreads();
-            addLocalToGlobal(tbox_x, jx_arr, jx_buff);
-            addLocalToGlobal(tbox_y, jy_arr, jy_buff);
-            addLocalToGlobal(tbox_z, jz_arr, jz_buff);
-        } else {
-        amrex::Array4<amrex::Real> const jx_buff(shared,
-                amrex::begin(tbox_x), amrex::end(tbox_x), 1);
-        amrex::Array4<amrex::Real> const jy_buff(shared,
-                amrex::begin(tbox_y), amrex::end(tbox_y), 1);
-        amrex::Array4<amrex::Real> const jz_buff(shared,
-                amrex::begin(tbox_z), amrex::end(tbox_z), 1);
-
-        // Zero-initialize the temporary array in shared memory
-        volatile amrex::Real* vs = shared;
-        for (int i = threadIdx.x; i < npts; i += blockDim.x){
-            vs[i] = 0.0;
-        }
-        __syncthreads();
-        for (unsigned int ip_orig = bin_start+threadIdx.x; ip_orig<bin_stop; ip_orig += blockDim.x)
-        {
-            const unsigned int ip = permutation[ip_orig];
-            depositComponent<depos_order>(GetPosition, wp, uxp, uyp, uzp, ion_lev, jx_buff, jx_type,
-                                          relative_time, dinv, xyzmin, lo, q, n_rz_azimuthal_modes,
-                                          ip, zdir, NODE, CELL, 0);
-        }
-
-        __syncthreads();
-        addLocalToGlobal(tbox_x, jx_arr, jx_buff);
-        for (int i = threadIdx.x; i < npts; i += blockDim.x){
-            vs[i] = 0.0;
-        }
-
-        __syncthreads();
-        for (unsigned int ip_orig = bin_start+threadIdx.x; ip_orig<bin_stop; ip_orig += blockDim.x)
-        {
-            const unsigned int ip = permutation[ip_orig];
-            depositComponent<depos_order>(GetPosition, wp, uxp, uyp, uzp, ion_lev, jy_buff, jy_type,
-                                          relative_time, dinv, xyzmin, lo, q, n_rz_azimuthal_modes,
-                                          ip, zdir, NODE, CELL, 1);
-        }
-
-        __syncthreads();
-        addLocalToGlobal(tbox_y, jy_arr, jy_buff);
-        for (int i = threadIdx.x; i < npts; i += blockDim.x){
-            vs[i] = 0.0;
-        }
-
-        __syncthreads();
-        for (unsigned int ip_orig = bin_start+threadIdx.x; ip_orig<bin_stop; ip_orig += blockDim.x)
-        {
-            const unsigned int ip = permutation[ip_orig];
-            depositComponent<depos_order>(GetPosition, wp, uxp, uyp, uzp, ion_lev, jz_buff, jz_type,
-                                          relative_time, dinv, xyzmin, lo, q, n_rz_azimuthal_modes,
-                                          ip, zdir, NODE, CELL, 2);
-        }
-
-        __syncthreads();
-        addLocalToGlobal(tbox_z, jz_arr, jz_buff);
-        }
-    });
-#else // not using hip/cuda
-    // Note, you should never reach this part of the code. This function cannot be called unless
-    // using HIP/CUDA, and those things are checked prior
-    WARPX_ABORT_WITH_MESSAGE("Shared memory only implemented for HIP/CUDA");
-#endif
-}
+    /** \brief Deposit the components of J in the bitmask \c components (see JComponents)
+     *         of particle \c ip into \c J */
+    template <int components>
+    AMREX_GPU_DEVICE AMREX_FORCE_INLINE
+    void deposit (const long ip, amrex::GpuArray<amrex::Array4<amrex::Real>, 3> const& J) const
+    {
+        doDepositionShapeNParticle<depos_order, components>(
+            ip, GetPosition, wp, uxp, uyp, uzp, ion_lev, J[0], J[1], J[2],
+            jx_type, jy_type, jz_type, relative_time, dinv, xyzmin, invvol, lo, q,
+            n_rz_azimuthal_modes);
+    }
+};
 
 /**
  * \brief Current Deposition for thread thread_num using shared memory
@@ -790,36 +672,17 @@ void doDepositionSharedShapeN (const GetParticlePosition<PIdx>& GetPosition,
     !(defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE))
     amrex::ignore_unused(geom, np_to_deposit);
 
-    amrex::IntVect const jx_type = jx_fab.box().type();
-    amrex::IntVect const jy_type = jy_fab.box().type();
-    amrex::IntVect const jz_type = jz_fab.box().type();
-
-    amrex::Box sample_tbox(amrex::IntVect(AMREX_D_DECL(0,0,0)), a_tbox_max_size - 1);
-    sample_tbox.grow(depos_order);
-
-    const auto npts_x = convert(sample_tbox, jx_type).numPts();
-    const auto npts_y = convert(sample_tbox, jy_type).numPts();
-    const auto npts_z = convert(sample_tbox, jz_type).numPts();
-    const auto npts = amrex::max(npts_x, npts_y, npts_z);
-
-    const std::size_t max_shared_mem_bytes = amrex::Gpu::Device::sharedMemPerBlock();
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(npts*sizeof(amrex::Real) <= max_shared_mem_bytes,
-                                     "Tile size too big for GPU shared memory current deposition");
-
-    // Deposit the three components of J in a single pass if their buffers fit in shared memory
-    const std::size_t fused_bytes = (npts_x + npts_y + npts_z)*sizeof(amrex::Real);
-    const bool fused = (fused_bytes <= max_shared_mem_bytes);
-    const std::size_t shared_mem_bytes = fused ? fused_bytes : npts*sizeof(amrex::Real);
-
-    // Compile versions of the kernel with and without a single pass
-    auto launch = [&] (auto single_pass) {
-        doDepositionSharedShapeNImpl<depos_order, decltype(single_pass)::value>(
-            GetPosition, wp, uxp, uyp, uzp, ion_lev, jx_fab, jy_fab, jz_fab,
-                                          relative_time, dinv, xyzmin, lo, q, n_rz_azimuthal_modes,
-                                          a_bins, box, threads_per_block, bin_size, npts, shared_mem_bytes);
-    };
-    if (fused) { launch(std::true_type{}); }
-    else       { launch(std::false_type{}); }
+    // The direct deposition deposits at the current position, used for binning
+    const DirectParticleDeposit<depos_order> deposit_particle{
+        GetPosition, wp, uxp, uyp, uzp, ion_lev, jx_fab.box().type(), jy_fab.box().type(),
+        jz_fab.box().type(), relative_time, dinv, xyzmin, dinv.x*dinv.y*dinv.z, lo, q,
+        n_rz_azimuthal_modes};
+    const amrex::GpuArray<amrex::Array4<amrex::Real>, 3> J{
+        jx_fab.array(), jy_fab.array(), jz_fab.array()};
+    const amrex::GpuArray<amrex::IntVect, 3> types{
+        jx_fab.box().type(), jy_fab.box().type(), jz_fab.box().type()};
+    doSharedDeposition<3>(deposit_particle, J, types, depos_order, a_bins, box,
+                          a_tbox_max_size, threads_per_block, bin_size);
 #else // not using hip/cuda
     // Note, you should never reach this part of the code. This funcion cannot be called unless
     // using HIP/CUDA, and those things are checked prior
