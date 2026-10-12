@@ -152,9 +152,11 @@ public:
     std::unique_ptr<amrex::MultiFab> GetZeroChargeDensity(int lev);
 
     /**
-     * \brief Deposit charge density.
+     * \brief Deposit charge from all species without synchronization or finalization.
      *
-     * \param[in,out] rho vector of charge densities (one pointer to MultiFab per mesh refinement level)
+     * Physical boundary folding and radial volume scaling are left to the caller.
+     *
+     * \param[in,out] rho Charge deposits, one MultiFab per mesh refinement level.
      * \param[in] relative_time Time at which to deposit rho, relative to the time of the
      *                          current positions of the particles. When different than 0,
      *                          the particle position will be temporarily modified to match
@@ -199,8 +201,15 @@ public:
     /// This deposits the particle charge onto a node-centered MultiFab and returns a unique ptr
     /// to it. The charge density is accumulated over all the particles in the MultiParticleContainer
 
-    /** Set finalize=true for physical charge density after summation (local=false).
-     * Set finalize=false for unscaled deposits to filter/synchronize before FinalizeRho. */
+    /**
+     * \brief Deposit charge from all species on one level with optional summation and finalization.
+     *
+     * \param[in] lev Mesh refinement level for deposition.
+     * \param[in] local If false, sum overlapping valid- and guard-cell deposits.
+     * \param[in] finalize If true, apply physical boundary conditions and radial volume
+     *                     scaling to return physical charge density; requires local=false.
+     *                     If false, leave boundary handling and radial scaling to the caller.
+     */
     std::unique_ptr<amrex::MultiFab> GetChargeDensity(
         int lev, bool local, bool finalize);
 

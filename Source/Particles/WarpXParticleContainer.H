@@ -336,9 +336,9 @@ public:
     /**
      * \brief Deposit charge without physical boundary folding or radial volume scaling.
      *
-     * \param[in,out] rho vector of charge densities (one pointer to MultiFab per mesh refinement level)
-     * \param[in] local if false, exchange the data in the guard cells after the deposition
-     * \param[in] reset if true, reset all values of rho to zero
+     * \param[in,out] rho Charge deposits, one MultiFab per mesh refinement level.
+     * \param[in] local If false, sum overlapping valid- and guard-cell deposits.
+     * \param[in] reset If true, zero the deposited time component and its guard cells.
      * \param[in] interpolate_across_levels whether to average down from the fine patch to the coarse patch
      * \param[in] icomp component of the MultiFab where rho is deposited (old, new)
      */
@@ -347,12 +347,29 @@ public:
                         bool interpolate_across_levels = true,
                         int icomp = 0);
 
+    /**
+     * \brief Deposit charge on one level without physical boundary folding or radial
+     *        volume scaling.
+     *
+     * \param[in,out] rho MultiFab receiving the charge deposits.
+     * \param[in] lev Mesh refinement level for deposition.
+     * \param[in] local If false, sum overlapping valid- and guard-cell deposits.
+     * \param[in] reset If true, zero the deposited time component and its guard cells.
+     * \param[in] icomp Time component of rho to deposit into (old or new).
+     */
     void DepositChargeOnLevel (amrex::MultiFab* rho, int lev,
                         bool local = false, bool reset = false,
                         int icomp = 0);
 
-    /** Set finalize=true for physical charge density after summation (local=false).
-     * Set finalize=false for unscaled deposits to filter/synchronize before FinalizeRho. */
+    /**
+     * \brief Deposit charge from this species on one level with optional summation and finalization.
+     *
+     * \param[in] lev Mesh refinement level for deposition.
+     * \param[in] local If false, sum overlapping valid- and guard-cell deposits.
+     * \param[in] finalize If true, apply physical boundary conditions and radial volume
+     *                     scaling to return physical charge density; requires local=false.
+     *                     If false, leave boundary handling and radial scaling to the caller.
+     */
     std::unique_ptr<amrex::MultiFab> GetChargeDensity(int lev, bool local, bool finalize);
 
     virtual void DepositCharge (WarpXParIter& pti,
