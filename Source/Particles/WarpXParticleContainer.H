@@ -351,9 +351,9 @@ public:
                         bool local = false, bool reset = false,
                         int icomp = 0);
 
-    /** Return physical charge density by default. Set finalize=false to obtain
-     * unscaled deposits for filtering/synchronization followed by FinalizeRho. */
-    std::unique_ptr<amrex::MultiFab> GetChargeDensity(int lev, bool local = false, bool finalize = true);
+    /** Set finalize=true for physical charge density after summation (local=false).
+     * Set finalize=false for unscaled deposits to filter/synchronize before FinalizeRho. */
+    std::unique_ptr<amrex::MultiFab> GetChargeDensity(int lev, bool local, bool finalize);
 
     virtual void DepositCharge (WarpXParIter& pti,
                                RealVector const & wp,

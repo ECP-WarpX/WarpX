@@ -677,11 +677,12 @@ MultiParticleContainer::DepositTemperatures (
 std::unique_ptr<MultiFab>
 MultiParticleContainer::GetChargeDensity (int lev, bool local, bool finalize)
 {
+
     std::unique_ptr<MultiFab> rho = GetZeroChargeDensity(lev);
 
     for (auto& container : allcontainers) {
         if (container->do_not_deposit) { continue; }
-        const std::unique_ptr<MultiFab> rhoi = container->GetChargeDensity(lev, true, /*finalize*/false);
+        const auto rhoi = container->GetChargeDensity(lev, /*local=*/true, /*finalize=*/false);
         MultiFab::Add(*rho, *rhoi, 0, 0, rho->nComp(), rho->nGrowVect());
     }
     if (!local) {
@@ -694,6 +695,9 @@ MultiParticleContainer::GetChargeDensity (int lev, bool local, bool finalize)
     }
 
     if (finalize) {
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            !local,
+            "GetChargeDensity requires local=false when finalize=true.");
         WarpX::GetInstance().FinalizeRho(lev, rho.get(), PatchType::fine);
     }
     return rho;
