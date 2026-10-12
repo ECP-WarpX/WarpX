@@ -638,6 +638,10 @@ FullDiagnostics::AddRZModesToDiags (int lev)
 
     if (!m_dump_rz_modes) { return; }
 
+    // This is called for every level and after every regrid. Remove the
+    // mode names appended by a previous call before appending them again.
+    m_varnames.resize(m_varnames_fields.size() + m_pfield_varnames.size()*m_pfield_species.size());
+
     auto & warpx = WarpX::GetInstance();
     const int ncomp_multimodefab = warpx.m_fields.get(FieldType::Efield_aux, Direction::r, 0)->nComp();
     // Make sure all multifabs have the same number of components
