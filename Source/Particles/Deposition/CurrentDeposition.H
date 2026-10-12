@@ -3132,6 +3132,52 @@ void doVayDepositionShapeNKernel ([[maybe_unused]] const long ip,
 }
 
 /**
+ * \brief Combine the temporary arrays of the Vay deposition into \c Dx_fab, \c Dy_fab, \c Dz_fab.
+ *        This is kept separate from (and not templated like) doVayDepositionWithTempArrays,
+ *        since nvcc does not allow an extended device lambda in a function template
+ *        instantiated with a function-local type.
+ *
+ * \param[in] temp_arr  Array4 of the temporary arrays
+ * \param[in,out] Dx_fab,Dy_fab,Dz_fab FArrayBox of Vay current density
+ */
+inline
+void doVayDepositionCombineTempArrays (
+    [[maybe_unused]] amrex::Array4<amrex::Real const> const& temp_arr,
+    [[maybe_unused]] amrex::FArrayBox& Dx_fab,
+    [[maybe_unused]] amrex::FArrayBox& Dy_fab,
+    [[maybe_unused]] amrex::FArrayBox& Dz_fab)
+{
+#if !(defined WARPX_DIM_RZ || defined WARPX_DIM_1D_Z || defined WARPX_DIM_RCYLINDER || defined WARPX_DIM_RSPHERE)
+    using namespace amrex::literals;
+
+    amrex::Array4<amrex::Real> const& Dx_arr = Dx_fab.array();
+    amrex::Array4<amrex::Real> const& Dy_arr = Dy_fab.array();
+    amrex::Array4<amrex::Real> const& Dz_arr = Dz_fab.array();
+
+#if defined(WARPX_DIM_3D)
+    amrex::ParallelFor(Dx_fab.box(), [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
+    {
+        const amrex::Real t_a = temp_arr(i,j,k,0);
+        const amrex::Real t_b = temp_arr(i,j,k,1);
+        const amrex::Real t_c = temp_arr(i,j,k,2);
+        const amrex::Real t_d = temp_arr(i,j,k,3);
+        Dx_arr(i,j,k) += (1._rt/6._rt)*(2_rt*t_a       + t_b       + t_c - 2._rt*t_d);
+        Dy_arr(i,j,k) += (1._rt/6._rt)*(2_rt*t_a       + t_b - 2._rt*t_c       + t_d);
+        Dz_arr(i,j,k) += (1._rt/6._rt)*(2_rt*t_a - 2._rt*t_b       + t_c       + t_d);
+    });
+#elif defined(WARPX_DIM_XZ)
+    amrex::ParallelFor(Dx_fab.box(), [=] AMREX_GPU_DEVICE (int i, int j, int) noexcept
+    {
+        const amrex::Real t_a = temp_arr(i,j,0,0);
+        const amrex::Real t_b = temp_arr(i,j,0,1);
+        Dx_arr(i,j,0) += (0.5_rt)*(t_a + t_b);
+        Dz_arr(i,j,0) += (0.5_rt)*(t_a - t_b);
+    });
+#endif
+#endif
+}
+
+/**
  * \brief Common part of the Vay current deposition with and without shared memory:
  *        allocate the temporary arrays, call \c deposit to deposit the particles into them
  *        (and into Dy in 2D), then combine them into \c Dx_fab, \c Dy_fab, \c Dz_fab.
@@ -3160,10 +3206,8 @@ void doVayDepositionWithTempArrays ([[maybe_unused]] amrex::FArrayBox& Dx_fab,
     temp_fab.setVal<amrex::RunOn::Device>(0._rt);
     amrex::Array4<amrex::Real> const& temp_arr = temp_fab.array();
 
-    // Arrays where D will be stored
-    amrex::Array4<amrex::Real> const& Dx_arr = Dx_fab.array();
+    // Array where Dy is deposited directly (2D only)
     amrex::Array4<amrex::Real> const& Dy_arr = Dy_fab.array();
-    amrex::Array4<amrex::Real> const& Dz_arr = Dz_fab.array();
 
     // Components of the temporary arrays
     amrex::Array4<amrex::Real> const t0_arr(temp_arr, 0, 1);
@@ -3177,26 +3221,8 @@ void doVayDepositionWithTempArrays ([[maybe_unused]] amrex::FArrayBox& Dx_fab,
 
     deposit(t0_arr, t1_arr, t2_arr, t3_arr, Dy_arr);
 
-#if defined(WARPX_DIM_3D)
-    amrex::ParallelFor(Dx_fab.box(), [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
-    {
-        const amrex::Real t_a = temp_arr(i,j,k,0);
-        const amrex::Real t_b = temp_arr(i,j,k,1);
-        const amrex::Real t_c = temp_arr(i,j,k,2);
-        const amrex::Real t_d = temp_arr(i,j,k,3);
-        Dx_arr(i,j,k) += (1._rt/6._rt)*(2_rt*t_a       + t_b       + t_c - 2._rt*t_d);
-        Dy_arr(i,j,k) += (1._rt/6._rt)*(2_rt*t_a       + t_b - 2._rt*t_c       + t_d);
-        Dz_arr(i,j,k) += (1._rt/6._rt)*(2_rt*t_a - 2._rt*t_b       + t_c       + t_d);
-    });
-#elif defined(WARPX_DIM_XZ)
-    amrex::ParallelFor(Dx_fab.box(), [=] AMREX_GPU_DEVICE (int i, int j, int) noexcept
-    {
-        const amrex::Real t_a = temp_arr(i,j,0,0);
-        const amrex::Real t_b = temp_arr(i,j,0,1);
-        Dx_arr(i,j,0) += (0.5_rt)*(t_a + t_b);
-        Dz_arr(i,j,0) += (0.5_rt)*(t_a - t_b);
-    });
-#endif
+    doVayDepositionCombineTempArrays(temp_arr, Dx_fab, Dy_fab, Dz_fab);
+
     // Synchronize so that temp_fab can be safely deallocated in its destructor
     amrex::Gpu::streamSynchronize();
 
