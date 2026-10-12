@@ -2585,165 +2585,44 @@ void doVillasenorDepositionShapeNExplicit (const GetParticlePosition<PIdx>& GetP
 }
 
 /**
- * \brief Implementation of doVillasenorDepositionSharedShapeN, for a given choice of
- *        the use of shared memory.
+ * \brief Functor that deposits the current of one particle with the Villasenor and Buneman
+ *        deposition, for doSharedDeposition. See doVillasenorDepositionShapeNExplicitKernel
+ *        for the members.
  *
  * \tparam depos_order  deposition order
- * \tparam fused        if true, deposit the three components of J in a single pass, into
- *                      three shared memory buffers; otherwise, deposit them one at a time
- *                      into a single buffer, which requires less shared memory but
- *                      computes the segments of each particle three times.
- * \param GetPosition  A functor for returning the particle position.
- * \param wp           Pointer to array of particle weights.
- * \param uxp,uyp,uzp  Pointer to arrays of particle momentum.
- * \param ion_lev      Pointer to array of particle ionization level, or null pointer.
- * \param jx_fab,jy_fab,jz_fab FArrayBox of current density.
- * \param dt           Time step for particle level
- * \param relative_time Time at which to deposit J, relative to the time of the
- *                      current positions of the particles.
- * \param dinv         3D cell size inverse
- * \param xyzmin       Physical lower bounds of domain.
- * \param domain_double  The domain boundary indicies cast to double values
- * \param do_cropping    Whether to crop particle orbits at domain boundaries
- * \param lo           Index lower bounds of domain.
- * \param q            species charge.
- * \param n_rz_azimuthal_modes Number of azimuthal modes when using RZ geometry; must be 1.
- * \param a_bins             bins used for particle sorting
- * \param box                the current box
- * \param threads_per_block  number of threads to use per block in shared deposition
- * \param bin_size           tileSize to use for shared current deposition operations
- * \param ngrow             number of cells by which the tiles are grown for the buffers
- * \param shared_mem_bytes  size of shared memory per block
  */
-template <int depos_order, bool fused>
-void doVillasenorDepositionSharedShapeNImpl (
-    [[maybe_unused]] const GetParticlePosition<PIdx>& GetPosition,
-    [[maybe_unused]] const amrex::ParticleReal * const wp,
-    [[maybe_unused]] const amrex::ParticleReal * const uxp,
-    [[maybe_unused]] const amrex::ParticleReal * const uyp,
-    [[maybe_unused]] const amrex::ParticleReal * const uzp,
-    [[maybe_unused]] const int* ion_lev,
-    [[maybe_unused]] amrex::FArrayBox& jx_fab,
-    [[maybe_unused]] amrex::FArrayBox& jy_fab,
-    [[maybe_unused]] amrex::FArrayBox& jz_fab,
-    [[maybe_unused]] const amrex::Real dt,
-    [[maybe_unused]] const amrex::Real relative_time,
-    [[maybe_unused]] const amrex::XDim3 & dinv,
-    [[maybe_unused]] const amrex::XDim3 & xyzmin,
-    [[maybe_unused]] const amrex::GpuArray<amrex::GpuArray<double,2>, AMREX_SPACEDIM> & domain_double,
-    [[maybe_unused]] const amrex::GpuArray<amrex::GpuArray<bool,2>, AMREX_SPACEDIM> & do_cropping,
-    [[maybe_unused]] const amrex::Dim3 lo,
-    [[maybe_unused]] const amrex::Real q,
-    [[maybe_unused]] const int n_rz_azimuthal_modes,
-    [[maybe_unused]] const amrex::DenseBins<WarpXParticleContainer::ParticleTileType::ParticleTileDataType>& a_bins,
-    [[maybe_unused]] const amrex::Box& box,
-    [[maybe_unused]] const int threads_per_block,
-    [[maybe_unused]] const amrex::IntVect bin_size,
-    [[maybe_unused]] const int ngrow,
-    [[maybe_unused]] const std::size_t shared_mem_bytes)
+template <int depos_order>
+struct VillasenorParticleDeposit
 {
-#if (defined(AMREX_USE_HIP) || defined(AMREX_USE_CUDA)) && \
-    !(defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE))
-    using namespace amrex;
-    using namespace amrex::literals;
+    GetParticlePosition<PIdx> GetPosition;
+    const amrex::ParticleReal* wp;
+    const amrex::ParticleReal* uxp;
+    const amrex::ParticleReal* uyp;
+    const amrex::ParticleReal* uzp;
+    const int* ion_lev;
+    amrex::Real dt;
+    amrex::Real relative_time;
+    amrex::XDim3 dinv;
+    amrex::XDim3 xyzmin;
+    amrex::GpuArray<amrex::GpuArray<double,2>, AMREX_SPACEDIM> domain_double;
+    amrex::GpuArray<amrex::GpuArray<bool,2>, AMREX_SPACEDIM> do_cropping;
+    amrex::Dim3 lo;
+    amrex::Real q;
+    amrex::Real invvol;
+    int n_rz_azimuthal_modes;
 
-    auto permutation = a_bins.permutationPtr();
-
-    amrex::Array4<amrex::Real> const& jx_arr = jx_fab.array();
-    amrex::Array4<amrex::Real> const& jy_arr = jy_fab.array();
-    amrex::Array4<amrex::Real> const& jz_arr = jz_fab.array();
-
-    const amrex::Real invvol = dinv.x*dinv.y*dinv.z;
-
-    const int nblocks = a_bins.numBins();
-    const auto offsets_ptr = a_bins.offsetsPtr();
-
-    // Launch one thread-block per bin
-    amrex::launch(
-            nblocks, threads_per_block, shared_mem_bytes, amrex::Gpu::gpuStream(),
-            [=] AMREX_GPU_DEVICE () noexcept {
-        const int bin_id = blockIdx.x;
-        const unsigned int bin_start = offsets_ptr[bin_id];
-        const unsigned int bin_stop = offsets_ptr[bin_id+1];
-
-        if (bin_start == bin_stop) { return; /*this bin has no particles*/ }
-
-        // This box defines the index space for the shared memory buffers.
-        // Tile of this bin (the bins are numbered as by amrex::getTileIndex)
-        amrex::Box buffer_box = getTileBoxFromIndex(bin_id, box, bin_size);
-        buffer_box.grow(ngrow);
-        buffer_box.surroundingNodes();
-        const auto nbuffer = static_cast<int>(buffer_box.numPts());
-
-        Gpu::SharedMemory<amrex::Real> gsm;
-        amrex::Real* const shared = gsm.dataPtr();
-
-        // Note: not `if constexpr`, since nvcc does not allow an extended __device__ lambda
-        // to first-capture variables in a constexpr-if context. `fused` is a template
-        // parameter, so the branch is still resolved at compile time.
-        if (fused) {
-            // Deposit all components of J into three buffers, then add them to the global arrays
-            amrex::Array4<amrex::Real> const jx_buff(shared,
-                    amrex::begin(buffer_box), amrex::end(buffer_box), 1);
-            amrex::Array4<amrex::Real> const jy_buff(shared + nbuffer,
-                    amrex::begin(buffer_box), amrex::end(buffer_box), 1);
-            amrex::Array4<amrex::Real> const jz_buff(shared + 2*nbuffer,
-                    amrex::begin(buffer_box), amrex::end(buffer_box), 1);
-            for (int i = threadIdx.x; i < 3*nbuffer; i += blockDim.x) {
-                shared[i] = 0.0_rt;
-            }
-            __syncthreads();
-            for (unsigned int ip_orig = bin_start+threadIdx.x; ip_orig<bin_stop;
-                 ip_orig += blockDim.x)
-            {
-                const unsigned int ip = permutation[ip_orig];
-                doVillasenorDepositionShapeNExplicitKernel<depos_order>(
-                    ip, GetPosition, wp, uxp, uyp, uzp, ion_lev, jx_buff, jy_buff, jz_buff,
-                    dt, relative_time, dinv, xyzmin, domain_double, do_cropping, lo, q, invvol,
-                    n_rz_azimuthal_modes);
-            }
-            __syncthreads();
-            addLocalToGlobal(buffer_box, jx_arr, jx_buff);
-            addLocalToGlobal(buffer_box, jy_arr, jy_buff);
-            addLocalToGlobal(buffer_box, jz_arr, jz_buff);
-        } else {
-            amrex::Array4<amrex::Real> const j_buff(shared,
-                    amrex::begin(buffer_box), amrex::end(buffer_box), 1);
-
-            // Deposit one component of J into the buffer, then add the buffer to the
-            // global array
-            auto deposit_component = [&] (auto component,
-                                          amrex::Array4<amrex::Real> const& j_arr)
-            {
-                constexpr int components = decltype(component)::value;
-                for (int i = threadIdx.x; i < nbuffer; i += blockDim.x) {
-                    shared[i] = 0.0_rt;
-                }
-                __syncthreads();
-                for (unsigned int ip_orig = bin_start+threadIdx.x; ip_orig<bin_stop;
-                     ip_orig += blockDim.x)
-                {
-                    const unsigned int ip = permutation[ip_orig];
-                    doVillasenorDepositionShapeNExplicitKernel<depos_order, components>(
-                        ip, GetPosition, wp, uxp, uyp, uzp, ion_lev, j_buff, j_buff, j_buff,
-                        dt, relative_time, dinv, xyzmin, domain_double, do_cropping, lo, q,
-                        invvol, n_rz_azimuthal_modes);
-                }
-                __syncthreads();
-                addLocalToGlobal(buffer_box, j_arr, j_buff);
-                __syncthreads();
-            };
-            deposit_component(std::integral_constant<int, JComponents::x>{}, jx_arr);
-            deposit_component(std::integral_constant<int, JComponents::y>{}, jy_arr);
-            deposit_component(std::integral_constant<int, JComponents::z>{}, jz_arr);
-        }
-    });
-#else // not using hip/cuda
-    // Note, you should never reach this part of the code. This function cannot be called unless
-    // using HIP/CUDA, and those things are checked prior
-    WARPX_ABORT_WITH_MESSAGE("Shared memory only implemented for HIP/CUDA");
-#endif
-}
+    /** \brief Deposit the components of J in the bitmask \c components (see JComponents)
+     *         of particle \c ip into \c J */
+    template <int components>
+    AMREX_GPU_DEVICE AMREX_FORCE_INLINE
+    void deposit (const long ip, amrex::GpuArray<amrex::Array4<amrex::Real>, 3> const& J) const
+    {
+        doVillasenorDepositionShapeNExplicitKernel<depos_order, components>(
+            ip, GetPosition, wp, uxp, uyp, uzp, ion_lev, J[0], J[1], J[2],
+            dt, relative_time, dinv, xyzmin, domain_double, do_cropping, lo, q, invvol,
+            n_rz_azimuthal_modes);
+    }
+};
 
 /**
  * \brief Villasenor and Buneman current deposition, for the explicit scheme, using shared
@@ -2823,29 +2702,16 @@ void doVillasenorDepositionSharedShapeN (
         ngrow = amrex::max(ngrow, depos_order + static_cast<int>(
             std::ceil(PhysConst::c*shift_time*dxiarr[idim])));
     }
-    amrex::Box sample_tbox(amrex::IntVect(AMREX_D_DECL(0,0,0)), a_tbox_max_size - 1);
-    sample_tbox.grow(ngrow);
-    sample_tbox.surroundingNodes();
-    const std::size_t buffer_bytes = sample_tbox.numPts()*sizeof(amrex::Real);
 
-    const std::size_t max_shared_mem_bytes = amrex::Gpu::Device::sharedMemPerBlock();
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(buffer_bytes <= max_shared_mem_bytes,
-                                     "Tile size too big for GPU shared memory current deposition");
-
-    // Deposit the three components of J in a single pass if their buffers fit in shared memory
-    const bool fused = (3*buffer_bytes <= max_shared_mem_bytes);
-    const std::size_t shared_mem_bytes = fused ? 3*buffer_bytes : buffer_bytes;
-
-    // Compile versions of the kernel with and without a single pass
-    auto launch = [&] (auto single_pass) {
-        doVillasenorDepositionSharedShapeNImpl<depos_order, decltype(single_pass)::value>(
-            GetPosition, wp, uxp, uyp, uzp, ion_lev, jx_fab, jy_fab, jz_fab,
-            dt, relative_time, dinv, xyzmin, domain_double, do_cropping, lo, q,
-            n_rz_azimuthal_modes, a_bins, box, threads_per_block, bin_size,
-            ngrow, shared_mem_bytes);
-    };
-    if (fused) { launch(std::true_type{}); }
-    else       { launch(std::false_type{}); }
+    const VillasenorParticleDeposit<depos_order> deposit_particle{
+        GetPosition, wp, uxp, uyp, uzp, ion_lev, dt, relative_time, dinv, xyzmin,
+        domain_double, do_cropping, lo, q, dinv.x*dinv.y*dinv.z, n_rz_azimuthal_modes};
+    const amrex::GpuArray<amrex::Array4<amrex::Real>, 3> J{
+        jx_fab.array(), jy_fab.array(), jz_fab.array()};
+    const amrex::IntVect nodal = amrex::IntVect::TheNodeVector();
+    const amrex::GpuArray<amrex::IntVect, 3> types{nodal, nodal, nodal};
+    doSharedDeposition<3>(deposit_particle, J, types, ngrow, a_bins, box, a_tbox_max_size,
+                          threads_per_block, bin_size);
 #else
     amrex::ignore_unused(GetPosition, wp, uxp, uyp, uzp, ion_lev, jx_fab, jy_fab, jz_fab,
         dt, relative_time, dinv, xyzmin, domain_double, do_cropping, lo, q, n_rz_azimuthal_modes,
