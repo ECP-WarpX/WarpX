@@ -586,11 +586,8 @@ WarpX::OneStep_nosub (
 
     ExecutePythonCallback("afterdeposition");
 
-    // Synchronize J and rho:
-    // filter (if used), exchange guard cells, interpolate across MR levels
-    // and apply boundary conditions
-    SyncCurrentAndRho();
-    FinalizeRho();
+    SyncCurrentAndRho(); // Filter, exchange gurd cells, and interpolate across levels
+    FinalizeRho(); // Apply boundary conditions and inverse volume scaling to rho
 
     // At this point, J is up-to-date inside the domain, and E and B are
     // up-to-date including enough guard cells for first step of the field
