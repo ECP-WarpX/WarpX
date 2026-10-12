@@ -1924,6 +1924,7 @@ WarpXParticleContainer::DepositChargeOnLevel (amrex::MultiFab* rho,
 std::unique_ptr<MultiFab>
 WarpXParticleContainer::GetChargeDensity (int lev, bool local, bool finalize)
 {
+
     const auto& ba = m_gdb->ParticleBoxArray(lev);
     const auto& dm = m_gdb->DistributionMap(lev);
     BoxArray nba = ba;
@@ -1945,6 +1946,9 @@ WarpXParticleContainer::GetChargeDensity (int lev, bool local, bool finalize)
     auto rho = std::make_unique<MultiFab>(nba, dm, WarpX::ncomps,ng_rho);
     DepositChargeOnLevel(rho.get(), lev, local, /*reset=*/true, /*icomp=*/0);
     if (finalize) { // Apply boundary conditions to rho, and then apply volume scaling
+        AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+            !local,
+            "GetChargeDensity requires local=false when finalize=true.");
         WarpX::GetInstance().FinalizeRho(lev, rho.get(), PatchType::fine);
     }
     return rho;
