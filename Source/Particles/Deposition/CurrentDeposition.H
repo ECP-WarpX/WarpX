@@ -3293,8 +3293,23 @@ void doVayDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
  *                      memory buffer per array; otherwise, deposit into them one at a time
  *                      using a single buffer, which requires less shared memory but computes
  *                      the shape factors of each particle several times.
+ * \param[in] GetPosition  Functor that returns the particle position
+ * \param[in] wp           Pointer to array of particle weights
+ * \param[in] uxp,uyp,uzp  Pointer to arrays of particle momentum
+ * \param[in] ion_lev      Pointer to array of particle ionization level, or null pointer
  * \param[in,out] t0_arr,t1_arr,t2_arr,t3_arr,Dy_arr  arrays to deposit into, see
  *                doVayDepositionShapeNKernel
+ * \param[in] dt           Time step for particle level
+ * \param[in] relative_time Time at which to deposit D, relative to the time of the
+ *                          current positions of the particles.
+ * \param[in] dinv         3D cell size inverse
+ * \param[in] xyzmin       3D lower bounds of physical domain
+ * \param[in] lo           Dimension-agnostic lower bounds of index domain
+ * \param[in] q            Species charge
+ * \param[in] a_bins             bins used for particle sorting
+ * \param[in] box                the current box
+ * \param[in] threads_per_block  number of threads to use per block in shared deposition
+ * \param[in] bin_size           tileSize to use for shared current deposition operations
  * \param ngrow             number of cells by which the tiles are grown for the buffers
  * \param shared_mem_bytes  size of shared memory per block
  */
