@@ -107,7 +107,7 @@ if(AMReX_PETSC)
         2  # dims
         2  # nprocs
         inputs_test_2d_semi_implicit_planar_pinch_petsc_snes  # inputs
-        "analysis_pinch.py diags/diag1000020"  # analysis
+        "analysis_pinch.py diags/diag1000020 --gmres-iters-tol 4 --newton-iters-tol 4"  # analysis
         "analysis_default_regression.py --path diags/diag1000020"  # checksum
         OFF  # dependency
     )
