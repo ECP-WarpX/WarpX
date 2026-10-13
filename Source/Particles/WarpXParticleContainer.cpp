@@ -749,7 +749,7 @@ WarpXParticleContainer::DepositCurrent (WarpXParIter& pti,
 #else
                 const ParticleReal* xp_old_data = nullptr;
 #endif
-#if defined(WARPX_DIM_3D)
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
                 const ParticleReal* yp_old_data = (use_stored_old_position && HasRealComp("prev_y")) ?
                     pti.GetAttribs("prev_y").dataPtr() + offset : nullptr;
 #else

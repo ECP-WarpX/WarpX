@@ -671,6 +671,11 @@ public:
     void SplitParticlesAndDepositRemappingCurrent (int timestep, amrex::Real dt,
                                                    bool deposit_virtual_j = true);
 
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
+    /** Apply radial inverse-volume scaling after particle current and charge deposition. */
+    void ApplyInverseVolumeScalingToDepositedFields (int lev, bool scale_current);
+#endif
+
     // This function does aux(lev) = fp(lev) + I(aux(lev-1)-cp(lev)).
     // Caller must make sure fp and cp have ghost cells filled.
     void UpdateAuxiliaryData ();

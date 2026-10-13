@@ -337,7 +337,8 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
     // If old particle positions should be saved add the needed components
     pp_species_name.query("save_previous_position", m_save_previous_position);
     // Particle-splitting remap deposits x^{n+1} → x_c from stored prev_*.
-#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_XZ) || defined(WARPX_DIM_1D_Z)
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_XZ) || defined(WARPX_DIM_1D_Z) || \
+    defined(WARPX_DIM_RZ)
     if (do_resampling && m_resampler.isParticleSplitting()) {
         m_save_previous_position = true;
     }
@@ -346,14 +347,14 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
 #if !defined(WARPX_DIM_1D_Z)
         AddRealComp("prev_x");
 #endif
-#if defined(WARPX_DIM_3D)
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
         AddRealComp("prev_y");
 #endif
 #if defined(WARPX_ZINDEX)
         AddRealComp("prev_z");
 #endif
-#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
-      amrex::Abort("Saving previous particle positions not yet implemented in RZ");
+#if defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
+        amrex::Abort("Saving previous particle positions not yet implemented in radial geometry");
 #endif
     }
 
@@ -1522,7 +1523,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
 #if !defined(WARPX_DIM_1D_Z)
         x_old = pti.GetAttribs("prev_x").dataPtr() + offset;
 #endif
-#if defined(WARPX_DIM_3D)
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
         y_old = pti.GetAttribs("prev_y").dataPtr() + offset;
 #endif
 #if defined(WARPX_ZINDEX)
@@ -1580,7 +1581,7 @@ PhysicalParticleContainer::PushPX (WarpXParIter& pti,
 #if !defined(WARPX_DIM_1D_Z)
             x_old[ip] = xp;
 #endif
-#if defined(WARPX_DIM_3D)
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
             y_old[ip] = yp;
 #endif
 #if defined(WARPX_ZINDEX)
@@ -1845,7 +1846,8 @@ void PhysicalParticleContainer::splitAndDepositRemappingCurrent (
 
     Redistribute();
 
-#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_XZ) || defined(WARPX_DIM_1D_Z)
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_XZ) || defined(WARPX_DIM_1D_Z) || \
+    defined(WARPX_DIM_RZ)
     const bool do_child_deposit = (
         !do_not_deposit && deposit_virtual_j && m_do_remapping_current &&
         (WarpX::current_deposition_algo == CurrentDepositionAlgo::Esirkepov));

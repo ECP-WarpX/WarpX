@@ -183,15 +183,16 @@ void ParticleSplitting::operator() (
     auto * const AMREX_RESTRICT z = soa.GetRealData(PIdx::z).data();
 #endif
     // Virtual remap: child prev_* = parent SoA (already x^{n+1} after the push).
-#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_XZ)
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
     auto * const AMREX_RESTRICT x_old = pc->HasRealComp("prev_x") ?
         pti.GetAttribs("prev_x").dataPtr() : nullptr;
 #endif
-#if defined(WARPX_DIM_3D)
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
     auto * const AMREX_RESTRICT y_old = pc->HasRealComp("prev_y") ?
         pti.GetAttribs("prev_y").dataPtr() : nullptr;
 #endif
-#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_XZ) || defined(WARPX_DIM_1D_Z)
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_XZ) || defined(WARPX_DIM_1D_Z) || \
+    defined(WARPX_DIM_RZ)
     auto * const AMREX_RESTRICT z_old = pc->HasRealComp("prev_z") ?
         pti.GetAttribs("prev_z").dataPtr() : nullptr;
 #endif
@@ -452,8 +453,17 @@ void ParticleSplitting::operator() (
                         );
                     }
                 }
-                // Child remap segment: prev = parent new (x^{n+1}), SoA = x_c.
-#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_XZ)
+
+#if defined(WARPX_DIM_RZ)
+                if (x_old && y_old) {
+                    const amrex::ParticleReal x_parent = xp * std::cos(theta[parent_idx]);
+                    const amrex::ParticleReal y_parent = xp * std::sin(theta[parent_idx]);
+                    for (int k = 0; k < np_split_per_parent; ++k) {
+                        x_old[child_base + k] = x_parent;
+                        y_old[child_base + k] = y_parent;
+                    }
+                }
+#elif defined(WARPX_DIM_3D) || defined(WARPX_DIM_XZ)
                 if (x_old) {
                     for (int k = 0; k < np_split_per_parent; ++k) {
                         x_old[child_base + k] = xp;
@@ -467,7 +477,8 @@ void ParticleSplitting::operator() (
                     }
                 }
 #endif
-#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_XZ) || defined(WARPX_DIM_1D_Z)
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_XZ) || defined(WARPX_DIM_1D_Z) || \
+    defined(WARPX_DIM_RZ)
                 if (z_old) {
                     for (int k = 0; k < np_split_per_parent; ++k) {
                         z_old[child_base + k] = zp;

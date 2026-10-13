@@ -696,12 +696,11 @@ void doDepositionSharedShapeN (const GetParticlePosition<PIdx>& GetPosition,
  * \param reduced_particle_shape_mask  Array4 of int, Mask that indicates whether a particle
  * should use its regular shape factor or a reduced, order-1 shape factor instead in a given cell.
  * \param enable_reduced_shape Flag to indicate whether to use the reduced shape factor
- * \param xp_old_data Optional stored old x positions. When non-null (Cartesian),
- *        Esirkepov uses these as the segment start instead of reconstructing from velocity.
- * \param yp_old_data Optional stored old y positions. When non-null (Cartesian),
- *        Esirkepov uses these as the segment start instead of reconstructing from velocity.
- * \param zp_old_data Optional stored old z positions. When non-null (Cartesian),
- *        Esirkepov uses these as the segment start instead of reconstructing from velocity.
+ * \param xp_old_data Optional stored old Cartesian x positions.
+ * \param yp_old_data Optional stored old Cartesian y positions.
+ * \param zp_old_data Optional stored old Cartesian z positions. When the components required
+ *        by the geometry are non-null, Esirkepov uses them as the segment start instead of
+ *        reconstructing it from velocity.
  */
 template <int depos_order>
 void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
@@ -744,6 +743,21 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
 
     Real constexpr inv_c2 = PhysConst::inv_c2;
 
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_RZ)
+    bool const using_stored_old_position = (xp_old_data != nullptr);
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        using_stored_old_position == (yp_old_data != nullptr) &&
+            using_stored_old_position == (zp_old_data != nullptr),
+        "3D/RZ Esirkepov deposition requires all stored old-position components");
+#elif defined(WARPX_DIM_XZ)
+    bool const using_stored_old_position = (xp_old_data != nullptr);
+    AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+        using_stored_old_position == (zp_old_data != nullptr),
+        "XZ Esirkepov deposition requires both stored old-position components");
+#elif defined(WARPX_DIM_1D_Z)
+    bool const using_stored_old_position = (zp_old_data != nullptr);
+#endif
+
 #if (AMREX_SPACEDIM > 1)
     Real constexpr one_third = 1.0_rt / 3.0_rt;
     Real constexpr one_sixth = 1.0_rt / 6.0_rt;
@@ -774,12 +788,28 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
 
             // computes current and old position in grid units
 #if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
-            Real const xp_new = xp + (relative_time + 0.5_rt*dt)*uxp[ip]*gaminv;
-            Real const yp_new = yp + (relative_time + 0.5_rt*dt)*uyp[ip]*gaminv;
-            Real const xp_mid = xp_new - 0.5_rt*dt*uxp[ip]*gaminv;
-            Real const yp_mid = yp_new - 0.5_rt*dt*uyp[ip]*gaminv;
-            Real const xp_old = xp_new - dt*uxp[ip]*gaminv;
-            Real const yp_old = yp_new - dt*uyp[ip]*gaminv;
+            Real xp_new, yp_new, xp_mid, yp_mid, xp_old, yp_old;
+#if defined(WARPX_DIM_RZ)
+
+            amrex::Print()<< " *************** before using_stored_old_position(): using_stored_old_position =  " << using_stored_old_position<< "\n";
+            if (using_stored_old_position) {
+                xp_new = xp;
+                yp_new = yp;
+                xp_old = xp_old_data[ip];
+                yp_old = yp_old_data[ip];
+                xp_mid = 0.5_rt * (xp_old + xp_new);
+                yp_mid = 0.5_rt * (yp_old + yp_new);
+                amrex::Print()<< " ++++++++++++ Inside using_stored_old_position(): "<< "\n";
+            } else
+#endif
+            {
+                xp_new = xp + (relative_time + 0.5_rt*dt)*uxp[ip]*gaminv;
+                yp_new = yp + (relative_time + 0.5_rt*dt)*uyp[ip]*gaminv;
+                xp_mid = xp_new - 0.5_rt*dt*uxp[ip]*gaminv;
+                yp_mid = yp_new - 0.5_rt*dt*uyp[ip]*gaminv;
+                xp_old = xp_new - dt*uxp[ip]*gaminv;
+                yp_old = yp_new - dt*uyp[ip]*gaminv;
+            }
             Real const rp_new = std::sqrt(xp_new*xp_new + yp_new*yp_new);
             Real const rp_mid = std::sqrt(xp_mid*xp_mid + yp_mid*yp_mid);
             Real const rp_old = std::sqrt(xp_old*xp_old + yp_old*yp_old);
@@ -824,7 +854,7 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
 #if !defined(WARPX_DIM_1D_Z)
             // Keep these double to avoid bug in single precision
             double x_new, x_old;
-            if (xp_old_data) {
+            if (using_stored_old_position) {
                 x_new = (xp - xyzmin.x)*dinv.x;
                 x_old = (xp_old_data[ip] - xyzmin.x)*dinv.x;
             } else {
@@ -836,7 +866,7 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
 #if defined(WARPX_DIM_3D)
             // Keep these double to avoid bug in single precision
             double y_new, y_old;
-            if (yp_old_data) {
+            if (using_stored_old_position) {
                 y_new = (yp - xyzmin.y)*dinv.y;
                 y_old = (yp_old_data[ip] - xyzmin.y)*dinv.y;
             } else {
@@ -847,7 +877,7 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
 #if !defined(WARPX_DIM_RCYLINDER) && !defined(WARPX_DIM_RSPHERE)
             // Keep these double to avoid bug in single precision
             double z_new, z_old;
-            if (zp_old_data) {
+            if (using_stored_old_position) {
                 z_new = (zp - xyzmin.z)*dinv.z;
                 z_old = (zp_old_data[ip] - xyzmin.z)*dinv.z;
             } else {
@@ -901,12 +931,14 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
             }
 
 #if defined(WARPX_DIM_RZ)
-            Real const vy = (-uxp[ip]*sintheta_mid + uyp[ip]*costheta_mid)*gaminv;
+            Real const vy = using_stored_old_position
+                ? 0._rt
+                : (-uxp[ip]*sintheta_mid + uyp[ip]*costheta_mid)*gaminv;
 #elif defined(WARPX_DIM_XZ)
-            Real const vy = uyp[ip]*gaminv;
+            Real const vy = using_stored_old_position ? 0._rt : uyp[ip]*gaminv;
 #elif defined(WARPX_DIM_1D_Z)
-            Real const vx = uxp[ip]*gaminv;
-            Real const vy = uyp[ip]*gaminv;
+            Real const vx = using_stored_old_position ? 0._rt : uxp[ip]*gaminv;
+            Real const vy = using_stored_old_position ? 0._rt : uyp[ip]*gaminv;
 #elif defined(WARPX_DIM_RCYLINDER)
             Real const vy = (-uxp[ip]*sintheta_mid + uyp[ip]*costheta_mid)*gaminv;
             Real const vz = uzp[ip]*gaminv;
