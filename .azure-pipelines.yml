@@ -34,6 +34,7 @@ jobs:
     BLASPP_HOME: '/usr/local'
     CEI_SUDO: 'sudo'
     CEI_TMP: '/tmp/cei'
+    CMAKE_BUILD_PARALLEL_LEVEL: '2'
     CMAKE_GENERATOR: 'Ninja'
     FFTW_HOME: '/usr'
     PETSC_ARCH: 'arch-opt'
@@ -200,8 +201,8 @@ jobs:
         ${WARPX_CMAKE_FLAGS}                 \
         ${WARPX_TEST_FLAGS}
       # build
-      CMAKE_BUILD_PARALLEL_LEVEL=2 ctest --test-dir build -D ExperimentalBuild -V
-      cmake --build build -j 2  # authoritative pass/fail (no-op if the build above succeeded)
+      ctest --test-dir build -D ExperimentalBuild -V
+      cmake --build build  # authoritative pass/fail (no-op if the build above succeeded)
     displayName: 'Build'
 
   - bash: |
