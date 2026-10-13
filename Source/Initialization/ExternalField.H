@@ -161,10 +161,6 @@ struct ExternalFieldView
 #endif
     }
 
-    //! Return the value of the field, linearly interpolated at the position
-    //! given in Cartesian coordinates (x,y,z), as used by the particle injectors.
-    //! The position is converted to the coordinates of the data, i.e. (z) in 1D,
-    //! (x,z) in 2D Cartesian and (r,z) in RZ.
     [[nodiscard]]
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     amrex::Real
