@@ -665,8 +665,8 @@ public:
                                   MomentumPushType momentum_push_type=MomentumPushType::Full,
                                   ImplicitOptions const * implicit_options = nullptr);
 
-    /** Split particles and add Esirkepov current on virtual parent→child segments.
-     *  The physical push current must already be in J. This does not reset J.
+    /** Split particles and add remapping current over the virtual parent-child segments.
+     *  The remapping adds a 'virtual' current to the physical current without resetting its existing values.
      */
     void SplitParticlesAndDepositRemappingCurrent (int timestep, amrex::Real dt,
                                                    bool deposit_virtual_j = true);
