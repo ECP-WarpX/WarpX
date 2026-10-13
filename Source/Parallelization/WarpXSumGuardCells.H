@@ -21,6 +21,9 @@
  * This updates both the *valid* cells and *guard* cells in the selected
  * component range.
  *
+ * \param[in,out] mf MultiFab to update (valid + guard cells) with the summed values.
+ * \param[in] period Periodicity information used when summing across domain boundaries.
+ * \param[in] src_ngrow Number of source guard cells to consider when summing.
  * \param[in] icomp First component of `mf` to sum.
  * \param[in] ncomp Number of components to process.
  */
@@ -40,6 +43,10 @@ WarpXSumGuardCells(amrex::MultiFab& mf, const amrex::Periodicity& period,
  * This overwrites both the *valid* cells and *guard* cells of `dst` in the
  * selected component range.
  *
+ * \param[in,out] dst Destination MultiFab whose valid and guard cells are overwritten with sums.
+ * \param[in] src Source MultiFab providing values to be summed (components 0..ncomp-1).
+ * \param[in] period Periodicity information used when summing across domain boundaries.
+ * \param[in] src_ngrow Number of guard cells in `src` to include in the sum.
  * \param[in] icomp First component of `dst` in which to store the sums.
  * \param[in] ncomp Number of components to process.
  */
