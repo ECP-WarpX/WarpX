@@ -800,7 +800,8 @@ void SNES_impl::computeRHS(VecType& a_F, const VecType& a_U)
 
     if (!from_jacobian) {
         // Same PC update schedule as the native Newton solver
-        m_update_pc = m_newton_params.UpdatePC(m_step, m_iter, m_pc_initialized);
+        m_update_pc = m_force_pc_update ||
+            m_newton_params.UpdatePC(m_step, m_iter, m_pc_initialized);
     }
 
     m_op->ComputeRHS(a_F, a_U, m_time, m_iter, from_jacobian,

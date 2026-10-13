@@ -197,7 +197,7 @@ int ImplicitSolver::OneStep (const amrex::Real  start_time,
 {
     BL_PROFILE("ImplicitSolver::OneStep()");
 
-    // Fields have Eg^{n} and Bg^{n}
+    // Fields have E^{n} and B^{n}
     // Particles have up^{n} and xp^{n}.
 
     // Set the member time step
@@ -221,6 +221,8 @@ int ImplicitSolver::OneStep (const amrex::Real  start_time,
             }
 
             // Solve nonlinear system at t_{n+theta}
+            // Disable PC lagging throughout adaptive substepping.
+            m_nlsolver->ForcePreconditionerUpdate(m_nsubsteps > 1);
             exit_status = DoSolve(substep_start_time, a_step, verbose_step);
 
             if (exit_status >= 0) {
@@ -239,6 +241,7 @@ int ImplicitSolver::OneStep (const amrex::Real  start_time,
                 m_nsubsteps *= 2;
                 if (m_nsubsteps > max_substeps) {
                     // Give up and just return the bad exit status
+                    m_nlsolver->InvalidatePreconditioner();
                     return exit_status;
                 }
                 m_dt /= 2._rt;
@@ -251,6 +254,11 @@ int ImplicitSolver::OneStep (const amrex::Real  start_time,
 
         substep_start_time += m_dt;
 
+    }
+
+    if (m_nsubsteps > 1) {
+        // Rebuild the PC with the full timestep's dt on the next solve.
+        m_nlsolver->InvalidatePreconditioner();
     }
 
     return exit_status;
@@ -1005,10 +1013,8 @@ void ImplicitSolver::PreLinearSolve (const bool update_pc)
 
     if (m_use_mass_matrices) {
 
-        if (m_use_mass_matrices_jacobian || update_pc) {
-            m_WarpX->DepositMassMatrices(m_dt);
-            FinishMassMatricesDeposition();
-        }
+        m_WarpX->DepositMassMatrices(m_dt);
+        FinishMassMatricesDeposition();
 
         if (m_use_mass_matrices_jacobian) {
             SaveE();

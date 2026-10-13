@@ -279,7 +279,8 @@ Overall simulation parameters
             the PETSc factorization. The same schedule applies to the native Newton
             solver and to PETSc SNES.
             The first required linear solve always initializes the PC, including
-            after restart.
+            after restart. During adaptive implicit substepping, PC updates are forced
+            on every Newton iteration, overriding both intervals.
           - ``newton.relative_tolerance`` (``float``, default: 1.0e-6)
             Must be in [0, 1). Other values are replaced by the default, with a warning.
           - ``newton.absolute_tolerance`` (``float``, default: 0.0)

@@ -112,6 +112,16 @@ class PETScSNES : public NonlinearSolver<Vec,Ops>
             return m_solver->getPreconditionerType();
         }
 
+        void ForcePreconditionerUpdate (bool force_update) override
+        {
+            m_solver->setForcePreconditionerUpdate(force_update);
+        }
+
+        void InvalidatePreconditioner () override
+        {
+            m_solver->invalidatePreconditioner();
+        }
+
     private:
 
         //! Parameters specific to Newton-type solvers.

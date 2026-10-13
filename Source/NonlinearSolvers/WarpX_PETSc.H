@@ -244,6 +244,15 @@ class SNES_impl : public PETScSolver_impl
         //! Record that the PC has been set up
         void setPCInitialized() const { m_pc_initialized = true; }
 
+        //! Require a PC update before the next linear solve.
+        void invalidatePreconditioner() { m_pc_initialized = false; }
+
+        //! Allow the owner to force PC updates during adaptive substepping.
+        void setForcePreconditionerUpdate(bool force_update)
+        {
+            m_force_pc_update = force_update;
+        }
+
         //! Returns if a preconditioner is being used
         [[nodiscard]] bool usePC() const;
 
@@ -307,6 +316,8 @@ class SNES_impl : public PETScSolver_impl
         mutable bool m_pc_initialized = false;
         //! PC update decision for the current nonlinear iteration.
         mutable bool m_update_pc = true;
+        //! Override the normal PC update decision until disabled by the owner.
+        bool m_force_pc_update = false;
 
         //! verbosity
         bool m_verbose = true;
