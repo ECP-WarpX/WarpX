@@ -11,6 +11,8 @@
 #include "NonlinearSolver.H"
 #include "Preconditioner.H"
 
+#include <ablastr/warn_manager/WarnManager.H>
+
 #include <AMReX.H>
 #include <AMReX_Config.H>
 #include <AMReX_REAL.H>
@@ -793,6 +795,24 @@ void SNES_impl::solve (VecType& a_U,
         amrex::Print() << "Newton (PETSc SNES): exited due to \""
                        << conv_reason << "\" "
                        << "(abs. norm = " << m_norm << ").\n";
+    }
+
+    // Same failure warnings as the native Newton solver
+    std::string msg;
+    if (reason == SNES_DIVERGED_DTOL) {
+        msg = newton_solver_msg::Diverged(m_niters, m_step, m_norm,
+                                          m_newton_params.divergence_tolerance, norm0);
+    } else if (reason == SNES_DIVERGED_LINEAR_SOLVE) {
+        PetscInt linear_iters = 0;
+        KSPGetIterationNumber(ksp, &linear_iters);
+        msg = newton_solver_msg::LinearSolveFailed(m_niters, m_step, linear_iters);
+    } else if (reason == SNES_DIVERGED_MAX_IT && m_params.rtol > 0.) {
+        msg = newton_solver_msg::MaxIterations(m_niters, m_step, m_norm_rel, m_params.rtol,
+                                               m_norm, m_params.atol);
+    }
+    if (!msg.empty()) {
+        if (m_params.verbose) { amrex::Print() << msg << "\n"; }
+        ablastr::warn_manager::WMRecordWarning("PETScSNES", msg);
     }
 
     m_total_iters += m_niters;

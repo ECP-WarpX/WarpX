@@ -272,8 +272,10 @@ Overall simulation parameters
           - ``newton.pc_update_newton_interval`` (``int``, default: 1)
             Controls preconditioner updates within a nonlinear solve. Zero updates
             only at iteration 0; a positive N updates at iterations 0, N, 2N, etc.
+            A negative value is replaced by the default, with a warning.
           - ``newton.pc_update_time_step_interval`` (``int``, default: 1)
-            Must be positive. Updates are allowed only when the zero-based simulation
+            Must be positive; other values are replaced by the default, with a warning.
+            Updates are allowed only when the zero-based simulation
             step index is divisible by this interval. Both interval conditions must
             hold for the preconditioner to be updated; otherwise it is reused, including
             the PETSc factorization. The same schedule applies to the native Newton
@@ -285,8 +287,9 @@ Overall simulation parameters
             Must be in [0, 1). Other values are replaced by the default, with a warning.
           - ``newton.absolute_tolerance`` (``float``, default: 0.0)
           - ``newton.divergence_tolerance`` (``float``, default: 1.0e4)
-            Must not be less than 1. The nonlinear solve fails as diverged when the
-            residual norm exceeds this factor times the initial residual norm.
+            The nonlinear solve fails as diverged when the residual norm exceeds this
+            factor times the initial residual norm. A value less than 1 is replaced by
+            the default, with a warning.
           - ``newton.diagnostic_file`` (``string``, default: None)
           - ``newton.diagnostic_interval`` (``int``, default: 1)
 

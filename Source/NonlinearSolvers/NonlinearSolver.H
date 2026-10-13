@@ -24,6 +24,22 @@
 #include <vector>
 
 /**
+ * \brief Replace an invalid input value by its default, with a warning.
+ * The warning reads "<a_name> = <value> <a_reason>; using the default <a_default>."
+ */
+template <typename T>
+void ResetInvalidInput (T& a_value, const bool a_is_valid, const T& a_default,
+                        const std::string& a_name, const std::string& a_reason)
+{
+    if (a_is_valid) { return; }
+    std::stringstream msg;
+    msg << a_name << " = " << a_value << " " << a_reason
+        << "; using the default " << a_default << ".";
+    ablastr::warn_manager::WMRecordWarning("Nonlinear solver", msg.str());
+    a_value = a_default;
+}
+
+/**
  * \brief Input parameters common to all nonlinear solvers, read from the
  * ParmParse prefix of the solver (e.g., "newton" or "picard").
  */
@@ -57,17 +73,12 @@ struct NonlinearSolverParams
 
     /**
      * \brief PETSc SNES accepts a relative tolerance in [0,1). The Newton-type solvers
-     * reject other values with a warning and keep the default.
+     * replace other values by the default, with a warning.
      */
     void ResetInvalidRelativeTolerance (const std::string& a_prefix)
     {
-        if (rtol >= 0. && rtol < 1.) { return; }
-        const amrex::Real rtol_default = NonlinearSolverParams().rtol;
-        std::stringstream msg;
-        msg << a_prefix << ".relative_tolerance = " << rtol
-            << " is not in [0,1); using the default " << rtol_default << ".";
-        ablastr::warn_manager::WMRecordWarning("Nonlinear solver", msg.str());
-        rtol = rtol_default;
+        ResetInvalidInput(rtol, (rtol >= 0. && rtol < 1.), NonlinearSolverParams().rtol,
+                          a_prefix + ".relative_tolerance", "is not in [0,1)");
     }
 
     void Print (const std::string& a_name) const
