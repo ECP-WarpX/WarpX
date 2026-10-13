@@ -11,8 +11,6 @@
 #include "NonlinearSolver.H"
 #include "Preconditioner.H"
 
-#include <ablastr/warn_manager/WarnManager.H>
-
 #include <AMReX.H>
 #include <AMReX_Config.H>
 #include <AMReX_REAL.H>
@@ -225,10 +223,11 @@ PetscErrorCode printSNESResidual(SNES a_snes, PetscInt a_n, PetscReal a_rnorm, v
 {
     PetscFunctionBeginUser;
     BL_PROFILE("printSNESResidual()");
-    amrex::ignore_unused(a_ctxt);
     amrex::ignore_unused(a_snes);
     static amrex::Real norm0 = 0;
     if (a_n == 0) { norm0 = a_rnorm; }
+    // The verbosity can change from one time step to the next
+    if (!static_cast<const SNES_impl*>(a_ctxt)->verbose()) { PetscFunctionReturn(PETSC_SUCCESS); }
     amrex::Print() << "Newton (PETSc SNES): iter = " << a_n << ", residual = " << a_rnorm
                    << ", " << a_rnorm / norm0 << " (rel.)\n";
     PetscFunctionReturn(PETSC_SUCCESS);
@@ -248,7 +247,6 @@ PetscErrorCode printKSPResidual(KSP a_ksp, PetscInt a_n, PetscReal a_rnorm, void
     PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-//! Constructor
 //! Create the PETSc solution and right-hand-side vectors of a solver
 void createVectors( PETScSolver_impl& a_solver, const std::string& a_name )
 {
@@ -317,6 +315,7 @@ Mat setupPC( KSP a_ksp, PETScSolver_impl& a_solver, const std::string& a_name )
     return a_solver.m_P->obj;
 }
 
+//! Constructor
 PETScSolver_impl::PETScSolver_impl()
 {
     m_A = std::make_unique<MatObj>();
@@ -682,9 +681,7 @@ SNES_impl::SNES_impl(const VecType& a_vec, TIType* a_op,
                     JacobianFunction, this);
 
     setTolerances();
-    if (m_verbose) {
-        SNESMonitorSet(m_snes->obj, printSNESResidual, NULL,NULL );
-    }
+    SNESMonitorSet(m_snes->obj, printSNESResidual, this, NULL);
     if (m_newton_params.linsol_verbose_int > 1) {
         KSPMonitorSet( ksp, printKSPResidual, NULL, NULL );
     }
@@ -825,9 +822,6 @@ void SNES_impl::setVerbose(bool a_v)
 {
     BL_PROFILE("SNES_impl::setVerbose()");
     m_verbose = a_v;
-    if (a_v && isDefined()) {
-        SNESMonitorSet(m_snes->obj, printSNESResidual, NULL,NULL );
-    }
 }
 
 }

@@ -49,10 +49,14 @@ struct NewtonSolverParams
     //! Preconditioner type.
     PreconditionerType pc_type = PreconditionerType::none;
 
-    void Parse ()
+    /**
+     * \brief Read the parameters. A solver with a fixed linear solver sets
+     * linear_solver_type and passes a_query_linear_solver = false.
+     */
+    void Parse (bool a_query_linear_solver = true)
     {
         const amrex::ParmParse pp_newton("newton");
-        pp_newton.query("linear_solver",       linear_solver_type);
+        if (a_query_linear_solver) { pp_newton.query("linear_solver", linear_solver_type); }
         pp_newton.query("divergence_tolerance", divergence_tolerance);
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             divergence_tolerance >= 1.,

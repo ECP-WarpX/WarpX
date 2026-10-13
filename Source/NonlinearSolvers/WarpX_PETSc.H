@@ -262,6 +262,9 @@ class SNES_impl : public PETScSolver_impl
         //! Set verbosity
         void setVerbose(bool);
 
+        //! Whether the residual norms are printed
+        [[nodiscard]] bool verbose() const { return m_verbose; }
+
         //! Print parameters of the linear operator
         void printParams () const;
 

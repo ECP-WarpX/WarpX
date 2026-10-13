@@ -56,13 +56,14 @@ class PETScSNES : public NonlinearSolver<Vec,Ops>
 
             // The linear solver is always PETSc's KSP
             m_newton_params.linear_solver_type = LinearSolverType::petsc_ksp;
-            m_newton_params.Parse();
-            if (m_newton_params.linear_solver_type != LinearSolverType::petsc_ksp) {
+            m_newton_params.Parse(/*a_query_linear_solver=*/false);
+            LinearSolverType linear_solver = LinearSolverType::petsc_ksp;
+            const amrex::ParmParse pp_newton("newton");
+            pp_newton.query("linear_solver", linear_solver);
+            if (linear_solver != LinearSolverType::petsc_ksp) {
                 ablastr::warn_manager::WMRecordWarning("PETSc SNES",
-                    "newton.linear_solver = " +
-                    amrex::getEnumNameString(m_newton_params.linear_solver_type) +
+                    "newton.linear_solver = " + amrex::getEnumNameString(linear_solver) +
                     " is ignored; petsc_snes uses PETSc KSP as the linear solver.");
-                m_newton_params.linear_solver_type = LinearSolverType::petsc_ksp;
             }
 
             m_solver = std::make_unique<warpx_petsc::SNES_impl>(a_U, a_op, this->m_params,
