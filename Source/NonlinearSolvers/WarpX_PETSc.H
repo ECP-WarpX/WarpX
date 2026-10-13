@@ -147,6 +147,9 @@ class KSP_impl : public PETScSolver_impl
         //! Set max iters
         void setMaxIters(int);
 
+        //! Rebuild the PETSc matrix and preconditioner on the next linear solve.
+        void invalidatePreconditioner () { m_pc_needs_update = true; }
+
         //! Solve
         void solve(VecType&, const VecType&);
 
@@ -172,6 +175,9 @@ class KSP_impl : public PETScSolver_impl
         LinOpType* m_linop = nullptr;
 
     private:
+
+        //! Whether the PETSc preconditioner matrix needs reassembly.
+        bool m_pc_needs_update = true;
 
         //! absolute tolerance
         amrex::Real m_atol = 1e-12;
@@ -233,6 +239,12 @@ class SNES_impl : public PETScSolver_impl
         //! Evaluate the RHS
         void computeRHS(VecType&, const VecType&);
 
+        //! Allow the owner to force PC updates during adaptive substepping.
+        void setForcePreconditionerUpdate(bool force_update)
+        {
+            m_force_pc_update = force_update;
+        }
+
         //! Returns if a preconditioner is being used
         [[nodiscard]] bool usePC() const;
 
@@ -292,6 +304,9 @@ class SNES_impl : public PETScSolver_impl
 
     private:
 
+        //! Override the normal PC update decision until disabled by the owner.
+        bool m_force_pc_update = false;
+
         //! absolute tolerance
         amrex::Real m_atol = 0.;
         //! relative tolerance
@@ -300,6 +315,8 @@ class SNES_impl : public PETScSolver_impl
         amrex::Real m_stol = 1e-16;
         //! maximum iterations
         int m_maxits= 100;
+        //! whether reaching the maximum iterations is a failure
+        bool m_require_convergence = true;
         //! verbosity
         bool m_verbose = true;
         //! verbosity for linear solver
@@ -325,7 +342,7 @@ class SNES_impl : public PETScSolver_impl
 
         //! Simulation time
         mutable amrex::Real m_time = 0.0;
-        //! Simulation time iter
+        //! Newton iteration index of the next residual evaluation
         mutable int m_iter = 0;
 
         //! Total nonlinear iterations for the diagnostic file

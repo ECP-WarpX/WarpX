@@ -110,8 +110,10 @@ class WarpX(Bucket):
             return None
         visited.add(filename)
 
-        # included files
-        file_pattern = re.compile(r'^\s*FILE\s*=\s*"?([^"\n\r]+)"?', re.I)
+        # included files, in quotes or up to a blank: a comment can follow
+        file_pattern = re.compile(
+            r'^\s*FILE\s*=\s*(?:"([^"\n\r]+)"|([^\s"#]\S*))', re.I
+        )
         # geometry.dims can be 1/2/3/RZ/RCYLINDER/RSPHERE
         dims_pattern = re.compile(
             r'^\s*geometry\.dims\s*=\s*"?\s*(1|2|3|RZ|RCYLINDER|RSPHERE)\s*"?', re.I
@@ -124,7 +126,7 @@ class WarpX(Bucket):
                     # Check for FILE = ... recursively
                     m_file = file_pattern.search(line)
                     if m_file:
-                        included_file = m_file.group(1).strip()
+                        included_file = m_file.group(1) or m_file.group(2)
                         val = WarpX.read_dims_from_file(included_file, visited)
                         if val is not None:
                             dims_value = val

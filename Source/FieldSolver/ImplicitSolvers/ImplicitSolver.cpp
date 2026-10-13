@@ -190,6 +190,80 @@ Array<LinOpBCType,AMREX_SPACEDIM> ImplicitSolver::convertFieldBCToLinOpBC (const
     return lbc;
 }
 
+int ImplicitSolver::OneStep (const amrex::Real  start_time,
+                             const amrex::Real  a_dt,
+                             const int          a_step,
+                             const bool verbose_step)
+{
+    BL_PROFILE("ImplicitSolver::OneStep()");
+
+    // Fields have E^{n} and B^{n}
+    // Particles have up^{n} and xp^{n}.
+
+    // Set the member time step
+    m_dt = a_dt;
+
+    // Setup variables to handle substepping in case it is needed
+    int isubstep = 0;
+    m_nsubsteps = 1;
+    int const max_substeps = 8;
+    amrex::Real substep_start_time = start_time;
+    int exit_status;
+
+    while (isubstep < m_nsubsteps) {
+
+        SetupStep(substep_start_time);
+
+        while (true) {
+
+            if (m_nsubsteps > 1) {
+                amrex::Print() << "ImplicitSolver::OneStep: starting substep " << isubstep+1 << " of " << m_nsubsteps << "\n";
+            }
+
+            // Solve nonlinear system at t_{n+theta}
+            // Disable PC lagging throughout adaptive substepping.
+            m_nlsolver->ForcePreconditionerUpdate(m_nsubsteps > 1);
+            exit_status = DoSolve(substep_start_time, a_step, verbose_step);
+
+            if (exit_status >= 0) {
+                // The solve succeeded. Increment the step number and continue to the next.
+                isubstep += 1;
+                break;
+            } else {
+                // Try again, dividing the step size in half.
+                // This will restart from the end of the last substep that succeeded.
+                ablastr::warn_manager::WMRecordWarning("ImplicitSolver",
+                    "Notice: solver failed at step " + std::to_string(a_step+1) +
+                    " during subcycling step " + std::to_string(isubstep+1) +
+                    " of " + std::to_string(m_nsubsteps) +
+                    " substeps, with exit status " + std::to_string(exit_status) + ".",
+                    ablastr::warn_manager::WarnPriority::low);
+                m_nsubsteps *= 2;
+                if (m_nsubsteps > max_substeps) {
+                    // Give up and just return the bad exit status
+                    m_nlsolver->InvalidatePreconditioner();
+                    return exit_status;
+                }
+                m_dt /= 2._rt;
+                ResetStep(substep_start_time);
+                isubstep *= 2;
+            }
+        }
+
+        FinishStep(substep_start_time, a_step);
+
+        substep_start_time += m_dt;
+
+    }
+
+    if (m_nsubsteps > 1) {
+        // Rebuild the PC with the full timestep's dt on the next solve.
+        m_nlsolver->InvalidatePreconditioner();
+    }
+
+    return exit_status;
+}
+
 void ImplicitSolver::CumulateJ ()
 {
 
@@ -215,18 +289,9 @@ void ImplicitSolver::CumulateJ ()
 
 void ImplicitSolver::SaveE ()
 {
-
     // Copy Efield_fp to E0.
-
     using warpx::fields::FieldType;
-    for (int lev = 0; lev < m_num_amr_levels; ++lev) {
-        const ablastr::fields::VectorField E = m_WarpX->m_fields.get_alldirs(FieldType::Efield_fp, lev);
-        ablastr::fields::VectorField E0 = m_WarpX->m_fields.get_alldirs(FieldType::Efield_fp_save, lev);
-        amrex::MultiFab::Copy(*E0[0], *E[0], 0, 0, E[0]->nComp(), E[0]->nGrowVect());
-        amrex::MultiFab::Copy(*E0[1], *E[1], 0, 0, E[1]->nComp(), E[1]->nGrowVect());
-        amrex::MultiFab::Copy(*E0[2], *E[2], 0, 0, E[2]->nComp(), E[2]->nGrowVect());
-    }
-
+    CopyVectorField(FieldType::Efield_fp_save, FieldType::Efield_fp);
 }
 
 void ImplicitSolver::ApplyMassMatrices (
@@ -563,6 +628,44 @@ void ImplicitSolver::ApplyMassMatrices (
     }
 }
 
+void ImplicitSolver::AssertMassMatricesStencilNotClipped (
+    const ablastr::fields::MultiLevelVectorField& a_out,
+    const ablastr::fields::MultiLevelVectorField& a_in ) const
+{
+    // Number of components of the mass matrix S_ab, which maps a_in[b] to a_out[a]
+    const amrex::IntVect ncomp[3][3] = {{m_ncomp_xx, m_ncomp_xy, m_ncomp_xz},
+                                        {m_ncomp_yx, m_ncomp_yy, m_ncomp_yz},
+                                        {m_ncomp_zx, m_ncomp_zy, m_ncomp_zz}};
+
+    // The check does not depend on the position of the box, so use a single
+    // cell-centered cell as the valid box, as in the loops of ApplyMassMatrices
+    const amrex::Box validbox(amrex::IntVect(0), amrex::IntVect(0));
+
+    for (int lev = 0; lev < static_cast<int>(a_out.size()); ++lev) {
+        for (int a = 0; a < 3; ++a) {
+            const amrex::IntVect out_nodal = a_out[lev][a]->ixType().toIntVect();
+            const amrex::Box outb = amrex::convert(validbox, a_out[lev][a]->ixType());
+            for (int b = 0; b < 3; ++b) {
+                const amrex::IntVect in_nodal = a_in[lev][b]->ixType().toIntVect();
+                amrex::Box in_fullb = amrex::convert(validbox, a_in[lev][b]->ixType());
+                in_fullb.grow(a_in[lev][b]->nGrowVect());
+                for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
+                    // Same stencil offset and extent as in ApplyMassMatrices
+                    const int offset = (out_nodal[dir] > in_nodal[dir]) ? (ncomp[a][b][dir]/2)
+                                                                        : ((ncomp[a][b][dir]-1)/2);
+                    const bool fits =
+                        (outb.smallEnd(dir) - offset >= in_fullb.smallEnd(dir)) &&
+                        (outb.bigEnd(dir) + ncomp[a][b][dir]-1-offset <= in_fullb.bigEnd(dir));
+                    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(fits,
+                        "The stencil of the mass matrices reaches beyond the guard cells "
+                        "of the field they are applied to, and would be silently clipped "
+                        "in ImplicitSolver::ApplyMassMatrices.");
+                }
+            }
+        }
+    }
+}
+
 void ImplicitSolver::ComputeJfromMassMatrices (const bool  a_J_from_MM_only)
 {
     BL_PROFILE("ImplicitSolver::ComputeJfromMassMatrices()");
@@ -635,11 +738,6 @@ void ImplicitSolver::parseNonlinearSolverParams ( const amrex::ParmParse&  pp )
             m_mass_matrices_pc_width = 0;
             pp.query("mass_matrices_pc_width", m_mass_matrices_pc_width);
         }
-#if defined(WARPX_DIM_RSPHERE)
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            !m_use_mass_matrices,
-            "Using mass matrices is not setup for DIM = RSPHERE!");
-#endif
         if ( (WarpX::current_deposition_algo == CurrentDepositionAlgo::Villasenor ||
               WarpX::current_deposition_algo == CurrentDepositionAlgo::Esirkepov) &&
              (WarpX::nox < 2) ) {
@@ -658,17 +756,23 @@ void ImplicitSolver::parseNonlinearSolverParams ( const amrex::ParmParse&  pp )
 
 }
 
-void ImplicitSolver::SaveEoldMultifab ()
+void ImplicitSolver::CopyVectorField (warpx::fields::FieldType dst, warpx::fields::FieldType src)
 {
-    using warpx::fields::FieldType;
-    // E_old multifab is needed for diagnostics and saving at checkpoints
+    // Copy the MultiFabs in a VectorField
     for (int lev = 0; lev < m_num_amr_levels; ++lev) {
-        const ablastr::fields::VectorField Efp = m_WarpX->m_fields.get_alldirs(FieldType::Efield_fp, lev);
-        ablastr::fields::VectorField E_old = m_WarpX->m_fields.get_alldirs(FieldType::E_old, lev);
+        const ablastr::fields::VectorField src_vec = m_WarpX->m_fields.get_alldirs(src, lev);
+        ablastr::fields::VectorField dst_vec = m_WarpX->m_fields.get_alldirs(dst, lev);
         for (int n = 0; n < 3; ++n) {
-            amrex::MultiFab::Copy(*E_old[n], *Efp[n], 0, 0, E_old[n]->nComp(), E_old[n]->nGrowVect());
+            amrex::MultiFab::Copy(*dst_vec[n], *src_vec[n], 0, 0, dst_vec[n]->nComp(), dst_vec[n]->nGrowVect());
         }
     }
+}
+
+void ImplicitSolver::SaveEoldMultifab ()
+{
+    // E_old multifab is needed for diagnostics and saving at checkpoints
+    using warpx::fields::FieldType;
+    CopyVectorField(FieldType::E_old, FieldType::Efield_fp);
 }
 
 void ImplicitSolver::InitializeMassMatrices ()
@@ -749,7 +853,7 @@ void ImplicitSolver::InitializeMassMatrices ()
                 "Mass matrices for Jacobian with Villasenor deposition are not yet implemented "
                 "in 3D. Use algo.current_deposition = direct.");
 #else
-            const int max_grid_crossings = ngJ[0] - shape + 1;
+            const int max_grid_crossings = ngJ[0] - shape / 2;
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(max_grid_crossings > 0,
                 "Mass Matrices for Jacobian with Villasenor deposition requires particles.max_grid_crossings > 0.");
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(max_grid_crossings == WarpX::particle_max_grid_crossings,
@@ -903,32 +1007,33 @@ void ImplicitSolver::InitializeMassMatrices ()
 
 }
 
-void ImplicitSolver::PreLinearSolve ()
+void ImplicitSolver::PreLinearSolve (const bool update_pc)
 {
     BL_PROFILE("ImplicitSolver::PreLinearSolve()");
 
-    if (m_use_mass_matrices) {
-
-        m_WarpX->DepositMassMatrices();
+    // The deposit is skipped when the mass matrices are used only for a PC that is not updated
+    if (m_use_mass_matrices_jacobian || (m_use_mass_matrices_pc && update_pc)) {
+        m_WarpX->DepositMassMatrices(m_dt);
         FinishMassMatricesDeposition();
+    }
 
-        if (m_use_mass_matrices_jacobian) {
-            SaveE();
-        }
+    if (m_use_mass_matrices_jacobian) {
+        SaveE();
+    }
 
-        if (m_use_mass_matrices_pc) {
-            SyncMassMatricesPCAndApplyBCs();
-            const amrex::Real theta_dt = m_theta*m_dt;
-            SetMassMatricesForPC( theta_dt );
-        }
-
+    if (m_use_mass_matrices_pc && update_pc) {
+        SyncMassMatricesPCAndApplyBCs();
+        const amrex::Real theta_dt = m_theta*m_dt;
+        SetMassMatricesForPC( theta_dt );
     }
 
 }
 
-void ImplicitSolver::PreRHSOp ( const amrex::Real  a_cur_time,
-                                const int          a_nl_iter,
-                                const bool         a_from_jacobian )
+void ImplicitSolver::PreRHSOp (const amrex::Real a_cur_time,
+                               const int         a_nl_iter,
+                               const bool        a_from_jacobian,
+                               const amrex::Real a_dt_scale,
+                               const bool        update_pc)
 {
     BL_PROFILE("ImplicitSolver::PreRHSOp()");
 
@@ -948,7 +1053,8 @@ void ImplicitSolver::PreRHSOp ( const amrex::Real  a_cur_time,
     // Set the implict solver options for particles and setting the current density
     ImplicitOptions options;
     options.linear_stage_of_jfnk = a_from_jacobian;
-    options.use_mass_matrices_pc = m_use_mass_matrices_pc;
+    // PC deposition and zeroing follow the same schedule as sparse assembly.
+    options.use_mass_matrices_pc = m_use_mass_matrices_pc && update_pc && !a_from_jacobian;
     options.use_mass_matrices_jacobian = m_use_mass_matrices_jacobian;
     options.evolve_suborbit_particles_only = false;
 
@@ -966,13 +1072,13 @@ void ImplicitSolver::PreRHSOp ( const amrex::Real  a_cur_time,
     if (m_use_mass_matrices_jacobian && a_from_jacobian) { // Called from linear stage of JFNK and using mass matrices for Jacobian
         if (m_particle_suborbits) {
             options.evolve_suborbit_particles_only = true;
-            m_WarpX->PushParticlesandDeposit(a_cur_time, skip_deposition, PositionPushType::Full, MomentumPushType::Full, &options);
+            m_WarpX->PushParticlesandDeposit(a_cur_time, skip_deposition, PositionPushType::Full, MomentumPushType::Full, a_dt_scale, &options);
         }
         const bool J_from_MM_only = !options.evolve_suborbit_particles_only;
         ComputeJfromMassMatrices( J_from_MM_only );
     }
     else { // Conventional particle-suppressed JFNK
-        m_WarpX->PushParticlesandDeposit(a_cur_time, skip_deposition, PositionPushType::Full, MomentumPushType::Full, &options);
+        m_WarpX->PushParticlesandDeposit(a_cur_time, skip_deposition, PositionPushType::Full, MomentumPushType::Full, a_dt_scale, &options);
         CumulateJ();
     }
 
@@ -994,7 +1100,7 @@ void ImplicitSolver::PreRHSOp ( const amrex::Real  a_cur_time,
         // The native Newton solver calls this routine immediately before the linear solve,
         // and only when a linear solve is required (i.e., the system is not converged).
         // PETSc's SNES solver does not provide this optimization, so we must call it here.
-        PreLinearSolve();
+        PreLinearSolve(update_pc);
     }
 
 }
