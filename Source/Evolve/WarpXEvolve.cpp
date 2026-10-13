@@ -473,6 +473,10 @@ void WarpX::OneStep (
                     MomentumPushType::Full
                 );
             }
+            if (mypc->hasParticleSplitting()) {
+                SplitParticlesAndDepositRemappingCurrent(a_step + 1, a_dt,
+                                                         /*deposit_virtual_j=*/false);
+            }
         }
         // electromagnetic solver
         else {
@@ -582,6 +586,20 @@ WarpX::OneStep_nosub (
             PositionPushType::Full,
             MomentumPushType::Full
         );
+    }
+
+    if (mypc->hasParticleSplitting()) {
+        SplitParticlesAndDepositRemappingCurrent(a_step + 1, a_dt);
+        if (do_dive_cleaning) {
+            mypc->DepositChargeComponent(m_fields, /*rho_comp=*/1);
+        }
+#if defined(WARPX_DIM_RZ)
+        // Normal particle deposits, remapping J, and post-split rho_new are all
+        // still unscaled. Apply the radial normalization once to their sum.
+        for (int lev = 0; lev <= finest_level; ++lev) {
+            ApplyInverseVolumeScalingToDepositedFields(lev, /*scale_current=*/true);
+        }
+#endif
     }
 
     ExecutePythonCallback("afterdeposition");
@@ -1390,6 +1408,57 @@ WarpX::doQEDEvents ()
 }
 #endif
 
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
+void
+WarpX::ApplyInverseVolumeScalingToDepositedFields (int lev, bool scale_current)
+{
+    using ablastr::fields::Direction;
+    using warpx::fields::FieldType;
+
+    if (scale_current) {
+        ApplyInverseVolumeScalingToCurrentDensity(
+            m_fields.get(FieldType::current_fp, Direction{0}, lev),
+            m_fields.get(FieldType::current_fp, Direction{1}, lev),
+            m_fields.get(FieldType::current_fp, Direction{2}, lev),
+            lev);
+        if (m_fields.has_vector(FieldType::current_buf, lev)) {
+            ApplyInverseVolumeScalingToCurrentDensity(
+                m_fields.get(FieldType::current_buf, Direction{0}, lev),
+                m_fields.get(FieldType::current_buf, Direction{1}, lev),
+                m_fields.get(FieldType::current_buf, Direction{2}, lev),
+                lev-1);
+        }
+    }
+
+    if (m_fields.has(FieldType::rho_fp, lev)) {
+        ApplyInverseVolumeScalingToChargeDensity(m_fields.get(FieldType::rho_fp, lev), lev);
+        if (m_fields.has(FieldType::rho_buf, lev)) {
+            ApplyInverseVolumeScalingToChargeDensity(
+                m_fields.get(FieldType::rho_buf, lev), lev-1);
+        }
+    }
+}
+#endif
+
+void
+WarpX::SplitParticlesAndDepositRemappingCurrent (int timestep, amrex::Real a_dt,
+                                                 bool deposit_virtual_j)
+{
+    using warpx::fields::FieldType;
+
+    std::string current_string = "current_fp";
+    if (WarpX::do_current_centering) {
+        current_string = "current_fp_nodal";
+    } else if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Vay) {
+        current_string = "current_fp_vay";
+    }
+
+    auto const& J = m_fields.get_mr_levels_alldirs(current_string, finest_level);
+    bool const verbose_step = static_cast<bool>(verbose);
+    mypc->doParticleSplittingAndDepositRemap(
+        J, Geom(), timestep, a_dt, verbose_step, deposit_virtual_j);
+}
+
 void
 WarpX::PushParticlesandDeposit (
     amrex::Real cur_time,
@@ -1461,33 +1530,16 @@ WarpX::PushParticlesandDeposit (
 
     if (!skip_deposition) {
 #if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
-        // This is called after all particles have deposited their current and charge.
-        if (!implicit_options) {
-            // Skip scaling J here for the implicit solvers: the total current is
-            // accumulated from multiple containers after this call (see CumulateJ()
-            // and ComputeJfromMassMatrices()), and is scaled in PreRHSOp().
-            ApplyInverseVolumeScalingToCurrentDensity(
-                m_fields.get(FieldType::current_fp, Direction{0}, lev),
-                m_fields.get(FieldType::current_fp, Direction{1}, lev),
-                m_fields.get(FieldType::current_fp, Direction{2}, lev),
-                lev);
-            if (m_fields.has_vector(FieldType::current_buf, lev)) {
-                ApplyInverseVolumeScalingToCurrentDensity(
-                    m_fields.get(FieldType::current_buf, Direction{0}, lev),
-                    m_fields.get(FieldType::current_buf, Direction{1}, lev),
-                    m_fields.get(FieldType::current_buf, Direction{2}, lev),
-                    lev-1);
-            }
+        // Skip scaling J for implicit solvers: it is scaled after current accumulation.
+        // With explicit RZ splitting, scaling is instead applied after remapping J and
+        // post-split rho_new have been deposited.
+#if defined(WARPX_DIM_RZ)
+        if (implicit_options || m_do_subcycling || !mypc->hasParticleSplitting()) {
+            ApplyInverseVolumeScalingToDepositedFields(lev, !implicit_options);
         }
-        // Unlike J, the charge density has no post-deposition accumulation step:
-        // rho is reset and fully deposited within this call on both the explicit
-        // and implicit paths, so it is scaled here in all cases.
-        if (m_fields.has(FieldType::rho_fp, lev)) {
-            ApplyInverseVolumeScalingToChargeDensity(m_fields.get(FieldType::rho_fp, lev), lev);
-            if (m_fields.has(FieldType::rho_buf, lev)) {
-                ApplyInverseVolumeScalingToChargeDensity(m_fields.get(FieldType::rho_buf, lev), lev-1);
-            }
-        }
+#else
+        ApplyInverseVolumeScalingToDepositedFields(lev, !implicit_options);
+#endif
 // #else
         // I left this comment here as a reminder that currently the
         // boundary handling for cartesian grids are not matching the RZ handling

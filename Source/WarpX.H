@@ -668,6 +668,16 @@ public:
                                   amrex::Real dt_scale=static_cast<amrex::Real>(1.),
                                   ImplicitOptions const * implicit_options = nullptr);
 
+    /** Split particles and add remapping current over the virtual parent-child segments.
+     *  The remapping adds a 'virtual' current to the physical current without resetting its existing values.
+     */
+    void SplitParticlesAndDepositRemappingCurrent (int timestep, amrex::Real dt,
+                                                   bool deposit_virtual_j = true);
+
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
+    /** Apply radial inverse-volume scaling after particle current and charge deposition. */
+    void ApplyInverseVolumeScalingToDepositedFields (int lev, bool scale_current);
+#endif
     /** Perform essential particle house keeping at boundaries
      *
      * Inject, communicate, scrape and sort particles.
