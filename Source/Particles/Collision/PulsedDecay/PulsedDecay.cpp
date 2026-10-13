@@ -200,8 +200,8 @@ PulsedDecay::doCollisions (amrex::Real cur_time, amrex::Real dt, MultiParticleCo
                     amrex::ParticleReal xp, yp, zp;
                     getPosition1(ip, xp, yp, zp);
 
-                    const amrex::ParticleReal nu_izn = nu_func(xp, yp, zp, cur_time);
-                    const amrex::ParticleReal probability = (-std::expm1(-nu_izn*dt));
+                    const amrex::ParticleReal nu = nu_func(xp, yp, zp, cur_time);
+                    const amrex::ParticleReal probability = (-std::expm1(-nu*dt));
 
                     if (probability >= amrex::Random(engine)) {
                         new_particles_ptr[ip] = weight_ratio;
