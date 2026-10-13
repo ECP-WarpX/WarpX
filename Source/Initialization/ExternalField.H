@@ -177,16 +177,7 @@ struct ExternalFieldView
 #else
         amrex::RealVect const pos{x,y,z};
 #endif
-#if defined(AMREX_USE_GPU)
-        // The view can only be evaluated on device: operator() calls
-        // the interpolation routines of ablastr::math, which are device-only.
-        AMREX_IF_ON_HOST((amrex::Abort(
-            "For GPU builds, ExternalFieldView only works on device.");))
-        AMREX_IF_ON_DEVICE((return (*this)(pos);))
-        return 0.0;
-#else
         return (*this)(pos);
-#endif
     }
 
     amrex::RealVect dx;     //! mesh spacing of the data
