@@ -2941,7 +2941,6 @@ Details about the collision models can be found in the :ref:`theory section <mul
       This is a relativistic Monte Carlo treatment for particles colliding
       with a neutral background gas. See :ref:`MCC section <multiphysics-collisions-mcc>`.
     - ``pulsed_decay`` for decay of a parent species into two product species with a user-defined decay rate.
-      Each parent particle decays into the two product species that will have the same weights as the parent.
       See :ref:`Pulsed Decay section <multiphysics-collisions-pulseddecay>`.
     - ``background_stopping`` for slowing of ions due to collisions with electrons or ions.
       This implements the approximate formulae as derived in Introduction to Plasma Physics,
@@ -3324,7 +3323,7 @@ Details about the collision models can be found in the :ref:`theory section <mul
     :default: 1
     :optional:
 
-    The ratio of the weight of the paraent particle to the product particles.
+    The ratio of the weight of the paraent particle to the product particles (only for ``pulsed_decay``).
     This can only be an integer, since this is the number of product particles of each species created from each parent particle.
 
 .. pp:param:: <collision_name>.productA_temperature_eV
