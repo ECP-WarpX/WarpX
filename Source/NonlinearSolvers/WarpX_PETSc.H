@@ -241,7 +241,8 @@ class SNES_impl : public PETScSolver_impl
         //! Prepare for the linear solve at the current iterate
         void preLinearSolve();
 
-        //! The linear solve is done: the next residual evaluations are true residuals
+        //! With -snes_fd: called when the KSP solve of a Newton iteration has returned, so its
+        //! finite-difference Jacobian is complete and later residual evaluations are true residuals
         void endFDJacobian() const { m_fd_jac_in_progress = false; }
 
         //! Record that the PC has been set up
@@ -298,8 +299,9 @@ class SNES_impl : public PETScSolver_impl
         //! Using SNES FD?
         bool m_fd_jac_comput = false;
 
-        /** With -snes_fd: whether the residual evaluations belong to the finite-difference
-         *  Jacobian, from the start of a nonlinear iteration to the end of its linear solve.
+        /** With -snes_fd, SNES builds the Jacobian of each Newton iteration from residual
+         *  evaluations. True while these are in progress: from the start of a Newton
+         *  iteration until its KSP solve for the Newton update has returned.
          */
         mutable bool m_fd_jac_in_progress = false;
 

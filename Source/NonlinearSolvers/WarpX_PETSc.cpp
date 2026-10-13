@@ -124,7 +124,8 @@ PetscErrorCode PreLinearSolveFunction( SNES a_solver, PetscInt a_iter )
     PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-//! Called after the linear solve, before the residual at the updated solution is computed
+//! Called by SNES in each Newton iteration after the KSP solve for the Newton update,
+//! before the residual is computed at the updated solution
 PetscErrorCode PostLinearSolveFunction( SNESLineSearch a_linesearch, Vec a_U, Vec a_dU,
                                         PetscBool* a_changed, void* ctxt )
 {
@@ -803,8 +804,8 @@ void SNES_impl::computeRHS(VecType& a_F, const VecType& a_U)
     BL_PROFILE("SNES_impl::computeRHS()");
     AMREX_ALWAYS_ASSERT(isDefined());
 
-    // With -snes_fd, the evaluations between the start of a nonlinear iteration
-    // and the end of its linear solve are part of the finite-difference Jacobian
+    // With -snes_fd, the residual evaluations from the start of a Newton iteration
+    // until its KSP solve has returned build the finite-difference Jacobian
     const bool from_jacobian = m_fd_jac_in_progress;
 
     if (!from_jacobian) {
