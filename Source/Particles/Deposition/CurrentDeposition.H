@@ -790,8 +790,6 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
 #if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
             Real xp_new, yp_new, xp_mid, yp_mid, xp_old, yp_old;
 #if defined(WARPX_DIM_RZ)
-
-            amrex::Print()<< " *************** before using_stored_old_position(): using_stored_old_position =  " << using_stored_old_position<< "\n";
             if (using_stored_old_position) {
                 xp_new = xp;
                 yp_new = yp;
@@ -799,7 +797,6 @@ void doEsirkepovDepositionShapeN (const GetParticlePosition<PIdx>& GetPosition,
                 yp_old = yp_old_data[ip];
                 xp_mid = 0.5_rt * (xp_old + xp_new);
                 yp_mid = 0.5_rt * (yp_old + yp_new);
-                amrex::Print()<< " ++++++++++++ Inside using_stored_old_position(): "<< "\n";
             } else
 #endif
             {
