@@ -124,6 +124,17 @@ PetscErrorCode PreLinearSolveFunction( SNES a_solver, PetscInt a_iter )
     PetscFunctionReturn(PETSC_SUCCESS);
 }
 
+//! Called after the linear solve, before the residual at the updated solution is computed
+PetscErrorCode PostLinearSolveFunction( SNESLineSearch a_linesearch, Vec a_U, Vec a_dU,
+                                        PetscBool* a_changed, void* ctxt )
+{
+    PetscFunctionBeginUser;
+    amrex::ignore_unused(a_linesearch, a_U, a_dU);
+    static_cast<SNES_impl*>(ctxt)->endFDJacobian();
+    *a_changed = PETSC_FALSE;
+    PetscFunctionReturn(PETSC_SUCCESS);
+}
+
 //! Compute Jacobian
 PetscErrorCode JacobianFunction( SNES a_solver,
                                  Vec a_U,
@@ -656,6 +667,7 @@ SNES_impl::SNES_impl(const VecType& a_vec, TIType* a_op,
     SNESLineSearch linesearch;
     SNESGetLineSearch( m_snes->obj, &linesearch );
     SNESLineSearchSetType( linesearch, SNESLINESEARCHNONE );
+    SNESLineSearchSetPreCheck( linesearch, PostLinearSolveFunction, this );
     SNESSetFunction(m_snes->obj, nullptr, RHSFunction, this);
     SNESSetApplicationContext(m_snes->obj, this);
     // Keep the residual norms of each solve; the first one gives the relative norm
@@ -741,7 +753,7 @@ void SNES_impl::solve (VecType& a_U,
     m_time = a_time;
     m_step = a_step;
     m_iter = 0;
-    m_rhs_first_call = true;
+    m_fd_jac_in_progress = false;
     dynamic_cast<JacobianFunctionMF<VecType,TIType>*>(m_linop.get())->curTime(a_time);
     dynamic_cast<JacobianFunctionMF<VecType,TIType>*>(m_linop.get())->curTimeStep(a_dt);
 
@@ -791,10 +803,9 @@ void SNES_impl::computeRHS(VecType& a_F, const VecType& a_U)
     BL_PROFILE("SNES_impl::computeRHS()");
     AMREX_ALWAYS_ASSERT(isDefined());
 
-    // With -snes_fd, evaluations after the first one of a solve are part of
-    // the finite-difference Jacobian
-    const bool from_jacobian = m_fd_jac_comput && !m_rhs_first_call;
-    m_rhs_first_call = false;
+    // With -snes_fd, the evaluations between the start of a nonlinear iteration
+    // and the end of its linear solve are part of the finite-difference Jacobian
+    const bool from_jacobian = m_fd_jac_in_progress;
 
     if (!from_jacobian) {
         // Same PC update schedule as the native Newton solver
@@ -816,6 +827,9 @@ void SNES_impl::preLinearSolve()
     dynamic_cast<JacobianFunctionMF<VecType,TIType>*>(m_linop.get())->setBaseSolution(this->m_U);
     dynamic_cast<JacobianFunctionMF<VecType,TIType>*>(m_linop.get())->setBaseRHS(m_F);
     m_op->PreLinearSolve(m_update_pc);
+
+    // With -snes_fd, the residual evaluations that follow build the Jacobian
+    m_fd_jac_in_progress = m_fd_jac_comput;
 }
 
 void SNES_impl::setVerbose(bool a_v)

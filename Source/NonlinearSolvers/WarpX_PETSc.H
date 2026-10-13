@@ -241,6 +241,9 @@ class SNES_impl : public PETScSolver_impl
         //! Prepare for the linear solve at the current iterate
         void preLinearSolve();
 
+        //! The linear solve is done: the next residual evaluations are true residuals
+        void endFDJacobian() const { m_fd_jac_in_progress = false; }
+
         //! Record that the PC has been set up
         void setPCInitialized() const { m_pc_initialized = true; }
 
@@ -295,12 +298,10 @@ class SNES_impl : public PETScSolver_impl
         //! Using SNES FD?
         bool m_fd_jac_comput = false;
 
-        /** Whether computeRHS() still has to run its first-call path.
-         *
-         * Reset for each nonlinear solve so its initial residual prepares the
-         * particle state before finite-difference Jacobian evaluations.
+        /** With -snes_fd: whether the residual evaluations belong to the finite-difference
+         *  Jacobian, from the start of a nonlinear iteration to the end of its linear solve.
          */
-        mutable bool m_rhs_first_call = true;
+        mutable bool m_fd_jac_in_progress = false;
 
         //! Linear operator object
         std::unique_ptr<LinOpType> m_linop;
