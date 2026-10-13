@@ -147,6 +147,9 @@ class KSP_impl : public PETScSolver_impl
         //! Set max iters
         void setMaxIters(int);
 
+        //! Rebuild the PETSc matrix and preconditioner on the next linear solve.
+        void invalidatePreconditioner () { m_pc_needs_update = true; }
+
         //! Solve
         void solve(VecType&, const VecType&);
 
@@ -172,6 +175,9 @@ class KSP_impl : public PETScSolver_impl
         LinOpType* m_linop = nullptr;
 
     private:
+
+        //! Whether the PETSc preconditioner matrix needs reassembly.
+        bool m_pc_needs_update = true;
 
         //! absolute tolerance
         amrex::Real m_atol = 1e-12;
@@ -233,6 +239,12 @@ class SNES_impl : public PETScSolver_impl
         //! Evaluate the RHS
         void computeRHS(VecType&, const VecType&);
 
+        //! Allow the owner to force PC updates during adaptive substepping.
+        void setForcePreconditionerUpdate(bool force_update)
+        {
+            m_force_pc_update = force_update;
+        }
+
         //! Returns if a preconditioner is being used
         [[nodiscard]] bool usePC() const;
 
@@ -291,6 +303,9 @@ class SNES_impl : public PETScSolver_impl
         std::unique_ptr<LinOpType> m_linop;
 
     private:
+
+        //! Override the normal PC update decision until disabled by the owner.
+        bool m_force_pc_update = false;
 
         //! absolute tolerance
         amrex::Real m_atol = 0.;

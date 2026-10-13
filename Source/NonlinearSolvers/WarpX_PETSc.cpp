@@ -537,8 +537,16 @@ void KSP_impl::solve(VecType& a_Y, const VecType& a_R)
     copyVec(this->m_b->obj, a_R);
 
     if (m_linop->pcType() == PreconditionerType::pc_petsc) {
-        auto err = assemblePCMatrix(m_linop);
-        AMREX_ALWAYS_ASSERT(err == PETSC_SUCCESS);
+        if (m_pc_needs_update) {
+            auto err = assemblePCMatrix(m_linop);
+            AMREX_ALWAYS_ASSERT(err == PETSC_SUCCESS);
+            m_pc_needs_update = false;
+            // Tell PETSc NOT to reuse preconditioner - forces new factorization
+            KSPSetReusePreconditioner(m_ksp->obj, PETSC_FALSE);
+        } else {
+            // Tell PETSc to reuse the existing preconditioner factorization
+            KSPSetReusePreconditioner(m_ksp->obj, PETSC_TRUE);
+        }
     }
 
     KSPSolve(m_ksp->obj, this->m_b->obj, this->m_x->obj);
@@ -840,11 +848,16 @@ void SNES_impl::computeRHS(VecType& a_F, const VecType& a_U)
     BL_PROFILE("SNES_impl::computeRHS()");
     AMREX_ALWAYS_ASSERT(isDefined());
 
+    // SNES always updates the PC for now. Once lagging is added, this flag
+    // must still force updates during substepping.
+    bool update_pc = true;
+    if (m_force_pc_update) { update_pc = true; }
+
     if (m_fd_jac_comput) {
-        m_op->ComputeRHS( a_F, a_U, m_time, m_iter, !m_rhs_first_call);
+        m_op->ComputeRHS( a_F, a_U, m_time, m_iter, !m_rhs_first_call, update_pc);
         m_rhs_first_call = false;
     } else {
-        m_op->ComputeRHS( a_F, a_U, m_time, m_iter, false);
+        m_op->ComputeRHS( a_F, a_U, m_time, m_iter, false, update_pc);
         m_iter++;
     }
 
