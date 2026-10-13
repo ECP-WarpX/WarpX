@@ -118,6 +118,11 @@ class PETScSNES : public NonlinearSolver<Vec,Ops>
             return m_solver->getPreconditionerType();
         }
 
+        void ForcePreconditionerUpdate (bool force_update) override
+        {
+            m_solver->setForcePreconditionerUpdate(force_update);
+        }
+
     private:
 
         std::unique_ptr<warpx_petsc::SNES_impl> m_solver = nullptr;
