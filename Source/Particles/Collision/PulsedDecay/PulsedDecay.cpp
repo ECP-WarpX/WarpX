@@ -40,6 +40,9 @@ PulsedDecay::PulsedDecay (std::string const& collision_name, MultiParticleContai
     // Get the product species
     pp_collision_name.queryarr("product_species", m_product_species);
 
+    m_weight_ratio = 1;
+    pp_collision_name.query("weight_ratio", m_weight_ratio);
+
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE( m_product_species.size() == 2,
         "PulsedDecay: product_species size must be equal to two");
 
@@ -149,6 +152,8 @@ PulsedDecay::doCollisions (amrex::Real cur_time, amrex::Real dt, MultiParticleCo
     SmartCopy const* AMREX_RESTRICT CopyBPtr = &CopyB;
 #endif
 
+    const int weight_ratio = m_weight_ratio;
+
     // get parsers for the decay rate
     auto nu_func = m_decay_rate_func;
 
@@ -199,7 +204,7 @@ PulsedDecay::doCollisions (amrex::Real cur_time, amrex::Real dt, MultiParticleCo
                     const amrex::ParticleReal probability = (-std::expm1(-nu_izn*dt));
 
                     if (probability >= amrex::Random(engine)) {
-                        new_particles_ptr[ip] = 1;
+                        new_particles_ptr[ip] = weight_ratio;
                     }
                 }
             );
@@ -251,32 +256,33 @@ PulsedDecay::doCollisions (amrex::Real cur_time, amrex::Real dt, MultiParticleCo
                     auto const& CopyBF = *CopyBPtr;
 
                     if (new_particles_ptr[ip] > 0) {
+                        for (int j = 0 ; j < new_particles_ptr[ip] ; j++) {
 
-                        const index_type ip_A = old_npA + offsets_ptr[ip];
-                        const index_type ip_B = old_npB + offsets_ptr[ip];
+                            const index_type ip_A = old_npA + offsets_ptr[ip] + j;
+                            const index_type ip_B = old_npB + offsets_ptr[ip] + j;
 
-                        // Create product particles at position of particle from species 1
-                        CopyAF(*soaA_ptr, soa_1, ip, static_cast<int>(ip_A), engine);
-                        CopyBF(*soaB_ptr, soa_1, ip, static_cast<int>(ip_B), engine);
+                            // Create product particles at position of particle from species 1
+                            CopyAF(*soaA_ptr, soa_1, ip, static_cast<int>(ip_A), engine);
+                            CopyBF(*soaB_ptr, soa_1, ip, static_cast<int>(ip_B), engine);
 
-                        // Set product species A particle velocity to parent particle velocity plus thermal
-                        uAx[ip_A] += VtA_x*RandomNormal(0_prt, 1.0_prt, engine);
-                        uAy[ip_A] += VtA_y*RandomNormal(0_prt, 1.0_prt, engine);
-                        uAz[ip_A] += VtA_z*RandomNormal(0_prt, 1.0_prt, engine);
+                            // Set product species A particle velocity to parent particle velocity plus thermal
+                            uAx[ip_A] += VtA_x*RandomNormal(0_prt, 1.0_prt, engine);
+                            uAy[ip_A] += VtA_y*RandomNormal(0_prt, 1.0_prt, engine);
+                            uAz[ip_A] += VtA_z*RandomNormal(0_prt, 1.0_prt, engine);
 
-                        // Set product species B velocity to parent particle velocity plus thermal
-                        uBx[ip_B] += VtB_x*RandomNormal(0_prt, 1.0_prt, engine);
-                        uBy[ip_B] += VtB_y*RandomNormal(0_prt, 1.0_prt, engine);
-                        uBz[ip_B] += VtB_z*RandomNormal(0_prt, 1.0_prt, engine);
+                            // Set product species B velocity to parent particle velocity plus thermal
+                            uBx[ip_B] += VtB_x*RandomNormal(0_prt, 1.0_prt, engine);
+                            uBy[ip_B] += VtB_y*RandomNormal(0_prt, 1.0_prt, engine);
+                            uBz[ip_B] += VtB_z*RandomNormal(0_prt, 1.0_prt, engine);
 
-                        // Set the weight of the product particles
-                        wA[ip_A] = w1[ip];
-                        wB[ip_B] = w1[ip];
+                            // Set the weight of the product particles
+                            wA[ip_A] = w1[ip]/weight_ratio;
+                            wB[ip_B] = w1[ip]/weight_ratio;
+                        }
+
                         w1[ip] = 0.;
                         idcpu1[ip] = amrex::ParticleIdCpus::Invalid;
-
                     }
-
                 }
             );
 

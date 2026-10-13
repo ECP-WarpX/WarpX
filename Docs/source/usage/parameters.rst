@@ -3319,6 +3319,14 @@ Details about the collision models can be found in the :ref:`theory section <mul
 
     The parent species decay rate (only for ``pulsed_decay``).
 
+.. pp:param:: <collision_name>.weight_ratio
+    :type: ``int``
+    :default: 1
+    :optional:
+
+    The ratio of the weight of the paraent particle to the product particles.
+    This can only be an integer, since this is the number of product particles of each species created from each parent particle.
+
 .. pp:param:: <collision_name>.productA_temperature_eV
     :type: `float array, size 3`
 

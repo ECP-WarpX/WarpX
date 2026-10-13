@@ -55,6 +55,8 @@ private:
 
     amrex::Vector<std::string> m_product_species;
 
+    int m_weight_ratio;
+
     amrex::GpuArray<amrex::ParticleReal,3> m_productA_thermal_speed;
     amrex::GpuArray<amrex::ParticleReal,3> m_productB_thermal_speed;
 
