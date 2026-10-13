@@ -79,8 +79,8 @@ ele_number_end = ele_number[-1]
 print(f"ele number = {ele_number_end}")
 assert ele_number_end == weight_ratio * neu_number_change
 
-print(f'initial neu weight change = {neu_weight[0] - neu_weight[-1]:.16e}')
-print(f'final ion weight          = {ion_weight[-1]:.16e}')
-print(f'final ele weight          = {ele_weight[-1]:.16e}')
+print(f"initial neu weight change = {neu_weight[0] - neu_weight[-1]:.16e}")
+print(f"final ion weight          = {ion_weight[-1]:.16e}")
+print(f"final ele weight          = {ele_weight[-1]:.16e}")
 assert np.allclose(neu_weight[0], neu_weight[-1] + ion_weight[-1], rtol=1e-15)
 assert np.allclose(neu_weight[0], neu_weight[-1] + ele_weight[-1], rtol=1e-15)
