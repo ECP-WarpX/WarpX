@@ -69,9 +69,6 @@ PulsedDecay::PulsedDecay (std::string const& collision_name, MultiParticleContai
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE( mass_error <= rtol,
         "PulsedDecay: total mass of product species must match the parent species mass");
 
-    // Get the fixed product particle weight
-    pp_collision_name.get("fixed_product_weight", m_fixed_product_weight);
-
     // Parse the direction-dependent temperature for product species A
     amrex::Vector<amrex::ParticleReal> TA_tmp;
     pp_collision_name.getarr("productA_temperature_eV", TA_tmp);
@@ -155,7 +152,6 @@ PulsedDecay::doCollisions (amrex::Real cur_time, amrex::Real dt, MultiParticleCo
     // get parsers for the decay rate
     auto nu_func = m_decay_rate_func;
 
-    const amrex::ParticleReal fixed_product_weight = m_fixed_product_weight;
     const amrex::ParticleReal VtA_x = m_productA_thermal_speed[0];
     const amrex::ParticleReal VtA_y = m_productA_thermal_speed[1];
     const amrex::ParticleReal VtA_z = m_productA_thermal_speed[2];
@@ -200,17 +196,11 @@ PulsedDecay::doCollisions (amrex::Real cur_time, amrex::Real dt, MultiParticleCo
                     getPosition1(ip, xp, yp, zp);
 
                     const amrex::ParticleReal nu_izn = nu_func(xp, yp, zp, cur_time);
-                    const amrex::ParticleReal product = w1[ip]*(-std::expm1(-nu_izn*dt));
+                    const amrex::ParticleReal probability = (-std::expm1(-nu_izn*dt));
 
-                    // Compute number of products macro particles to create
-                    // Since fixed_product_weight will likely not divide exactly into product,
-                    // Randomly round the number of macroparticles up.
-                    const amrex::ParticleReal num_expected = product/fixed_product_weight;
-                    const int num_macro_particles = static_cast<int>(std::floor(num_expected + amrex::Random(engine)));
-
-                    // Subtract the product weight from the source macroparticle.
-                    w1[ip] -= product;
-                    new_particles_ptr[ip] = num_macro_particles;
+                    if (probability >= amrex::Random(engine)) {
+                        new_particles_ptr[ip] = 1;
+                    }
                 }
             );
 
@@ -260,10 +250,10 @@ PulsedDecay::doCollisions (amrex::Real cur_time, amrex::Real dt, MultiParticleCo
                     auto const& CopyAF = *CopyAPtr;
                     auto const& CopyBF = *CopyBPtr;
 
-                    for (int j = 0; j < new_particles_ptr[ip]; ++j) {
+                    if (new_particles_ptr[ip] > 0) {
 
-                        const index_type ip_A = old_npA + offsets_ptr[ip] + j;
-                        const index_type ip_B = old_npB + offsets_ptr[ip] + j;
+                        const index_type ip_A = old_npA + offsets_ptr[ip];
+                        const index_type ip_B = old_npB + offsets_ptr[ip];
 
                         // Create product particles at position of particle from species 1
                         CopyAF(*soaA_ptr, soa_1, ip, static_cast<int>(ip_A), engine);
@@ -280,13 +270,10 @@ PulsedDecay::doCollisions (amrex::Real cur_time, amrex::Real dt, MultiParticleCo
                         uBz[ip_B] += VtB_z*RandomNormal(0_prt, 1.0_prt, engine);
 
                         // Set the weight of the product particles
-                        wA[ip_A] = fixed_product_weight;
-                        wB[ip_B] = fixed_product_weight;
-
-                        // Remove product weight from species 1
-                        if (w1[ip] <= 0.0_prt) {
-                            idcpu1[ip] = amrex::ParticleIdCpus::Invalid;
-                        }
+                        wA[ip_A] = w1[ip];
+                        wB[ip_B] = w1[ip];
+                        w1[ip] = 0.;
+                        idcpu1[ip] = amrex::ParticleIdCpus::Invalid;
 
                     }
 
