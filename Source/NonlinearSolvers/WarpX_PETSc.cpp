@@ -709,10 +709,11 @@ void SNES_impl::printParams () const
 void SNES_impl::setTolerances()
 {
     BL_PROFILE("SNES_impl::setTolerances()");
+    // No step-tolerance test, as in the native Newton solver (-snes_stol enables it)
     SNESSetTolerances( m_snes->obj,
                        m_params.atol,
                        m_params.rtol,
-                       m_newton_params.step_tolerance,
+                       0.0,
                        m_params.maxits,
                        PETSC_CURRENT );
     SNESSetDivergenceTolerance(m_snes->obj, m_newton_params.divergence_tolerance);
