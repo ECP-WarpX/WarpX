@@ -64,13 +64,14 @@ rate equations on a particle basis:
     .. math::
 
        \begin{aligned}
-        \frac{dW_1}{dt} &= -\nu(t)W_1, \\
-        \frac{dW_A}{dt} &= +\nu(t)W_1 = \frac{dW_B}{dt}, \\
+        \frac{dN_1}{dt} &= -\nu(t)N_1, \\
+        \frac{dN_A}{dt} &= +\nu(t)N_1 = \frac{dN_B}{dt}, \\
        \end{aligned}
 
-where :math:`W_1` is the weight of the parent species macroparticle, :math:`W_A` and :math:`W_B` are the weights of the product species, and :math:`\nu(x,y,z,t)` is the user-specified decay rate.
-The weight of the product species is apportioned into macroparticles with fixed weight.
-That fixed weight may not divide exactly into the product species weight so the number of product macroparticles is randomly rounded up so that on average the weight of the new macroparticles will be correct.
+where :math:`N_1` is the number of the parent species particles, :math:`N_A` and :math:`N_B` are the numbers of the product species, and :math:`\nu(x,y,z,t)` is the user-specified decay rate.
+For each parent particle, a probabiliy is calculated :math:`\nu(x,y,z,t)*dt` with :math:`dt` being the time step size.
+If that probability is greater than a randomly chosen number, the parent particle decays into the products which will be given the same weight as the parent particle.
+After decaying, the parent particle is removed.
 
 This can be used, for example, to represent ionization of a parent species by an externally applied laser pulse.
 
