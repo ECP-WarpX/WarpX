@@ -22,6 +22,8 @@
 // forward declarations
 class WarpXSolverVec;
 class ImplicitSolver;
+struct NonlinearSolverParams;
+struct NewtonSolverParams;
 // end of forward declarations
 
 /* \brief Implementations of linear and nonlinear solvers using PETSc
@@ -215,7 +217,8 @@ class SNES_impl : public PETScSolver_impl
     public:
 
         //! Constructor
-        SNES_impl (const VecType&, TIType*);
+        SNES_impl (const VecType&, TIType*,
+                   const NonlinearSolverParams&, const NewtonSolverParams&);
 
         //! Destructor
         ~SNES_impl() override;
@@ -225,13 +228,6 @@ class SNES_impl : public PETScSolver_impl
         {
             return (this->m_is_defined && (m_op != nullptr) && (this->m_linop != nullptr));
         }
-
-        //! Set tolerances
-        void setTolerances(amrex::Real, amrex::Real, int,
-                           amrex::Real, amrex::Real, int);
-
-        //! Set max iters
-        void setMaxIters(int, int);
 
         //! Solve the system
         void solve(VecType&, const VecType&, amrex::Real, amrex::Real, int) const;
@@ -251,18 +247,7 @@ class SNES_impl : public PETScSolver_impl
         //! Set verbosity
         void setVerbose(bool);
 
-        //! Get parameters
-        AMREX_FORCE_INLINE
-        void getSolverParams ( amrex::Real&  a_rtol,
-                               amrex::Real&  a_atol,
-                               int&          a_maxits ) const
-        {
-            a_rtol = m_rtol;
-            a_atol = m_atol;
-            a_maxits = m_maxits;
-        }
-
-        //! Print parameters
+        //! Print parameters of the linear operator
         void printParams () const;
 
         AMREX_FORCE_INLINE
@@ -272,10 +257,10 @@ class SNES_impl : public PETScSolver_impl
         auto numTotalIters() const { return m_total_iters; }
 
         AMREX_FORCE_INLINE
-        auto normAbs() const { return -1.0; /* absolute norm is not tracked */}
+        auto normAbs() const { return m_norm; }
 
         AMREX_FORCE_INLINE
-        auto normRel() const { return m_norm; }
+        auto normRel() const { return m_norm_rel; }
 
         AMREX_FORCE_INLINE
         auto numLinIters() const { return m_niters_l; }
@@ -304,30 +289,21 @@ class SNES_impl : public PETScSolver_impl
 
     private:
 
+        //! Set the SNES and KSP tolerances and maximum iterations from the input parameters
+        void setTolerances();
+
+        //! Input parameters common to all nonlinear solvers
+        const NonlinearSolverParams& m_params;
+        //! Input parameters of the Newton-type solvers
+        const NewtonSolverParams& m_newton_params;
+
         //! Override the normal PC update decision until disabled by the owner.
         bool m_force_pc_update = false;
 
-        //! absolute tolerance
-        amrex::Real m_atol = 0.;
-        //! relative tolerance
-        amrex::Real m_rtol = 1e-6;
         //! step tolerance
         amrex::Real m_stol = 1e-16;
-        //! maximum iterations
-        int m_maxits= 100;
-        //! whether reaching the maximum iterations is a failure
-        bool m_require_convergence = true;
         //! verbosity
         bool m_verbose = true;
-        //! verbosity for linear solver
-        int m_verbose_l = 2;
-
-        //! absolute tolerance
-        amrex::Real m_atol_l = 0.;
-        //! relative tolerance
-        amrex::Real m_rtol_l = 1e-4;
-        //! maximum iterations
-        int m_maxits_l = 1000;
 
         //! number of iterations for recent most solve
         mutable int m_niters = -1;
@@ -335,8 +311,10 @@ class SNES_impl : public PETScSolver_impl
         mutable int m_niters_l = -1;
         //! status for recent most solve
         mutable int m_status = -1;
-        //! residual norm (relative) for recent most solve
+        //! residual norm (absolute) for recent most solve
         mutable amrex::Real m_norm = DBL_MAX;
+        //! residual norm relative to the initial one for recent most solve
+        mutable amrex::Real m_norm_rel = DBL_MAX;
         //! residual norm (relative) for recent most linear solve
         mutable amrex::Real m_norm_lin = DBL_MAX;
 
