@@ -92,8 +92,8 @@ if(AMReX_PETSC)
         OFF  # dependency
     )
 
-    # petsc_snes and the native Newton solver follow the same algorithm: the checksums
-    # of this test must equal those of test_2d_theta_implicit_planar_pinch
+    # petsc_snes and the native Newton solver follow the same algorithm: the checksum file
+    # of this test is a symbolic link to that of test_2d_theta_implicit_planar_pinch
     add_warpx_test(
         test_2d_theta_implicit_planar_pinch_petsc_snes  # name
         2  # dims
