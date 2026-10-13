@@ -20,8 +20,7 @@
  */
 void
 WarpXSumGuardCells(amrex::MultiFab& mf, const amrex::Periodicity& period,
-                   const amrex::IntVect& src_ngrow,
-                   int icomp=0, int ncomp=1);
+                   const amrex::IntVect& src_ngrow, int icomp, int ncomp);
 
 /** \brief Sum the values of `src` where the different boxes overlap
  * (i.e. in the guard cells) and copy them into `dst`
@@ -31,13 +30,12 @@ WarpXSumGuardCells(amrex::MultiFab& mf, const amrex::Periodicity& period,
  *
  *  This updates both the *valid* cells and *guard* cells.
  *
- * Note: `i_comp` is the component where the results will be stored in `dst`;
+ * Note: `icomp` is the component where the results will be stored in `dst`;
  *       The component from which we copy in `src` is always 0.
  */
 void
 WarpXSumGuardCells(amrex::MultiFab& dst, amrex::MultiFab& src,
                    const amrex::Periodicity& period,
-                   const amrex::IntVect& src_ngrow,
-                   int icomp=0, int ncomp=1);
+                   const amrex::IntVect& src_ngrow, int icomp, int ncomp);
 
 #endif // WARPX_SUM_GUARD_CELLS_H_
