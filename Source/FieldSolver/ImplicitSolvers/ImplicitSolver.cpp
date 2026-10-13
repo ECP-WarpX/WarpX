@@ -1011,21 +1011,20 @@ void ImplicitSolver::PreLinearSolve (const bool update_pc)
 {
     BL_PROFILE("ImplicitSolver::PreLinearSolve()");
 
-    if (m_use_mass_matrices) {
-
+    // The deposit is skipped when the mass matrices are used only for a PC that is not updated
+    if (m_use_mass_matrices_jacobian || (m_use_mass_matrices_pc && update_pc)) {
         m_WarpX->DepositMassMatrices(m_dt);
         FinishMassMatricesDeposition();
+    }
 
-        if (m_use_mass_matrices_jacobian) {
-            SaveE();
-        }
+    if (m_use_mass_matrices_jacobian) {
+        SaveE();
+    }
 
-        if (m_use_mass_matrices_pc && update_pc) {
-            SyncMassMatricesPCAndApplyBCs();
-            const amrex::Real theta_dt = m_theta*m_dt;
-            SetMassMatricesForPC( theta_dt );
-        }
-
+    if (m_use_mass_matrices_pc && update_pc) {
+        SyncMassMatricesPCAndApplyBCs();
+        const amrex::Real theta_dt = m_theta*m_dt;
+        SetMassMatricesForPC( theta_dt );
     }
 
 }
