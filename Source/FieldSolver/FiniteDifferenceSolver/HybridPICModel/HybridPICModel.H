@@ -378,6 +378,8 @@ public:
      *        pressure without modification, and before each B half-step push
      *        with the charge density of that push.
      */
+    void QDSMCFillElectronPressureFromTe (
+        ablastr::fields::MultiLevelScalarField const& rho) const;
     void QDSMCFillElectronPressureFromTe (int lev, amrex::MultiFab const& rho) const;
 
     /**

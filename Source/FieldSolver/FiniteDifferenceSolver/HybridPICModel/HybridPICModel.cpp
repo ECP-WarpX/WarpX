@@ -2023,6 +2023,17 @@ void HybridPICModel::QDSMCApplyIonHeating (int const lev, amrex::Real const dt,
 
 
 void HybridPICModel::QDSMCFillElectronPressureFromTe (
+    ablastr::fields::MultiLevelScalarField const& rho) const
+{
+    auto & warpx = WarpX::GetInstance();
+    for (int lev = 0; lev <= warpx.finestLevel(); ++lev)
+    {
+        QDSMCFillElectronPressureFromTe(lev, *rho[lev]);
+    }
+}
+
+
+void HybridPICModel::QDSMCFillElectronPressureFromTe (
     int const lev, amrex::MultiFab const& rho) const
 {
     ABLASTR_PROFILE("HybridPICModel::QDSMCFillElectronPressureFromTe()");
