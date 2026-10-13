@@ -71,11 +71,10 @@ assert neu_weight_error < neu_weight_rtol
 
 neu_number_change = neu_number[0] - neu_number[-1]
 ion_number_end = ion_number[-1]
-print(f'neu number change = {neu_number_change}')
-print(f'ion number = {ion_number_end}')
-assert ion_number_end == weight_ratio*neu_number_change
+print(f"neu number change = {neu_number_change}")
+print(f"ion number = {ion_number_end}")
+assert ion_number_end == weight_ratio * neu_number_change
 
 ele_number_end = ele_number[-1]
-print(f'ele number = {ele_number_end}')
-assert ele_number_end == weight_ratio*neu_number_change
-
+print(f"ele number = {ele_number_end}")
+assert ele_number_end == weight_ratio * neu_number_change
