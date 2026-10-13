@@ -89,10 +89,13 @@ struct ExternalFieldView
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     amrex::Real operator() (amrex::RealVect const& pos) const
     {
-#if defined(AMREX_USE_GPU)
-        AMREX_IF_ON_HOST((amrex::Abort("For GPU builds, ExternalFieldView only works on device. We could make it work on host if necessary.");))
-#endif
-
+#if defined(AMREX_USE_GPU) && !AMREX_DEVICE_COMPILE
+        // In GPU builds, the interpolation routines of ablastr::math are device-only,
+        // so they must not be compiled in the host pass.
+        amrex::ignore_unused(pos);
+        amrex::Abort("For GPU builds, ExternalFieldView only works on device. We could make it work on host if necessary.");
+        return 0;
+#else
         // Get index of the external field array
         AMREX_D_TERM(const auto i0 = static_cast<int>(std::floor( (pos[0]-offset[0])/dx[0] ));,
                      const auto i1 = static_cast<int>(std::floor( (pos[1]-offset[1])/dx[1] ));,
@@ -158,6 +161,7 @@ struct ExternalFieldView
                     table(i0+1,i1+1,i2+1),
                     pos[0], pos[1], pos[2]));
         }
+#endif
 #endif
     }
 
