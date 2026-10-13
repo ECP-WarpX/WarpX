@@ -41,9 +41,10 @@ void SemiImplicitEM::Define (WarpX*  a_WarpX, bool  a_from_restart)
         const auto& ba_Bz = m_WarpX->m_fields.get(FieldType::Bfield_fp, Direction{2}, lev)->boxArray();
         const auto& dm = m_WarpX->m_fields.get(FieldType::Bfield_fp, Direction{0}, lev)->DistributionMap();
         const amrex::IntVect ngb = m_WarpX->m_fields.get(FieldType::Bfield_fp, Direction{0}, lev)->nGrowVect();
-        m_WarpX->m_fields.alloc_init(FieldType::B_old, Direction{0}, lev, ba_Bx, dm, 1, ngb, 0.0_rt);
-        m_WarpX->m_fields.alloc_init(FieldType::B_old, Direction{1}, lev, ba_By, dm, 1, ngb, 0.0_rt);
-        m_WarpX->m_fields.alloc_init(FieldType::B_old, Direction{2}, lev, ba_Bz, dm, 1, ngb, 0.0_rt);
+        const int ncomp = m_WarpX->m_fields.get(FieldType::Bfield_fp, Direction{0}, lev)->nComp();
+        m_WarpX->m_fields.alloc_init(FieldType::B_old, Direction{0}, lev, ba_Bx, dm, ncomp, ngb, 0.0_rt);
+        m_WarpX->m_fields.alloc_init(FieldType::B_old, Direction{1}, lev, ba_By, dm, ncomp, ngb, 0.0_rt);
+        m_WarpX->m_fields.alloc_init(FieldType::B_old, Direction{2}, lev, ba_Bz, dm, ncomp, ngb, 0.0_rt);
     }
 
     // Reconstruct the initial guess E^{n-1/2} from checkpoint fields E^{n-1} and E^n.
@@ -130,6 +131,10 @@ void SemiImplicitEM::ResetStep (amrex::Real start_time)
     // m_E is at t_{n-1/2}
 
     m_WarpX->ResetImplicitParticleData();
+
+    // Restore E^n, including guards, before recomputing the magnetic half-step.
+    // The failed solve leaves Efield_fp containing its last nonlinear iterate.
+    CopyVectorField(FieldType::Efield_fp, FieldType::E_old);
 
     // Reset B field to start of step
     CopyVectorField(FieldType::Bfield_fp, FieldType::B_old);
