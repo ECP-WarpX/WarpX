@@ -143,7 +143,7 @@ class WarpX(Bucket):
         return dims_value
 
     @staticmethod
-    def amrex_argv(filename, argv=None):
+    def _amrex_argv(filename):
         """The AMReX command line that loads an inputs file.
 
         AMReX guesses whether its first argument is an inputs file: it is not
@@ -161,18 +161,20 @@ class WarpX(Bucket):
         override or after a "--" separator, where AMReX stops parsing.
         argv[0] is absolute for AMReX backtraces, as in init().
         """
-        if argv is None:
-            argv = sys.argv
-        args = argv[1:]
+        args = sys.argv[1:]
         # AMReX does not parse past "--", so no override starts there
         end = args.index("--") if "--" in args else len(args)
 
         def starts_override(i):
-            # one word before "=", which ends the FILE definition in front of it
+            # AMReX ends a definition only at the next "name =", so any other word
+            # before it joins FILE's values. FILE with more than one value is not
+            # included.
             name, equals, _ = args[i].partition("=")
             if not equals and not (i + 1 < end and args[i + 1].startswith("=")):
                 return False
             words = name.split()
+            # a leading "-" marks an option of the script, e.g.,
+            # --opt=val or a kernel's --f=kernel.json
             return len(words) == 1 and not words[0].startswith("-")
 
         first = next((i for i in range(end) if starts_override(i)), end)
@@ -193,7 +195,7 @@ class WarpX(Bucket):
                 f"Error: Could not find the geometry.dims in the input file '{filename}' or its included files."
             )
 
-        libwarpx.initialize(self.amrex_argv(filename))
+        libwarpx.initialize(self._amrex_argv(filename))
 
     def init(self, mpi_comm=None, **kw):
         # note: argv[0] needs to be an absolute path so it works with AMReX backtraces
