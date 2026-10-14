@@ -69,7 +69,7 @@ rate equations on a particle basis:
        \end{aligned}
 
 where :math:`N_1` is the number of the parent species particles, :math:`N_A` and :math:`N_B` are the numbers of the product species, and :math:`\nu(x,y,z,t)` is the user-specified decay rate.
-For each parent particle, a probabiliy is calculated :math:`\nu(x,y,z,t)*dt` with :math:`dt` being the time step size.
+For each parent particle, the decay probability is calculated as :math:`1-\exp[-\nu(x,y,z,t)\Delta t]`, where :math:`\Delta t` is the time-step size.
 If that probability is greater than a randomly chosen number, the parent particle decays into the products whose number and weight is scaled by the integer weight ratio.
 After decaying, the parent particle is removed.
 
