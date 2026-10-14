@@ -721,7 +721,7 @@ void SNES_impl::printParams () const
 void SNES_impl::setTolerances()
 {
     BL_PROFILE("SNES_impl::setTolerances()");
-    // No step-tolerance test, as in the native Newton solver (-snes_stol enables it)
+    // No step-tolerance test (-snes_stol enables it)
     SNESSetTolerances( m_snes->obj,
                        m_params.atol,
                        m_params.rtol,
@@ -776,12 +776,12 @@ void SNES_impl::solve (VecType& a_U,
     SNESGetConvergedReason( m_snes->obj, &reason );
     m_status = (int)reason;
     // Reaching the maximum number of iterations is a failure only if convergence is required.
-    // As in the native Newton solver, rtol == 0 allows a fixed number of iterations.
+    // rtol == 0 allows a fixed number of iterations.
     if (reason == SNES_DIVERGED_MAX_IT &&
         (!m_params.require_convergence || m_params.rtol == 0.)) { m_status = 0; }
     SNESGetFunctionNorm(m_snes->obj, &m_norm);
 
-    // Norm relative to the initial residual norm, as in the native Newton solver
+    // Norm relative to the initial residual norm
     PetscReal* norm_history = nullptr;
     PetscInt num_norms = 0;
     SNESGetConvergenceHistory(m_snes->obj, &norm_history, nullptr, &num_norms);
@@ -797,7 +797,7 @@ void SNES_impl::solve (VecType& a_U,
                        << "(abs. norm = " << m_norm << ").\n";
     }
 
-    // Same failure warnings as the native Newton solver
+    // Print and record a warning on a failed solve
     std::string msg;
     if (reason == SNES_DIVERGED_DTOL) {
         msg = newton_solver_msg::Diverged(m_niters, m_step, m_norm,
@@ -829,7 +829,7 @@ void SNES_impl::computeRHS(VecType& a_F, const VecType& a_U)
     const bool from_jacobian = m_fd_jac_in_progress;
 
     if (!from_jacobian) {
-        // Same PC update schedule as the native Newton solver
+        // Decide whether to update the PC at this iteration
         m_update_pc = m_force_pc_update ||
             m_newton_params.UpdatePC(m_step, m_iter, m_pc_initialized);
     }

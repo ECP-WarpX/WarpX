@@ -260,7 +260,7 @@ void NewtonSolver<Vec,Ops>::Solve (Vec&         a_U,
             break;
         }
 
-        // As PETSc SNES, the relative test is skipped at iteration 0
+        // The relative test is skipped at iteration 0
         if (iter > 0 and norm_abs <= this->m_params.rtol*norm0) {
             this->m_exit_status = 3;
             if (this->m_params.verbose and verbose_step) {
@@ -270,7 +270,7 @@ void NewtonSolver<Vec,Ops>::Solve (Vec&         a_U,
             break;
         }
 
-        // As PETSc SNES, a diverged solve returns a negative exit status
+        // A diverged solve returns a negative exit status
         if (norm_abs > m_newton_params.divergence_tolerance*norm0) {
             this->m_exit_status = -9;
             const std::string msg = newton_solver_msg::Diverged(
@@ -305,7 +305,7 @@ void NewtonSolver<Vec,Ops>::Solve (Vec&         a_U,
         m_linear_solver->solve( m_dU, m_F, m_newton_params.linsol_rtol, m_newton_params.linsol_atol );
         linear_solver_iters += m_linear_solver->getNumIters();
 
-        // As PETSc SNES, stop at a failed linear solve without updating the solution
+        // Stop at a failed linear solve without updating the solution
         if (!m_linear_solver->converged()) {
             this->m_exit_status = -3;
             const std::string msg = newton_solver_msg::LinearSolveFailed(
