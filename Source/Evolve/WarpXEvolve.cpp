@@ -899,7 +899,6 @@ void WarpX::FinalizeJ ()
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-<<<<<<< HEAD
         if (m_fields.has_vector(FieldType::current_fp, lev)) {
             FinalizeJOnLevel(lev,
                 m_fields.get(FieldType::current_fp, Direction{0}, lev),
@@ -909,15 +908,6 @@ void WarpX::FinalizeJ ()
         }
         if (lev > 0 && m_fields.has_vector(FieldType::current_cp, lev)) {
             FinalizeJOnLevel(lev,
-=======
-        ApplyJfieldBoundary(lev,
-            m_fields.get(FieldType::current_fp, Direction{0}, lev),
-            m_fields.get(FieldType::current_fp, Direction{1}, lev),
-            m_fields.get(FieldType::current_fp, Direction{2}, lev),
-            PatchType::fine);
-        if (lev > 0) {
-            ApplyJfieldBoundary(lev,
->>>>>>> rho_J_cleanup_v1
                 m_fields.get(FieldType::current_cp, Direction{0}, lev),
                 m_fields.get(FieldType::current_cp, Direction{1}, lev),
                 m_fields.get(FieldType::current_cp, Direction{2}, lev),
@@ -925,31 +915,6 @@ void WarpX::FinalizeJ ()
         }
     }
 
-}
-
-void WarpX::FinalizeRho ()
-{
-    using warpx::fields::FieldType;
-
-    for (int lev = 0; lev <= finest_level; ++lev)
-    {
-        if (m_fields.has(FieldType::rho_fp, lev)) {
-            FinalizeRho(lev, m_fields.get(FieldType::rho_fp, lev), PatchType::fine);
-        }
-        if (lev > 0 && m_fields.has(FieldType::rho_cp, lev)) {
-            FinalizeRho(lev, m_fields.get(FieldType::rho_cp, lev), PatchType::coarse);
-        }
-    }
-}
-
-void WarpX::FinalizeRho (int lev, amrex::MultiFab* rho, PatchType patch_type,
-                         int scomp, int ncomp)
-{
-    ApplyRhofieldBoundary(lev, rho, patch_type, scomp, ncomp);
-#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
-    const int glev = (patch_type == PatchType::fine) ? lev : lev - 1;
-    ApplyInverseVolumeScalingToChargeDensity(rho, glev, scomp, ncomp);
-#endif
 }
 
 void WarpX::FinalizeJOnLevel (int lev, amrex::MultiFab* Jx, amrex::MultiFab* Jy,
