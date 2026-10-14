@@ -89,7 +89,7 @@ struct ExternalFieldView
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     amrex::Real operator() (amrex::RealVect const& pos) const
     {
-#if defined(AMREX_USE_GPU) && !AMREX_DEVICE_COMPILE
+#if defined(AMREX_USE_GPU)
         // In GPU builds, the interpolation routines of ablastr::math are device-only,
         // so they must not be compiled in the host pass.
         amrex::ignore_unused(pos);
