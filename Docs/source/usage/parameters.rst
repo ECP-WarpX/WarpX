@@ -249,7 +249,7 @@ Overall simulation parameters
         - Practical limits on :math:`\Delta t` set by solver efficiency, number of particle cell crossings, and physics resolution.
 
       - **Nonlinear solvers:**
-        Advancing the implicit system in time requires solving a nonlinear system. The nonlinear solver options are ``picard`` and ``newton``.
+        Advancing the implicit system in time requires solving a nonlinear system. The nonlinear solver options are ``picard``, ``newton``, and ``petsc_snes``.
 
         - ``implicit_evolve.nonlinear_solver`` (``string``, default: None)
 
@@ -270,8 +270,29 @@ Overall simulation parameters
             Options are ``amrex_gmres``, ``petsc_ksp``, ``weighted_jacobi``, and ``chebyshev``.
           - ``newton.require_convergence`` (``bool``, default: true)
           - ``newton.max_iterations`` (``int``, default: 100)
+          - ``newton.pc_update_newton_interval`` (``int``, default: 1)
+            Controls preconditioner updates within a nonlinear solve. Zero updates
+            only at iteration 0; a positive N updates at iterations 0, N, 2N, etc.
+            A negative value is replaced by the default, with a warning.
+          - ``newton.pc_update_time_step_interval`` (``int``, default: 1)
+            Must be positive; other values are replaced by the default, with a warning.
+            Updates are allowed only when the zero-based simulation
+            step index is divisible by this interval. Both interval conditions must
+            hold for the preconditioner to be updated; otherwise it is reused, including
+            the PETSc factorization. The same schedule applies to the native Newton
+            solver and to PETSc SNES.
+            The first required linear solve always initializes the PC, including
+            after restart. During adaptive implicit substepping, PC updates are forced
+            on every Newton iteration, overriding both intervals.
+            With ``jacobian.pc_type = pc_jacobi`` or ``pc_chebyshev``, or a linear solver with ``use_pcmat = true``,
+            an interval greater than 1 requires ``newton.pc_update_newton_interval = 0``.
           - ``newton.relative_tolerance`` (``float``, default: 1.0e-6)
+            Must be in [0, 1). Other values are replaced by the default, with a warning.
           - ``newton.absolute_tolerance`` (``float``, default: 0.0)
+          - ``newton.divergence_tolerance`` (``float``, default: 1.0e4)
+            The nonlinear solve fails as diverged when the residual norm exceeds this
+            factor times the initial residual norm. A value less than 1 is replaced by
+            the default, with a warning.
           - ``newton.diagnostic_file`` (``string``, default: None)
           - ``newton.diagnostic_interval`` (``int``, default: 1)
 
@@ -282,6 +303,8 @@ Overall simulation parameters
           - ``gmres.max_iterations`` (``int``, default: 1000)
           - ``gmres.relative_tolerance`` (``float``, default: 1.0e-4)
           - ``gmres.absolute_tolerance`` (``float``, default: 0.0)
+
+          - These parameters can also be given with the name of the linear solver as prefix (``amrex_gmres`` or ``petsc_ksp``); the ``gmres`` prefix takes precedence.
 
           - ``newton.linear_solver = weighted_jacobi`` or ``chebyshev``: Use weighted Jacobi or Chebyshev iterations instead of GMRES to solve the linear system at each nonlinear iteration.
             These solvers do not use a preconditioner (``jacobian.pc_type``).
@@ -294,6 +317,7 @@ Overall simulation parameters
           - ``<linear_solver>.use_pcmat`` (``bool``, default: true)
             When ``true``, the solver iterates on the assembled matrix that is also used by ``jacobian.pc_type = pc_jacobi`` and ``pc_chebyshev`` (see below), with the plasma response included if ``implicit_evolve.use_mass_matrices_pc = true``.
             This matrix approximates the Jacobian, so more nonlinear iterations may be needed.
+            The assembled matrix is updated on the preconditioner update schedule (see ``newton.pc_update_newton_interval``).
             When ``false``, the solver uses matrix-free evaluations of the Jacobian.
             Its diagonal is then taken as the identity, plus the diagonal of the curl curl operator for ``theta_implicit_em``, plus the diagonal of the mass matrices if ``implicit_evolve.use_mass_matrices_jacobian = true``.
           - ``weighted_jacobi.omega`` (``float``, default: Gershgorin estimate from the assembled matrix, or 1.0 if ``use_pcmat = false``) Relaxation factor.
@@ -304,8 +328,15 @@ Overall simulation parameters
           - ``chebyshev.lambda_min`` (``float``, default: 1.0) Lower bound of the eigenvalues.
           - ``chebyshev.lambda_max`` (``float``, default: estimated with the power method) Upper bound of the eigenvalues.
 
+          - If the linear solver fails to converge (for example, on reaching ``gmres.max_iterations``), the nonlinear solve stops and the time step is repeated with substeps, as for any failed nonlinear solve. This does not depend on ``newton.require_convergence``.
+
+        - ``implicit_evolve.nonlinear_solver = petsc_snes``: Use a PS-JFNK method with the PETSc SNES solver. Requires WarpX to be compiled with PETSc (``WarpX_PETSC=ON``).
+          The ``newton`` and ``gmres`` parameters listed above apply, except that ``newton.linear_solver`` is not used: the linear system at each nonlinear iteration is solved with the PETSc KSP solver (GMRES), whose parameters can also be given with the ``petsc_ksp`` prefix.
+
+          PETSc options given on the command line (for example, ``-snes_view``) are passed to the PETSc solver.
+
       - **PS-JFNK solver specific options:**
-        The PS-JFNK solver (``implicit_evolve.nonlinear_solver = newton``) has a variety of additional parameters and options.
+        The PS-JFNK solver (``implicit_evolve.nonlinear_solver = newton`` or ``petsc_snes``) has a variety of additional parameters and options.
 
         - At each iteration in the PS-JFNK process, each particle is self-consistently updated for fixed :math:`\textbf{E}` and :math:`\textbf{B}` on the grid using a Picard method. The options for this Picard solve are set by:
 

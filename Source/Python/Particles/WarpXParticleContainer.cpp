@@ -117,7 +117,11 @@ void init_WarpXParticleContainer (py::module& m)
                 {
                     const long np = pti.numParticles();
                     auto& wp = pti.GetAttribs(PIdx::w);
-                    pc.DepositCharge(pti, wp, nullptr, rho, 0, 0, np, 0, lev, lev);
+                    int* ion_lev = nullptr;
+                    if (pc.DoFieldIonization()) {
+                        ion_lev = pti.GetiAttribs("ionizationLevel").dataPtr();
+                    }
+                    pc.DepositCharge(pti, wp, ion_lev, rho, 0, 0, np, 0, lev, lev);
                 }
             },
             py::arg("rho"), py::arg("lev")

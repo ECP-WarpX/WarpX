@@ -83,9 +83,15 @@ public:
                 static_cast<RT>(m_linop->getOps()->GetMassMatrixDiagScale()));
             m_matrix_ops->SetCurlCurlFactor(
                 static_cast<RT>(m_linop->getOps()->GetCurlCurlDiagScale()));
+        } else if (!m_matrix_stale) {
+            // The assembled PC matrix follows the PC update schedule
+            return;
         }
         m_solver.Update();
+        m_matrix_stale = false;
     }
+
+    void invalidatePreconditioner () override { m_matrix_stale = true; }
 
     void solve (Vec& a_sol, Vec const& a_rhs,
                 RT a_tol_rel, RT a_tol_abs, int a_its=-1) override
@@ -115,6 +121,11 @@ public:
         return m_solver.getStatus();
     }
 
+    [[nodiscard]] bool converged () const override
+    {
+        return (m_solver.getStatus() == 0);
+    }
+
     [[nodiscard]] RT getResidualNorm () const override
     {
         return m_solver.getResidualNorm();
@@ -126,6 +137,7 @@ private:
 
     LinOp* m_linop = nullptr;
     bool m_use_pcmat = true;
+    bool m_matrix_stale = true;
     std::unique_ptr<MatrixSolverOps<Vec>> m_matrix_ops;
     WeightedJacobiImpl<Vec> m_solver;
 };
