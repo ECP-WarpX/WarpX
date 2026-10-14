@@ -98,7 +98,10 @@ public:
     * @param[in] opt_depth_runtime_comp index of the optical depth component of the source species
     * @param[in] chi_lepton_at_creation_comp index of chi_lepton_at_creation_comp
     * @param[in] E_field_at_creation_comp index of E_field_at_creation_comp
-    * @param[in] E_field_at_creation_comp index of B_field_at_creation_comp
+    * @param[in] B_field_at_creation_comp index of B_field_at_creation_comp
+    * @param[in] parentID_A index of parentID_A
+    * @param[in] parentID_B index of parentID_B
+    * @param[in] step_at_creation_comp index of step_at_creation_comp
     * @param[in] emission_functor functor to generate photons and update momentum of the source particles
     * @param[in] a_pti particle iterator to iterate over electrons or positrons undergoing QED photon emission process
     * @param[in] lev   the mesh-refinement level
@@ -119,6 +122,9 @@ public:
         int chi_lepton_at_creation_comp,
         int E_field_at_creation_comp,
         int B_field_at_creation_comp,
+        int parentID_A,
+        int parentID_B,
+        int step_at_creation_comp,
         QuantumSynchrotronPhotonEmission emission_functor,
         const WarpXParIter& a_pti, int lev, amrex::IntVect ngEB,
         amrex::FArrayBox const& exfab,
@@ -139,11 +145,12 @@ public:
     * @param[in, out] src source species (either electrons or positrons)
     * @param[in] i_src particle index of the source species
     * @param[in] i_dst particle index of target species
+    * @param[in] step simulation step
     * @param[in] engine random number generator engine
     */
     template <typename DstData, typename SrcData>
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    void operator() (DstData& dst, SrcData& src, int i_src, int i_dst,
+    void operator() (DstData& dst, SrcData& src, int i_src, int i_dst, int step,
         amrex::RandomEngine const& engine) const noexcept
     {
         using namespace amrex;
@@ -194,6 +201,12 @@ public:
             std::sqrt(ex*ex + ey*ey + ez*ez);
         dst.m_runtime_rdata[m_B_field_at_creation_comp][i_dst] =
             std::sqrt(bx*bx + by*by + bz*bz);
+
+        unsigned int A = (unsigned int) src.m_idcpu[i_src];
+        unsigned int B = (unsigned int) (src.m_idcpu[i_src] >> 32);
+        dst.m_runtime_idata[m_parentID_A_comp][i_dst] = (A <= 2147483648)? (int)(-A) : (A-2147483647);
+        dst.m_runtime_idata[m_parentID_B_comp][i_dst] = (B <= 2147483648)? (int)(-B) : (B-2147483647);
+        dst.m_runtime_rdata[m_step_at_creation_comp][i_dst] = (amrex::ParticleReal) step;
     }
 
 private:
@@ -204,6 +217,9 @@ private:
     int m_chi_lepton_at_creation_comp = 0;
     int m_E_field_at_creation_comp = 0;
     int m_B_field_at_creation_comp = 0;
+    int m_parentID_A_comp= 0;
+    int m_parentID_B_comp = 0;
+    int m_step_at_creation_comp = 0;
 
     QuantumSynchrotronPhotonEmission
         m_emission_functor;  /*!< A copy of the functor to generate photons. It contains only pointers to the lookup tables.*/

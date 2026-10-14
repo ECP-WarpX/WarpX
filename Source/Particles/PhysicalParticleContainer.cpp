@@ -287,6 +287,9 @@ PhysicalParticleContainer::PhysicalParticleContainer (AmrCore* amr_core, int isp
         AddRealComp("chi_lepton_at_creation");
         AddRealComp("E_field_at_creation");
         AddRealComp("B_field_at_creation");
+        AddIntComp("parentID_A");
+        AddIntComp("parentID_B");
+        AddRealComp("step_at_creation");
     }
 
     if(m_do_qed_quantum_sync){

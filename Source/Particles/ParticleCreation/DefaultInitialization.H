@@ -58,7 +58,8 @@ namespace
         {"opticalDepthQSR",   InitializationPolicy::RandomExp},
         {"chi_lepton_at_creation",   InitializationPolicy::Zero},
         {"E_field_at_creation",   InitializationPolicy::Zero},
-        {"B_field_at_creation",   InitializationPolicy::Zero}
+        {"B_field_at_creation",   InitializationPolicy::Zero},
+        {"step_at_creation",   InitializationPolicy::Zero}
 #endif
 
     };
