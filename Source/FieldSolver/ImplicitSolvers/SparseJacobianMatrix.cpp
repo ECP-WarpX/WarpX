@@ -147,7 +147,7 @@ void SparseJacobianMatrix::ExtractDiagonal ()
 
     amrex::ParallelFor(m_ndofs_l, [=] AMREX_GPU_DEVICE (int row)
     {
-        amrex::Real diag = amrex::Real(1.0);
+        auto diag = amrex::Real(1.0);
         for (int col = 0; col < num_nz_ptr[row]; col++) {
             const int idx = row * nnz_max + col;
             if (c_g_ptr[idx] == r_g_ptr[row]) {
