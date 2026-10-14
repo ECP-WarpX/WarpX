@@ -155,9 +155,10 @@ private:
      * \brief Order of the particle shape factors used for the magnetostatic part
      *  of the solve: the current and mass matrices deposition, the E-field gather
      *  in the corrector push and the B-field gather in both pushes. Must not
-     *  exceed algo.particle_shape, which is used for the electrostatic part.
+     *  exceed algo.particle_shape, which is used for the electrostatic part
+     *  and is the default.
      */
-    int m_ms_particle_shape = 1;
+    int m_ms_particle_shape;
 
     /**
      * \brief Choice of linear solver

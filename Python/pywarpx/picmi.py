@@ -2130,7 +2130,7 @@ class SemiImplicitDarwinEvolveScheme(EvolveSchemeBase):
         description="Order of the particle shape factors used for the magnetostatic part of "
         "the solve (current and mass matrices deposition, inductive E-field gather and "
         "B-field gather). Must be between 1 and the particle shape used for the "
-        "electrostatic part (the `particle_shape` of the Simulation). Defaults to 1.",
+        "electrostatic part (the `particle_shape` of the Simulation), which is the default.",
     )
 
     def solver_scheme_initialize_inputs(self):

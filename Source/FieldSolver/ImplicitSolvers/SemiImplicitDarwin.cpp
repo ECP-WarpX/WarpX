@@ -60,6 +60,8 @@ void SemiImplicitDarwin::Define ( WarpX*  a_WarpX, bool from_restart)
 
     // Particle shape used for the magnetostatic part of the solve (current and
     // mass matrices deposition, inductive E-field gather, and B-field gather).
+    // Defaults to the electrostatic particle shape, algo.particle_shape.
+    m_ms_particle_shape = WarpX::nox;
     const amrex::ParmParse pp_implicit_evolve("implicit_evolve");
     pp_implicit_evolve.query("ms_particle_shape", m_ms_particle_shape);
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
