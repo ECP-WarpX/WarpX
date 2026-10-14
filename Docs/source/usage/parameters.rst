@@ -270,16 +270,26 @@ Overall simulation parameters
           - ``newton.require_convergence`` (``bool``, default: true)
           - ``newton.max_iterations`` (``int``, default: 100)
           - ``newton.pc_update_newton_interval`` (``int``, default: 1)
-            Controls preconditioner updates within a native Newton solve. Zero updates
+            Controls preconditioner updates within a nonlinear solve. Zero updates
             only at iteration 0; a positive N updates at iterations 0, N, 2N, etc.
+            A negative value is replaced by the default, with a warning.
           - ``newton.pc_update_time_step_interval`` (``int``, default: 1)
-            Must be positive. Updates are allowed only when the zero-based simulation
+            Must be positive; other values are replaced by the default, with a warning.
+            Updates are allowed only when the zero-based simulation
             step index is divisible by this interval. Both interval conditions must
-            hold. The first required linear solve always initializes the PC, including
+            hold for the preconditioner to be updated; otherwise it is reused, including
+            the PETSc factorization. The same schedule applies to the native Newton
+            solver and to PETSc SNES.
+            The first required linear solve always initializes the PC, including
             after restart. During adaptive implicit substepping, PC updates are forced
             on every Newton iteration, overriding both intervals.
           - ``newton.relative_tolerance`` (``float``, default: 1.0e-6)
+            Must be in [0, 1). Other values are replaced by the default, with a warning.
           - ``newton.absolute_tolerance`` (``float``, default: 0.0)
+          - ``newton.divergence_tolerance`` (``float``, default: 1.0e4)
+            The nonlinear solve fails as diverged when the residual norm exceeds this
+            factor times the initial residual norm. A value less than 1 is replaced by
+            the default, with a warning.
           - ``newton.diagnostic_file`` (``string``, default: None)
           - ``newton.diagnostic_interval`` (``int``, default: 1)
 
@@ -293,11 +303,10 @@ Overall simulation parameters
 
           - These parameters can also be given with the name of the linear solver as prefix (``amrex_gmres`` or ``petsc_ksp``); the ``gmres`` prefix takes precedence.
 
-        - ``implicit_evolve.nonlinear_solver = petsc_snes``: Use a PS-JFNK method with the PETSc SNES solver. Requires WarpX to be compiled with PETSc (``WarpX_PETSC=ON``).
-          The ``newton`` and ``gmres`` parameters listed above apply, with the following differences:
+          - If the linear solver fails to converge (for example, on reaching ``gmres.max_iterations``), the nonlinear solve stops and the time step is repeated with substeps, as for any failed nonlinear solve. This does not depend on ``newton.require_convergence``.
 
-          - ``newton.linear_solver`` is not used. The linear system at each nonlinear iteration is solved with the PETSc KSP solver (GMRES), whose parameters can also be given with the ``petsc_ksp`` prefix.
-          - ``gmres.restart_length`` is not used.
+        - ``implicit_evolve.nonlinear_solver = petsc_snes``: Use a PS-JFNK method with the PETSc SNES solver. Requires WarpX to be compiled with PETSc (``WarpX_PETSC=ON``).
+          The ``newton`` and ``gmres`` parameters listed above apply, except that ``newton.linear_solver`` is not used: the linear system at each nonlinear iteration is solved with the PETSc KSP solver (GMRES), whose parameters can also be given with the ``petsc_ksp`` prefix.
 
           PETSc options given on the command line (for example, ``-snes_view``) are passed to the PETSc solver.
 

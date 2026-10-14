@@ -52,10 +52,10 @@ class PETScSNES : public NonlinearSolver<Vec,Ops>
         void Define ( const Vec& a_U, Ops* a_op ) override
         {
             this->m_params.Parse("newton");
+            this->m_params.ResetInvalidRelativeTolerance("newton");
 
-            // The linear solver is always PETSc's KSP, and the default PC is PETSc's
+            // The linear solver is always PETSc's KSP
             m_newton_params.linear_solver_type = LinearSolverType::petsc_ksp;
-            m_newton_params.pc_type = PreconditionerType::pc_petsc;
             m_newton_params.Parse(/*a_query_linear_solver=*/false);
             LinearSolverType linear_solver = LinearSolverType::petsc_ksp;
             const amrex::ParmParse pp_newton("newton");
@@ -116,6 +116,11 @@ class PETScSNES : public NonlinearSolver<Vec,Ops>
         void ForcePreconditionerUpdate (bool force_update) override
         {
             m_solver->setForcePreconditionerUpdate(force_update);
+        }
+
+        void InvalidatePreconditioner () override
+        {
+            m_solver->invalidatePreconditioner();
         }
 
     private:

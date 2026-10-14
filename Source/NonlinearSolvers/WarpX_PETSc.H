@@ -98,13 +98,16 @@ class PETScSolver_impl
         bool m_is_defined = false;
 
         //! Preconditioner type
-        PreconditionerType m_pc_type = PreconditionerType::pc_petsc;
+        PreconditionerType m_pc_type = PreconditionerType::none;
 
         // Return the PC type
         PreconditionerType getPreconditionerType () const
         {
             return m_pc_type;
         }
+
+        //! Set the GMRES restart length, unless it is given as a PETSc option
+        void setRestartLength(int) const;
 
     protected:
 
@@ -235,6 +238,19 @@ class SNES_impl : public PETScSolver_impl
         //! Evaluate the RHS
         void computeRHS(VecType&, const VecType&);
 
+        //! Prepare for the linear solve at the current iterate
+        void preLinearSolve();
+
+        //! With -snes_fd: called when the KSP solve of a Newton iteration has returned, so its
+        //! finite-difference Jacobian is complete and later residual evaluations are true residuals
+        void endFDJacobian() const { m_fd_jac_in_progress = false; }
+
+        //! Record that the PC has been set up
+        void setPCInitialized() const { m_pc_initialized = true; }
+
+        //! Require a PC update before the next linear solve.
+        void invalidatePreconditioner() { m_pc_initialized = false; }
+
         //! Allow the owner to force PC updates during adaptive substepping.
         void setForcePreconditionerUpdate(bool force_update)
         {
@@ -244,8 +260,14 @@ class SNES_impl : public PETScSolver_impl
         //! Returns if a preconditioner is being used
         [[nodiscard]] bool usePC() const;
 
+        //! Whether the PC is updated at the current nonlinear iteration.
+        [[nodiscard]] bool updatePC() const { return m_update_pc; }
+
         //! Set verbosity
         void setVerbose(bool);
+
+        //! Whether the residual norms are printed
+        [[nodiscard]] bool verbose() const { return m_verbose; }
 
         //! Print parameters of the linear operator
         void printParams () const;
@@ -277,12 +299,11 @@ class SNES_impl : public PETScSolver_impl
         //! Using SNES FD?
         bool m_fd_jac_comput = false;
 
-        /** Whether computeRHS() still has to run its first-call path.
-         *
-         * Scoped to a single solver, so each solver built in a process takes that
-         * path exactly once.
+        /** With -snes_fd, SNES builds the Jacobian of each Newton iteration from residual
+         *  evaluations. True while these are in progress: from the start of a Newton
+         *  iteration until its KSP solve for the Newton update has returned.
          */
-        bool m_rhs_first_call = true;
+        mutable bool m_fd_jac_in_progress = false;
 
         //! Linear operator object
         std::unique_ptr<LinOpType> m_linop;
@@ -297,11 +318,13 @@ class SNES_impl : public PETScSolver_impl
         //! Input parameters of the Newton-type solvers
         const NewtonSolverParams& m_newton_params;
 
+        //! Ensure the first linear solve initializes the PC, including after restart.
+        mutable bool m_pc_initialized = false;
+        //! PC update decision for the current nonlinear iteration.
+        mutable bool m_update_pc = true;
         //! Override the normal PC update decision until disabled by the owner.
         bool m_force_pc_update = false;
 
-        //! step tolerance
-        amrex::Real m_stol = 1e-16;
         //! verbosity
         bool m_verbose = true;
 
@@ -320,6 +343,8 @@ class SNES_impl : public PETScSolver_impl
 
         //! Simulation time
         mutable amrex::Real m_time = 0.0;
+        //! Time step index
+        mutable int m_step = 0;
         //! Newton iteration index of the next residual evaluation
         mutable int m_iter = 0;
 

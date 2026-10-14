@@ -8,6 +8,7 @@
 #define NEWTON_SOLVER_PARAMS_H_
 
 #include "LinearSolverLibrary.H"
+#include "NonlinearSolver.H"
 #include "PreconditionerLibrary.H"
 #include "Utils/TextMsg.H"
 
@@ -16,6 +17,7 @@
 #include <AMReX_Print.H>
 #include <AMReX_REAL.H>
 
+#include <sstream>
 #include <string>
 
 /**
@@ -25,6 +27,9 @@
  */
 struct NewtonSolverParams
 {
+    //! The solve has diverged when the residual norm exceeds this factor times the initial norm.
+    amrex::Real divergence_tolerance = 1.0e4;
+
     //! Zero updates the PC only at iteration zero; positive values give a Newton interval.
     int pc_update_newton_interval = 1;
     //! Update the PC on time steps whose zero-based index is divisible by this interval.
@@ -52,16 +57,23 @@ struct NewtonSolverParams
      */
     void Parse (bool a_query_linear_solver = true)
     {
+        // Invalid values are replaced by the defaults, with a warning
+        const NewtonSolverParams defaults(*this);
+
         const amrex::ParmParse pp_newton("newton");
         if (a_query_linear_solver) { pp_newton.query("linear_solver", linear_solver_type); }
+        pp_newton.query("divergence_tolerance", divergence_tolerance);
+        ResetInvalidInput(divergence_tolerance, (divergence_tolerance >= 1.),
+                          defaults.divergence_tolerance,
+                          "newton.divergence_tolerance", "is less than 1");
         pp_newton.query("pc_update_newton_interval", pc_update_newton_interval);
+        ResetInvalidInput(pc_update_newton_interval, (pc_update_newton_interval >= 0),
+                          defaults.pc_update_newton_interval,
+                          "newton.pc_update_newton_interval", "is negative");
         pp_newton.query("pc_update_time_step_interval", pc_update_time_step_interval);
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            pc_update_newton_interval >= 0,
-            "newton.pc_update_newton_interval must be nonnegative");
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            pc_update_time_step_interval > 0,
-            "newton.pc_update_time_step_interval must be positive");
+        ResetInvalidInput(pc_update_time_step_interval, (pc_update_time_step_interval > 0),
+                          defaults.pc_update_time_step_interval,
+                          "newton.pc_update_time_step_interval", "is not positive");
 
         const amrex::ParmParse pp_l(amrex::getEnumNameString(linear_solver_type));
         pp_l.query("verbose_int",         linsol_verbose_int);
@@ -107,6 +119,7 @@ struct NewtonSolverParams
 
     void Print (const std::string& a_name) const
     {
+        amrex::Print() << a_name << " divergence tolerance: " << divergence_tolerance << "\n";
         amrex::Print() << a_name << " PC update Newton interval:    " << pc_update_newton_interval << "\n";
         amrex::Print() << a_name << " PC update time-step interval: " << pc_update_time_step_interval << "\n";
         auto linsol_name = amrex::getEnumNameString(linear_solver_type);
@@ -119,5 +132,50 @@ struct NewtonSolverParams
         amrex::Print() << "Preconditioner type:      " << amrex::getEnumNameString(pc_type) << "\n";
     }
 };
+
+/**
+ * \brief Failure messages common to the Newton-type nonlinear solvers.
+ */
+namespace newton_solver_msg
+{
+    //! The residual norm exceeds the divergence tolerance times the initial norm
+    inline std::string Diverged (int a_iter, int a_step, amrex::Real a_norm_abs,
+                                 amrex::Real a_divergence_tolerance, amrex::Real a_norm0)
+    {
+        std::stringstream msg;
+        msg << "Newton solver diverged at iteration " << a_iter <<
+               " of step " << a_step <<
+               ". Absolute norm " << a_norm_abs <<
+               " is more than " << a_divergence_tolerance <<
+               " times the initial norm " << a_norm0;
+        return msg.str();
+    }
+
+    //! The linear solver did not converge
+    inline std::string LinearSolveFailed (int a_iter, int a_step, int a_linear_iters)
+    {
+        std::stringstream msg;
+        msg << "Newton solver stopped at iteration " << a_iter <<
+               " of step " << a_step <<
+               ": the linear solver failed to converge in " <<
+               a_linear_iters << " iterations";
+        return msg.str();
+    }
+
+    //! The maximum number of iterations is reached
+    inline std::string MaxIterations (int a_iter, int a_step,
+                                      amrex::Real a_norm_rel, amrex::Real a_rtol,
+                                      amrex::Real a_norm_abs, amrex::Real a_atol)
+    {
+        std::stringstream msg;
+        msg << "Newton solver failed to converge after " << a_iter <<
+               " iterations at step " << a_step <<
+               ". Relative norm is " << a_norm_rel <<
+               " and the relative tolerance is " << a_rtol <<
+               ". Absolute norm is " << a_norm_abs <<
+               " and the absolute tolerance is " << a_atol;
+        return msg.str();
+    }
+}
 
 #endif

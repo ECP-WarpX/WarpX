@@ -1958,6 +1958,10 @@ class NewtonNonlinearSolver(NonlinearSolverBase):
     absolute_tolerance: float | None = Field(
         default=None, description="Absolute tolerance of the convergence (default 0.)"
     )
+    divergence_tolerance: float | None = Field(
+        default=None,
+        description="The solve has diverged when the residual norm exceeds this factor times the initial residual norm (default 1.e4)",
+    )
     diagnostic_file: str | None = Field(
         default=None, description="File name where solver diagnostics are written"
     )
@@ -2018,6 +2022,7 @@ class NewtonNonlinearSolver(NonlinearSolverBase):
         newton.verbose = self.verbose
         newton.absolute_tolerance = self.absolute_tolerance
         newton.relative_tolerance = self.relative_tolerance
+        newton.divergence_tolerance = self.divergence_tolerance
         newton.max_iterations = self.max_iterations
         newton.require_convergence = self.require_convergence
         newton.diagnostic_file = self.diagnostic_file
