@@ -24,6 +24,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <memory>
 #include <sstream>
 #include <unordered_map>
 #include <vector>
@@ -852,29 +853,51 @@ void SparseJacobianMatrix::RemapColumns (const WarpXSolverDOF* a_dofs)
     // Step 3: Extract diagonal
     ExtractDiagonal();
 
-    // Step 4: Store ghost DOF mapping as parallel device vectors
-    // for use by BuildExtendedDOFVector
-    const int nghost_dofs = m_ndofs_ext - m_ndofs_l;
-    std::vector<int> ghost_gdofs_h;
-    std::vector<int> ghost_ext_h;
-    ghost_gdofs_h.reserve(nghost_dofs);
-    ghost_ext_h.reserve(nghost_dofs);
+    // Step 4: Store the local-extended index of every DOF cell, ghost cells
+    // included, for BuildExtendedDOFVector. Owned DOFs are taken only from their
+    // owned cell; cells without a DOF, or with an owned DOF, hold -1.
+    m_ext_index.resize(num_amr_levels);
+    std::size_t ibox = 0;
+    for (int lev = 0; lev < num_amr_levels; lev++) {
+        for (int dir = 0; dir < 3; dir++) {
+            const auto& dof_fab = *(dofs_mfarrvec[lev][dir]);
+            m_ext_index[lev][dir] = std::make_unique<iMultiFab>(
+                dof_fab.boxArray(), dof_fab.DistributionMap(), 1, dof_fab.nGrowVect());
+            for (MFIter mfi(dof_fab); mfi.isValid(); ++mfi, ++ibox) {
+                const Box gbx = mfi.growntilebox();
+                const auto& ldof_h = ldofs_h[ibox];
+                const auto& gdof_h = gdofs_h[ibox];
+                const auto npts = static_cast<int>(gbx.numPts());
+                Gpu::PinnedVector<int> ext_h(npts);
+                for (int idx = 0; idx < npts; ++idx) {
+                    const int gdof = gdof_h[idx];
+                    if (ldof_h[idx] >= 0) {
+                        ext_h[idx] = ldof_h[idx];
+                    } else if (gdof >= 0 && global_to_ext.at(gdof) >= m_ndofs_l) {
+                        ext_h[idx] = global_to_ext.at(gdof);
+                    } else {
+                        ext_h[idx] = -1;
+                    }
+                }
+                Gpu::DeviceVector<int> ext_d(npts);
+                Gpu::copyAsync(Gpu::hostToDevice, ext_h.begin(), ext_h.end(), ext_d.begin());
+                Gpu::streamSynchronize();
 
-    for (const auto& kv : global_to_ext) {
-        if (kv.second >= m_ndofs_l) {
-            ghost_gdofs_h.push_back(kv.first);
-            ghost_ext_h.push_back(kv.second);
+                const auto* ext_ptr = ext_d.data();
+                auto ext_arr = m_ext_index[lev][dir]->array(mfi);
+                const auto gbx_lo = lbound(gbx);
+                const auto gbx_len = length(gbx);
+                ParallelFor(npts, [=] AMREX_GPU_DEVICE (int idx)
+                {
+                    int k = idx / (gbx_len.x * gbx_len.y);
+                    int j = (idx - k * gbx_len.x * gbx_len.y) / gbx_len.x;
+                    int i = idx - k * gbx_len.x * gbx_len.y - j * gbx_len.x;
+                    i += gbx_lo.x; j += gbx_lo.y; k += gbx_lo.z;
+                    ext_arr(i, j, k) = ext_ptr[idx];
+                });
+                Gpu::streamSynchronize();
+            }
         }
-    }
-
-    m_ghost_global_dofs.resize(ghost_gdofs_h.size());
-    m_ghost_ext_indices.resize(ghost_ext_h.size());
-    if (!ghost_gdofs_h.empty()) {
-        Gpu::copyAsync(Gpu::hostToDevice, ghost_gdofs_h.begin(), ghost_gdofs_h.end(),
-                       m_ghost_global_dofs.begin());
-        Gpu::copyAsync(Gpu::hostToDevice, ghost_ext_h.begin(), ghost_ext_h.end(),
-                       m_ghost_ext_indices.begin());
-        Gpu::streamSynchronize();
     }
 
     m_is_remapped = true;

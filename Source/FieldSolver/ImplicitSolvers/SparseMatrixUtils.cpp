@@ -8,7 +8,6 @@
 
 #include "FieldSolver/ImplicitSolvers/SparseJacobianMatrix.H"
 #include "FieldSolver/ImplicitSolvers/WarpXSolverVec.H"
-#include "FieldSolver/ImplicitSolvers/WarpXSolverDOF.H"
 
 #include <AMReX_GpuContainers.H>
 #include <AMReX_GpuLaunch.H>
@@ -29,7 +28,6 @@ void SparseMatrixUtils::BuildExtendedDOFVector (
         "SparseMatrixUtils::BuildExtendedDOFVector() called before RemapColumns()");
 
     const int ndofs_ext = a_sp.nExtended();
-    const int ndofs_l = a_sp.nLocalRows();
     a_ext.resize(ndofs_ext);
     auto* ext_ptr = a_ext.data();
     amrex::ParallelFor(ndofs_ext,
@@ -38,31 +36,23 @@ void SparseMatrixUtils::BuildExtendedDOFVector (
         });
     amrex::Gpu::streamSynchronize();
 
-    const auto* dofs = WarpXSolverVec::getDOFsObject().get();
-    const auto& dofs_mfarrvec = dofs->m_array;
     const auto& data_mfarrvec = a_V.getArrayVec();
-
-    const auto& ghost_gdofs = a_sp.ghostGlobalDOFs();
-    const auto& ghost_ext = a_sp.ghostExtIndices();
-    const int nghost = a_sp.nGhostDOFs();
-    const int* ghost_gdofs_ptr = nghost > 0 ? ghost_gdofs.data() : nullptr;
-    const int* ghost_ext_ptr = nghost > 0 ? ghost_ext.data() : nullptr;
 
     for (int lev = 0; lev < a_num_levels; lev++) {
         for (int dir = 0; dir < 3; dir++) {
 
-            const auto& dof_fab = *(dofs_mfarrvec[lev][dir]);
+            const auto& ext_index = a_sp.extIndex(lev, dir);
             const auto& data_src = *(data_mfarrvec[lev][dir]);
 
-            const amrex::IntVect dof_ng = dof_fab.nGrowVect();
+            const amrex::IntVect idx_ng = ext_index.nGrowVect();
             const amrex::IntVect data_ng = data_src.nGrowVect();
-            const bool need_tmp = (data_ng != dof_ng);
+            const bool need_tmp = (data_ng != idx_ng);
 
             amrex::MultiFab data_tmp;
             if (need_tmp) {
                 data_tmp.define(data_src.boxArray(),
                                 data_src.DistributionMap(),
-                                data_src.nComp(), dof_ng);
+                                data_src.nComp(), idx_ng);
                 data_tmp.setVal(amrex::Real(0.0));
                 amrex::MultiFab::Copy(data_tmp, data_src, 0, 0,
                     data_src.nComp(),
@@ -76,38 +66,22 @@ void SparseMatrixUtils::BuildExtendedDOFVector (
             const auto& data_fab =
                 need_tmp ? data_tmp : data_src;
 
-            for (amrex::MFIter mfi(dof_fab); mfi.isValid(); ++mfi) {
+            for (amrex::MFIter mfi(ext_index); mfi.isValid(); ++mfi) {
                 const amrex::Box gbx = mfi.growntilebox();
-                auto dof_arr = dof_fab.const_array(mfi);
+                auto idx_arr = ext_index.const_array(mfi);
                 auto data_arr = data_fab.const_array(mfi);
-                const int nl = ndofs_l;
-                const int ng = nghost;
 
                 // Scatter into ext_ptr with data-dependent indices, but
                 // iterations stay independent as ParallelFor requires (see
-                // issue #7097): the DOF numbering is injective over owned
-                // cells, and repeat ghost writes store the same value
-                // (ghost cells are FillBoundary'd, shared nodes agree across
-                // boxes), so they are idempotent.
+                // issue #7097): owned DOFs are written from their owned cell
+                // only, and repeat ghost writes store the same value (ghost
+                // cells are FillBoundary'd, shared nodes agree across boxes).
                 amrex::ParallelFor(gbx,
                     [=] AMREX_GPU_DEVICE (int i, int j, int k)
                 {
-                    // Valid shared nodes owned by another box are ghosts too
-                    const int ldof = dof_arr(i, j, k, 0);
-                    if (ldof >= 0 && ldof < nl) {
-                        ext_ptr[ldof] = data_arr(i, j, k);
-                    } else if (ng > 0) {
-                        const int gdof = dof_arr(i, j, k, 1);
-                        if (gdof < 0) { return; }
-                        for (int g = 0; g < ng; g++) {
-                            if (ghost_gdofs_ptr[g] == gdof) {
-                                const int eidx =
-                                    ghost_ext_ptr[g];
-                                ext_ptr[eidx] =
-                                    data_arr(i, j, k);
-                                break;
-                            }
-                        }
+                    const int eidx = idx_arr(i, j, k);
+                    if (eidx >= 0) {
+                        ext_ptr[eidx] = data_arr(i, j, k);
                     }
                 });
             }

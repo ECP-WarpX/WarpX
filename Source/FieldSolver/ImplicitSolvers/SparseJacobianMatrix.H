@@ -11,9 +11,12 @@
 #include <AMReX_Array.H>
 #include <AMReX_Geometry.H>
 #include <AMReX_GpuContainers.H>
+#include <AMReX_iMultiFab.H>
 #include <AMReX_MultiFab.H>
 #include <AMReX_REAL.H>
 #include <AMReX_Vector.H>
+
+#include <memory>
 
 struct WarpXSolverDOF;
 
@@ -270,12 +273,9 @@ public:
     [[nodiscard]] int nnzMax () const { return m_pc_mat_nnz; }
     [[nodiscard]] bool IsRemapped () const { return m_is_remapped; }
 
-    /** Ghost DOF mapping: global DOF indices of ghost cells */
-    [[nodiscard]] const amrex::Gpu::DeviceVector<int>& ghostGlobalDOFs () const
-    { return m_ghost_global_dofs; }
-    /** Ghost DOF mapping: corresponding extended-local indices */
-    [[nodiscard]] const amrex::Gpu::DeviceVector<int>& ghostExtIndices () const
-    { return m_ghost_ext_indices; }
+    /** Local-extended index of each cell of the DOF iMultiFab (-1: none) */
+    [[nodiscard]] const amrex::iMultiFab& extIndex (int a_lev, int a_dir) const
+    { return *m_ext_index[a_lev][a_dir]; }
 
 private:
 
@@ -306,11 +306,9 @@ private:
     /** Diagonal entries of the matrix (size nLocalRows) */
     amrex::Gpu::DeviceVector<amrex::Real> m_diagonal;
 
-    /** Ghost cell DOF mapping: parallel arrays storing
-     *  (global_dof, extended_index) for each ghost DOF.
-     *  Used by BuildExtendedDOFVector to fill ghost entries. */
-    amrex::Gpu::DeviceVector<int> m_ghost_global_dofs;
-    amrex::Gpu::DeviceVector<int> m_ghost_ext_indices;
+    /** Local-extended index of each cell of the DOF iMultiFabs, ghost cells
+     *  included. Used by BuildExtendedDOFVector. */
+    amrex::Vector<amrex::Array<std::unique_ptr<amrex::iMultiFab>,3>> m_ext_index;
 };
 
 #endif

@@ -27,9 +27,8 @@ namespace SparseMatrixUtils
      * \brief Build extended vector from a WarpXSolverVec.
      *
      * Performs FillBoundary on the data MultiFabs, then linearizes
-     * owned + ghost cells into a flat device vector using the DOF iMultiFab.
-     * Owned cells use local DOF indices; ghost cells use the ghost mapping
-     * stored in the SparseJacobianMatrix after RemapColumns().
+     * owned + ghost cells into a flat device vector, using the per-cell
+     * local-extended index stored in the SparseJacobianMatrix by RemapColumns().
      *
      * \param[in]  a_V        the solver vector to linearize
      * \param[out] a_ext      flat device vector (resized to nExtended)
