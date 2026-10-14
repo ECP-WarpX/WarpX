@@ -6,7 +6,9 @@
  */
 #include "CurrentControlledPort.H"
 
+#include "EmbeddedBoundary/Enabled.H"
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
+#include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/WarpXConst.H"
 #include "WarpX.H"
@@ -44,9 +46,9 @@ nearly_equal (amrex::Real const lhs, amrex::Real const rhs) {
 
 #if defined(WARPX_DIM_3D) || defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
 [[nodiscard]] int
-nearest_index (amrex::MultiFab const& field, int const direction,
-               amrex::Real const coordinate) {
-    amrex::Geometry const& geometry = WarpX::GetInstance().Geom(0);
+nearest_index (amrex::Geometry const& geometry, amrex::MultiFab const& field, int const direction,
+               amrex::Real const coordinate)
+{
     amrex::Box const cell_domain = geometry.Domain();
     amrex::Box const field_domain = amrex::convert(cell_domain, field.ixType());
     int const nodal = field.ixType().nodeCentered(direction) ? 1 : 0;
@@ -65,9 +67,9 @@ nearest_index (amrex::MultiFab const& field, int const direction,
 
 #ifdef WARPX_DIM_3D
 [[nodiscard]] std::array<int, 2>
-index_range (amrex::MultiFab const& field, int const direction,
-             amrex::Real const lower, amrex::Real const upper) {
-    amrex::Geometry const& geometry = WarpX::GetInstance().Geom(0);
+index_range (amrex::Geometry const& geometry, amrex::MultiFab const& field, int const direction,
+             amrex::Real const lower, amrex::Real const upper)
+{
     amrex::Box const cell_domain = geometry.Domain();
     amrex::Box const field_domain = amrex::convert(cell_domain, field.ixType());
     int const nodal = field.ixType().nodeCentered(direction) ? 1 : 0;
@@ -93,9 +95,9 @@ index_range (amrex::MultiFab const& field, int const direction,
 
 #ifdef WARPX_DIM_RZ
 [[nodiscard]] amrex::Real
-index_coordinate (amrex::MultiFab const& field, int const direction,
-                  int const index) {
-    amrex::Geometry const& geometry = WarpX::GetInstance().Geom(0);
+index_coordinate (amrex::Geometry const& geometry, amrex::MultiFab const& field,
+                  int const direction, int const index)
+{
     amrex::Box const cell_domain = geometry.Domain();
     amrex::Real const offset =
         field.ixType().nodeCentered(direction) ? 0.0_rt : 0.5_rt;
@@ -130,7 +132,10 @@ CurrentControlledPort::is_enabled () {
     return enabled;
 }
 
-CurrentControlledPort::CurrentControlledPort (std::string parameter_prefix) {
+CurrentControlledPort::CurrentControlledPort (std::string parameter_prefix, int const level,
+                                              PatchType const patch_type)
+    : m_parameter_prefix(parameter_prefix), m_level(level), m_patch_type(patch_type)
+{
     amrex::ParmParse const parser("warpx");
     auto const key = [&parameter_prefix] (std::string const& suffix) {
         return parameter_prefix + "." + suffix;
@@ -219,13 +224,75 @@ CurrentControlledPort::CurrentControlledPort (std::string parameter_prefix) {
     }
 }
 
+amrex::Geometry const&
+CurrentControlledPort::Geometry () const
+{
+    return WarpX::GetInstance().Geom(m_patch_type == PatchType::fine ? m_level : m_level - 1);
+}
+
+amrex::Array4<amrex::Real const>
+CurrentControlledPort::Permeability (amrex::MFIter const& mfi) const
+{
+    auto* const properties =
+        WarpX::GetInstance().get_pointer_MacroscopicProperties(m_level, m_patch_type);
+    return properties == nullptr ? amrex::Array4<amrex::Real const>{}
+                                 : properties->getmu_mf().const_array(mfi);
+}
+
+bool
+CurrentControlledPort::PatchContainsPort (ablastr::fields::VectorField const& Bfield) const
+{
+    if (m_level == 0) {
+        return true;
+    }
+    auto const& geometry = Geometry();
+    amrex::IntVect lower, upper;
+    for (int mesh_direction = 0; mesh_direction < AMREX_SPACEDIM; ++mesh_direction) {
+#ifdef WARPX_DIM_3D
+        int const direction = mesh_direction;
+#else
+        int const direction = mesh_direction == 0 ? 0 : 2;
+#endif
+        amrex::Real const lo = std::min(m_terminal_0.lo[direction], m_terminal_1.lo[direction]);
+        amrex::Real const hi = std::max(m_terminal_0.hi[direction], m_terminal_1.hi[direction]);
+        lower[mesh_direction] = static_cast<int>(std::floor((lo - geometry.ProbLo(mesh_direction)) /
+                                                            geometry.CellSize(mesh_direction))) +
+                                geometry.Domain().smallEnd(mesh_direction);
+        upper[mesh_direction] = static_cast<int>(std::ceil((hi - geometry.ProbLo(mesh_direction)) /
+                                                           geometry.CellSize(mesh_direction))) +
+                                geometry.Domain().smallEnd(mesh_direction);
+    }
+    amrex::Box const region(lower, upper);
+    auto const boxes = amrex::convert(Bfield[0]->boxArray(), amrex::IntVect::TheCellVector());
+    auto const required = amrex::grow(region, 2) & geometry.Domain();
+    if (!boxes.intersects(required)) {
+        return false;
+    }
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        boxes.contains(required),
+        "An SMR current-controlled port must be wholly inside or outside each refined patch, "
+        "with two coarse cells of clearance. "
+        "Port contours crossing refinement boundaries are not supported.");
+    return true;
+}
+
 void
 CurrentControlledPort::ValidateGeometry (
     ablastr::fields::VectorField const& Bfield) const {
     WarpX const& warpx = WarpX::GetInstance();
+#ifdef WARPX_DIM_RZ
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(warpx.maxLevel() == 0,
+                                     "RZ current-controlled ports with SMR require cylindrical PML "
+                                     "support and are not supported yet.");
+#endif
+    bool subcycling = false;
+    amrex::ParmParse("warpx").query("do_subcycling", subcycling);
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        warpx.maxLevel() == 0,
-        "Current-controlled ports currently support one mesh level.");
+        warpx.maxLevel() == 0 || (warpx.evolve_scheme == EvolveScheme::Explicit && !subcycling),
+        "SMR current-controlled ports require explicit evolution and synchronized timesteps.");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        warpx.maxLevel() == 0 || !EB::enabled(),
+        "SMR current-controlled ports with embedded boundaries are not supported.");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         warpx.getdo_moving_window() == 0,
         "Current-controlled ports do not yet support a moving window.");
@@ -252,7 +319,7 @@ CurrentControlledPort::ValidateGeometry (
     }
 
 #if defined(WARPX_DIM_3D) || defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-    amrex::Geometry const& geometry = warpx.Geom(0);
+    amrex::Geometry const& geometry = Geometry();
     std::array<amrex::Real, 3> domain_lo{{0.0_rt, 0.0_rt, 0.0_rt}};
     std::array<amrex::Real, 3> domain_hi{{0.0_rt, 0.0_rt, 0.0_rt}};
 #ifdef WARPX_DIM_3D
@@ -314,10 +381,10 @@ CurrentControlledPort::ValidateGeometry (
     amrex::MultiFab const& terminal_field = *Bfield[1];
     int const terminal_mesh_direction = m_direction == 0 ? 0 : 1;
 #endif
-    int const terminal_plane_0 = nearest_index(
-        terminal_field, terminal_mesh_direction, m_terminal_0.lo[m_direction]);
-    int const terminal_plane_1 = nearest_index(
-        terminal_field, terminal_mesh_direction, m_terminal_1.lo[m_direction]);
+    int const terminal_plane_0 = nearest_index(Geometry(), terminal_field, terminal_mesh_direction,
+                                               m_terminal_0.lo[m_direction]);
+    int const terminal_plane_1 = nearest_index(Geometry(), terminal_field, terminal_mesh_direction,
+                                               m_terminal_1.lo[m_direction]);
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         terminal_plane_0 != terminal_plane_1,
         "The two current-controlled terminals must map to distinct field "
@@ -328,10 +395,20 @@ CurrentControlledPort::ValidateGeometry (
 void
 CurrentControlledPort::InitData (
     ablastr::fields::VectorField const& Bfield,
-    std::array<std::unique_ptr<amrex::iMultiFab>, 3> const& eb_update_B,
-    amrex::Real const time) {
+    std::array<std::unique_ptr<amrex::iMultiFab>, 3> const& eb_update_B, amrex::Real const time,
+    int const lev, PatchType const patch_type)
+{
+    if (lev != m_level || patch_type != m_patch_type) {
+        auto patch = std::make_unique<CurrentControlledPort>(m_parameter_prefix, lev, patch_type);
+        patch->InitData(Bfield, eb_update_B, time, lev, patch_type);
+        m_refined_patches.push_back(std::move(patch));
+        return;
+    }
     ValidateGeometry(Bfield);
-    amrex::Geometry const& geometry = WarpX::GetInstance().Geom(0);
+    if (!PatchContainsPort(Bfield)) {
+        return;
+    }
+    amrex::Geometry const& geometry = Geometry();
     for (int component = 0; component < 3; ++component) {
         m_owner_mask[component] =
             Bfield[component]->OwnerMask(geometry.periodicity());
@@ -340,7 +417,7 @@ CurrentControlledPort::InitData (
     BuildCurlBasis(Bfield, eb_update_B);
 #endif
     m_initialized = true;
-    ApplyBfield(Bfield, eb_update_B, 0, PatchType::fine, time);
+    ApplyBfield(Bfield, eb_update_B, lev, patch_type, time);
 }
 
 std::array<amrex::Real, 3>
@@ -392,7 +469,7 @@ std::array<CurrentControlledPort::Edge, 4>
 CurrentControlledPort::Edges () const {
     int const tangent_a = (m_direction + 1) % 3;
     int const tangent_b = (m_direction + 2) % 3;
-    amrex::Geometry const& geometry = WarpX::GetInstance().Geom(0);
+    amrex::Geometry const& geometry = Geometry();
     amrex::Real const offset_a = WarpX::grid_type == GridType::Staggered
                                      ? 0.5_rt * geometry.CellSize(tangent_a)
                                      : 0.0_rt;
@@ -417,10 +494,9 @@ int
 CurrentControlledPort::EdgeFixedIndex (amrex::MultiFab const& field,
                                        Edge const& edge) const {
     if (WarpX::grid_type != GridType::Staggered) {
-        return nearest_index(field, edge.fixed_direction,
-                             edge.fixed_coordinate);
+        return nearest_index(Geometry(), field, edge.fixed_direction, edge.fixed_coordinate);
     }
-    amrex::Geometry const& geometry = WarpX::GetInstance().Geom(0);
+    amrex::Geometry const& geometry = Geometry();
     amrex::Box const field_domain =
         amrex::convert(geometry.Domain(), field.ixType());
     amrex::Real const bound = edge.upper_boundary
@@ -446,8 +522,9 @@ CurrentControlledPort::BuildCurlBasis (
     ablastr::fields::VectorField const& Bfield,
     std::array<std::unique_ptr<amrex::iMultiFab>, 3> const& eb_update_B) {
     WarpX& warpx = WarpX::GetInstance();
-    amrex::BoxArray const& cell_boxes = warpx.boxArray(0);
-    amrex::DistributionMapping const& distribution = warpx.DistributionMap(0);
+    amrex::BoxArray const cell_boxes =
+        amrex::convert(Bfield[0]->boxArray(), amrex::IntVect::TheCellVector());
+    amrex::DistributionMapping const& distribution = Bfield[0]->DistributionMap();
     amrex::IntVect const guards(1);
 
     std::array<std::unique_ptr<amrex::MultiFab>, 3> potential;
@@ -467,7 +544,7 @@ CurrentControlledPort::BuildCurlBasis (
     }
 
     amrex::MultiFab& axial_potential = *potential[m_direction];
-    amrex::Geometry const& geometry = warpx.Geom(0);
+    amrex::Geometry const& geometry = Geometry();
     auto const prob_lo = geometry.ProbLoArray();
     auto const cell_size = geometry.CellSizeArray();
     amrex::IntVect const domain_lo = geometry.Domain().smallEnd();
@@ -510,8 +587,10 @@ CurrentControlledPort::BuildCurlBasis (
         potential[0].get(), potential[1].get(), potential[2].get()};
     ablastr::fields::VectorField basis_field{
         m_curl_basis[0].get(), m_curl_basis[1].get(), m_curl_basis[2].get()};
-    warpx.get_pointer_fdtd_solver_fp(0)->ComputeCurlA(
-        basis_field, potential_field, eb_update_B, 0);
+    auto* const solver = m_patch_type == PatchType::fine
+                             ? warpx.get_pointer_fdtd_solver_fp(m_level)
+                             : warpx.get_pointer_fdtd_solver_cp(m_level);
+    solver->ComputeCurlA(basis_field, potential_field, eb_update_B, m_level);
     for (auto& component : m_curl_basis) {
         component->FillBoundary(geometry.periodicity());
     }
@@ -523,11 +602,11 @@ CurrentControlledPort::MeasureEdgeLocal (amrex::MultiFab const& field,
                                          amrex::iMultiFab const* const eb_flag,
                                          Edge const& edge,
                                          int const plane_index) const {
-    amrex::Geometry const& geometry = WarpX::GetInstance().Geom(0);
+    amrex::Geometry const& geometry = Geometry();
     amrex::Box line = amrex::convert(geometry.Domain(), field.ixType());
     int const fixed_index = EdgeFixedIndex(field, edge);
-    auto const tangent_range = index_range(field, edge.tangent_direction,
-                                           edge.tangent_lo, edge.tangent_hi);
+    auto const tangent_range =
+        index_range(Geometry(), field, edge.tangent_direction, edge.tangent_lo, edge.tangent_hi);
     line.setSmall(m_direction, plane_index);
     line.setBig(m_direction, plane_index);
     line.setSmall(edge.fixed_direction, fixed_index);
@@ -543,6 +622,7 @@ CurrentControlledPort::MeasureEdgeLocal (amrex::MultiFab const& field,
             continue;
         }
         auto const values = field.const_array(mfi);
+        auto const permeability = Permeability(mfi);
         auto const owners = owner_mask.const_array(mfi);
         amrex::Array4<int const> flags;
         if (eb_flag != nullptr) {
@@ -558,7 +638,8 @@ CurrentControlledPort::MeasureEdgeLocal (amrex::MultiFab const& field,
                 if (owners(i, j, k) == 0 || (flags && flags(i, j, k) == 0)) {
                     return {0.0_rt};
                 }
-                return {orientation * values(i, j, k) * spacing};
+                return {orientation * values(i, j, k) * spacing *
+                        (permeability ? PhysConst::mu0 / permeability(i, j, k) : 1.0_rt)};
             });
         auto const reduced = reduce_data.value();
         circulation += amrex::get<0>(reduced);
@@ -589,7 +670,7 @@ CurrentControlledPort::MeasureContoursLocalBatched (
     amrex::Gpu::DeviceVector<amrex::Real> device_circulation(number_of_planes,
                                                              0.0_rt);
     amrex::Real* const circulation = device_circulation.data();
-    amrex::Geometry const& geometry = WarpX::GetInstance().Geom(0);
+    amrex::Geometry const& geometry = Geometry();
 
     for (Edge const& edge : Edges()) {
         amrex::MultiFab const& field = *Bfield[edge.component];
@@ -598,8 +679,8 @@ CurrentControlledPort::MeasureContoursLocalBatched (
             eb_update_B[edge.component].get();
         amrex::Box slab = amrex::convert(geometry.Domain(), field.ixType());
         int const fixed_index = EdgeFixedIndex(field, edge);
-        auto const tangent_range = index_range(
-            field, edge.tangent_direction, edge.tangent_lo, edge.tangent_hi);
+        auto const tangent_range = index_range(Geometry(), field, edge.tangent_direction,
+                                               edge.tangent_lo, edge.tangent_hi);
         slab.setSmall(m_direction, first_plane);
         slab.setBig(m_direction, last_plane);
         slab.setSmall(edge.fixed_direction, fixed_index);
@@ -616,6 +697,7 @@ CurrentControlledPort::MeasureContoursLocalBatched (
                 continue;
             }
             auto const values = field.const_array(mfi);
+            auto const permeability = Permeability(mfi);
             auto const owners = owner_mask.const_array(mfi);
             amrex::Array4<int const> flags;
             if (eb_flag != nullptr) {
@@ -628,7 +710,8 @@ CurrentControlledPort::MeasureContoursLocalBatched (
                 int const index[3] = {i, j, k};
                 amrex::Gpu::Atomic::AddNoRet(
                     &circulation[index[axis] - first_plane],
-                    weight * values(i, j, k));
+                    weight * values(i, j, k) *
+                        (permeability ? PhysConst::mu0 / permeability(i, j, k) : 1.0_rt));
             });
         }
     }
@@ -689,10 +772,10 @@ CurrentControlledPort::MeasureXZContourLocal (
     int const transverse_direction = m_direction == 0 ? 2 : 0;
     int const axial_mesh_direction = m_direction == 0 ? 0 : 1;
     int const transverse_mesh_direction = m_direction == 0 ? 1 : 0;
-    int const lower_index = nearest_index(
-        by, transverse_mesh_direction, m_terminal_0.lo[transverse_direction]);
-    int const upper_index = nearest_index(
-        by, transverse_mesh_direction, m_terminal_0.hi[transverse_direction]);
+    int const lower_index = nearest_index(Geometry(), by, transverse_mesh_direction,
+                                          m_terminal_0.lo[transverse_direction]);
+    int const upper_index = nearest_index(Geometry(), by, transverse_mesh_direction,
+                                          m_terminal_0.hi[transverse_direction]);
     amrex::Real const upper_weight = m_direction == 2 ? 1.0_rt : -1.0_rt;
 
     amrex::Real circulation = 0.0_rt;
@@ -700,6 +783,7 @@ CurrentControlledPort::MeasureXZContourLocal (
     amrex::Real active_points = 0.0_rt;
     for (amrex::MFIter mfi(by); mfi.isValid(); ++mfi) {
         auto const values = by.const_array(mfi);
+        auto const permeability = Permeability(mfi);
         auto const owners = owner_mask.const_array(mfi);
         amrex::Array4<int const> flags;
         if (eb_flag != nullptr) {
@@ -728,7 +812,9 @@ CurrentControlledPort::MeasureXZContourLocal (
                         (flags && flags(i, j, k) == 0)) {
                         return {0.0_rt, 0.0_rt, 0.0_rt};
                     }
-                    return {weight * values(i, j, k), weight * weight, 1.0_rt};
+                    amrex::Real const h_weight =
+                        weight * (permeability ? PhysConst::mu0 / permeability(i, j, k) : 1.0_rt);
+                    return {h_weight * values(i, j, k), h_weight * h_weight, 1.0_rt};
                 });
             auto const reduced = reduce_data.value();
             circulation += amrex::get<0>(reduced);
@@ -749,16 +835,16 @@ CurrentControlledPort::MeasureXZContoursLocalBatched (
     int const transverse_direction = m_direction == 0 ? 2 : 0;
     int const axial_mesh_direction = m_direction == 0 ? 0 : 1;
     int const transverse_mesh_direction = m_direction == 0 ? 1 : 0;
-    int const lower_index = nearest_index(
-        by, transverse_mesh_direction, m_terminal_0.lo[transverse_direction]);
-    int const upper_index = nearest_index(
-        by, transverse_mesh_direction, m_terminal_0.hi[transverse_direction]);
+    int const lower_index = nearest_index(Geometry(), by, transverse_mesh_direction,
+                                          m_terminal_0.lo[transverse_direction]);
+    int const upper_index = nearest_index(Geometry(), by, transverse_mesh_direction,
+                                          m_terminal_0.hi[transverse_direction]);
     amrex::Real const upper_weight = m_direction == 2 ? 1.0_rt : -1.0_rt;
     int const number_of_planes = last_plane - first_plane + 1;
     amrex::Gpu::DeviceVector<amrex::Real> device_contours(3 * number_of_planes,
                                                           0.0_rt);
     amrex::Real* const contours = device_contours.data();
-    amrex::Geometry const& geometry = WarpX::GetInstance().Geom(0);
+    amrex::Geometry const& geometry = Geometry();
 
     for (int side = 0; side < 2; ++side) {
         int const transverse_index = side == 0 ? lower_index : upper_index;
@@ -775,6 +861,7 @@ CurrentControlledPort::MeasureXZContoursLocalBatched (
                 continue;
             }
             auto const values = by.const_array(mfi);
+            auto const permeability = Permeability(mfi);
             auto const owners = owner_mask.const_array(mfi);
             amrex::Array4<int const> flags;
             if (eb_flag != nullptr) {
@@ -786,10 +873,10 @@ CurrentControlledPort::MeasureXZContoursLocalBatched (
                 }
                 int const index[3] = {i, j, k};
                 int const offset = index[axial_mesh_direction] - first_plane;
-                amrex::Gpu::Atomic::AddNoRet(&contours[3 * offset],
-                                             weight * values(i, j, k));
-                amrex::Gpu::Atomic::AddNoRet(&contours[3 * offset + 1],
-                                             weight * weight);
+                amrex::Real const h_weight =
+                    weight * (permeability ? PhysConst::mu0 / permeability(i, j, k) : 1.0_rt);
+                amrex::Gpu::Atomic::AddNoRet(&contours[3 * offset], h_weight * values(i, j, k));
+                amrex::Gpu::Atomic::AddNoRet(&contours[3 * offset + 1], h_weight * h_weight);
                 amrex::Gpu::Atomic::AddNoRet(&contours[3 * offset + 2], 1.0_rt);
             });
         }
@@ -808,17 +895,17 @@ CurrentControlledPort::CorrectXZContoursBatched (
     int const transverse_direction = m_direction == 0 ? 2 : 0;
     int const axial_mesh_direction = m_direction == 0 ? 0 : 1;
     int const transverse_mesh_direction = m_direction == 0 ? 1 : 0;
-    int const lower_index = nearest_index(
-        by, transverse_mesh_direction, m_terminal_0.lo[transverse_direction]);
-    int const upper_index = nearest_index(
-        by, transverse_mesh_direction, m_terminal_0.hi[transverse_direction]);
+    int const lower_index = nearest_index(Geometry(), by, transverse_mesh_direction,
+                                          m_terminal_0.lo[transverse_direction]);
+    int const upper_index = nearest_index(Geometry(), by, transverse_mesh_direction,
+                                          m_terminal_0.hi[transverse_direction]);
     amrex::Real const upper_weight = m_direction == 2 ? 1.0_rt : -1.0_rt;
     int const last_plane = first_plane + static_cast<int>(scales.size()) - 1;
     amrex::Gpu::DeviceVector<amrex::Real> device_scales(scales.size());
     amrex::Gpu::copy(amrex::Gpu::hostToDevice, scales.begin(), scales.end(),
                      device_scales.begin());
     amrex::Real const* const scale = device_scales.data();
-    amrex::Geometry const& geometry = WarpX::GetInstance().Geom(0);
+    amrex::Geometry const& geometry = Geometry();
 
     for (int side = 0; side < 2; ++side) {
         int const transverse_index = side == 0 ? lower_index : upper_index;
@@ -838,6 +925,7 @@ CurrentControlledPort::CorrectXZContoursBatched (
                 continue;
             }
             auto const values = by.array(mfi);
+            auto const permeability = Permeability(mfi);
             amrex::Array4<int const> flags;
             if (eb_flag != nullptr) {
                 flags = eb_flag->const_array(mfi);
@@ -849,7 +937,8 @@ CurrentControlledPort::CorrectXZContoursBatched (
                 }
                 int const index[3] = {i, j, k};
                 int const offset = index[axial_mesh_direction] - first_plane;
-                values(i, j, k) += scale[offset] * weight;
+                values(i, j, k) += scale[offset] * weight *
+                                   (permeability ? PhysConst::mu0 / permeability(i, j, k) : 1.0_rt);
             });
         }
     }
@@ -869,21 +958,18 @@ CurrentControlledPort::MeasureRZContourLocal (
         m_terminal_0.lo[transverse_physical_direction];
     amrex::Real const upper_coordinate =
         m_terminal_0.hi[transverse_physical_direction];
-    bool const omit_lower =
-        axial && lower_coordinate <= WarpX::GetInstance().Geom(0).ProbLo(0);
+    bool const omit_lower = axial && lower_coordinate <= Geometry().ProbLo(0);
     int const lower_index =
         omit_lower ? 0
-                   : nearest_index(btheta, transverse_mesh_direction,
-                                   lower_coordinate);
+                   : nearest_index(Geometry(), btheta, transverse_mesh_direction, lower_coordinate);
     int const upper_index =
-        nearest_index(btheta, transverse_mesh_direction, upper_coordinate);
+        nearest_index(Geometry(), btheta, transverse_mesh_direction, upper_coordinate);
     amrex::Real const lower_radius =
-        axial && !omit_lower ? index_coordinate(btheta, 0, lower_index)
-                             : 0.0_rt;
+        axial && !omit_lower ? index_coordinate(Geometry(), btheta, 0, lower_index) : 0.0_rt;
     amrex::Real const upper_radius =
-        axial ? index_coordinate(btheta, 0, upper_index) : 0.0_rt;
+        axial ? index_coordinate(Geometry(), btheta, 0, upper_index) : 0.0_rt;
     amrex::Real const plane_radius =
-        axial ? 0.0_rt : index_coordinate(btheta, 0, plane_index);
+        axial ? 0.0_rt : index_coordinate(Geometry(), btheta, 0, plane_index);
 
     amrex::Real circulation = 0.0_rt;
     amrex::Real response_norm = 0.0_rt;
@@ -956,24 +1042,21 @@ CurrentControlledPort::MeasureRZContoursLocalBatched (
         m_terminal_0.lo[transverse_physical_direction];
     amrex::Real const upper_coordinate =
         m_terminal_0.hi[transverse_physical_direction];
-    bool const omit_lower =
-        axial && lower_coordinate <= WarpX::GetInstance().Geom(0).ProbLo(0);
+    bool const omit_lower = axial && lower_coordinate <= Geometry().ProbLo(0);
     int const lower_index =
         omit_lower ? 0
-                   : nearest_index(btheta, transverse_mesh_direction,
-                                   lower_coordinate);
+                   : nearest_index(Geometry(), btheta, transverse_mesh_direction, lower_coordinate);
     int const upper_index =
-        nearest_index(btheta, transverse_mesh_direction, upper_coordinate);
+        nearest_index(Geometry(), btheta, transverse_mesh_direction, upper_coordinate);
     amrex::Real const lower_radius =
-        axial && !omit_lower ? index_coordinate(btheta, 0, lower_index)
-                             : 0.0_rt;
+        axial && !omit_lower ? index_coordinate(Geometry(), btheta, 0, lower_index) : 0.0_rt;
     amrex::Real const upper_radius =
-        axial ? index_coordinate(btheta, 0, upper_index) : 0.0_rt;
+        axial ? index_coordinate(Geometry(), btheta, 0, upper_index) : 0.0_rt;
     int const number_of_planes = last_plane - first_plane + 1;
     std::vector<amrex::Real> weights(2 * number_of_planes);
     for (int offset = 0; offset < number_of_planes; ++offset) {
         amrex::Real const plane_radius =
-            axial ? 0.0_rt : index_coordinate(btheta, 0, first_plane + offset);
+            axial ? 0.0_rt : index_coordinate(Geometry(), btheta, 0, first_plane + offset);
         weights[2 * offset] = omit_lower
                                   ? 0.0_rt
                                   : -2.0_rt * MathConst::pi *
@@ -989,7 +1072,7 @@ CurrentControlledPort::MeasureRZContoursLocalBatched (
     amrex::Gpu::DeviceVector<amrex::Real> device_contours(3 * number_of_planes,
                                                           0.0_rt);
     amrex::Real* const contours = device_contours.data();
-    amrex::Geometry const& geometry = WarpX::GetInstance().Geom(0);
+    amrex::Geometry const& geometry = Geometry();
 
     for (int side = 0; side < 2; ++side) {
         if (side == 0 && omit_lower) {
@@ -1047,25 +1130,22 @@ CurrentControlledPort::CorrectRZContoursBatched (
         m_terminal_0.lo[transverse_physical_direction];
     amrex::Real const upper_coordinate =
         m_terminal_0.hi[transverse_physical_direction];
-    bool const omit_lower =
-        axial && lower_coordinate <= WarpX::GetInstance().Geom(0).ProbLo(0);
+    bool const omit_lower = axial && lower_coordinate <= Geometry().ProbLo(0);
     int const lower_index =
         omit_lower ? 0
-                   : nearest_index(btheta, transverse_mesh_direction,
-                                   lower_coordinate);
+                   : nearest_index(Geometry(), btheta, transverse_mesh_direction, lower_coordinate);
     int const upper_index =
-        nearest_index(btheta, transverse_mesh_direction, upper_coordinate);
+        nearest_index(Geometry(), btheta, transverse_mesh_direction, upper_coordinate);
     amrex::Real const lower_radius =
-        axial && !omit_lower ? index_coordinate(btheta, 0, lower_index)
-                             : 0.0_rt;
+        axial && !omit_lower ? index_coordinate(Geometry(), btheta, 0, lower_index) : 0.0_rt;
     amrex::Real const upper_radius =
-        axial ? index_coordinate(btheta, 0, upper_index) : 0.0_rt;
+        axial ? index_coordinate(Geometry(), btheta, 0, upper_index) : 0.0_rt;
     int const number_of_planes = static_cast<int>(scales.size());
     int const last_plane = first_plane + number_of_planes - 1;
     std::vector<amrex::Real> weights(2 * number_of_planes);
     for (int offset = 0; offset < number_of_planes; ++offset) {
         amrex::Real const plane_radius =
-            axial ? 0.0_rt : index_coordinate(btheta, 0, first_plane + offset);
+            axial ? 0.0_rt : index_coordinate(Geometry(), btheta, 0, first_plane + offset);
         weights[2 * offset] = omit_lower
                                   ? 0.0_rt
                                   : -2.0_rt * MathConst::pi *
@@ -1082,7 +1162,7 @@ CurrentControlledPort::CorrectRZContoursBatched (
     amrex::Gpu::copy(amrex::Gpu::hostToDevice, scales.begin(), scales.end(),
                      device_scales.begin());
     amrex::Real const* const scale_values = device_scales.data();
-    amrex::Geometry const& geometry = WarpX::GetInstance().Geom(0);
+    amrex::Geometry const& geometry = Geometry();
 
     for (int side = 0; side < 2; ++side) {
         if (side == 0 && omit_lower) {
@@ -1132,10 +1212,10 @@ CurrentControlledPort::Apply3D (
     amrex::Real const target_axis_current) {
     auto const edges = Edges();
     amrex::MultiFab const& reference_field = *Bfield[edges[0].component];
-    int const plane_0 = nearest_index(reference_field, m_direction,
-                                      m_terminal_0.lo[m_direction]);
-    int const plane_1 = nearest_index(reference_field, m_direction,
-                                      m_terminal_1.lo[m_direction]);
+    int const plane_0 =
+        nearest_index(Geometry(), reference_field, m_direction, m_terminal_0.lo[m_direction]);
+    int const plane_1 =
+        nearest_index(Geometry(), reference_field, m_direction, m_terminal_1.lo[m_direction]);
     int const first_plane = std::min(plane_0, plane_1);
     int const last_plane = std::max(plane_0, plane_1);
     int const number_of_planes = last_plane - first_plane + 1;
@@ -1187,9 +1267,9 @@ CurrentControlledPort::ApplyXZ (
     amrex::MultiFab& by = *Bfield[1];
     int const axial_mesh_direction = m_direction == 0 ? 0 : 1;
     int const plane_0 =
-        nearest_index(by, axial_mesh_direction, m_terminal_0.lo[m_direction]);
+        nearest_index(Geometry(), by, axial_mesh_direction, m_terminal_0.lo[m_direction]);
     int const plane_1 =
-        nearest_index(by, axial_mesh_direction, m_terminal_1.lo[m_direction]);
+        nearest_index(Geometry(), by, axial_mesh_direction, m_terminal_1.lo[m_direction]);
     int const first_plane = std::min(plane_0, plane_1);
     int const last_plane = std::max(plane_0, plane_1);
     int const number_of_planes = last_plane - first_plane + 1;
@@ -1232,10 +1312,10 @@ CurrentControlledPort::ApplyRZ (
     amrex::Real const target_axis_current) {
     amrex::MultiFab& btheta = *Bfield[1];
     int const terminal_mesh_direction = m_direction == 0 ? 0 : 1;
-    int const plane_0 = nearest_index(btheta, terminal_mesh_direction,
-                                      m_terminal_0.lo[m_direction]);
-    int const plane_1 = nearest_index(btheta, terminal_mesh_direction,
-                                      m_terminal_1.lo[m_direction]);
+    int const plane_0 =
+        nearest_index(Geometry(), btheta, terminal_mesh_direction, m_terminal_0.lo[m_direction]);
+    int const plane_1 =
+        nearest_index(Geometry(), btheta, terminal_mesh_direction, m_terminal_1.lo[m_direction]);
     int const first_plane = std::min(plane_0, plane_1);
     int const last_plane = std::max(plane_0, plane_1);
     int const number_of_planes = last_plane - first_plane + 1;
@@ -1276,7 +1356,16 @@ CurrentControlledPort::ApplyBfield (
     ablastr::fields::VectorField const& Bfield,
     std::array<std::unique_ptr<amrex::iMultiFab>, 3> const& eb_update_B,
     int const lev, PatchType const patch_type, amrex::Real const time) {
-    if (!m_initialized || lev != 0 || patch_type != PatchType::fine) {
+    if (lev != m_level || patch_type != m_patch_type) {
+        for (auto& patch : m_refined_patches) {
+            if (patch->m_level == lev && patch->m_patch_type == patch_type) {
+                patch->ApplyBfield(Bfield, eb_update_B, lev, patch_type, time);
+                return;
+            }
+        }
+        return;
+    }
+    if (!m_initialized) {
         return;
     }
 
@@ -1299,11 +1388,13 @@ CurrentControlledPort::ApplyBfield (
 void
 WarpX::ApplyCurrentControlledPort (int const lev, PatchType const patch_type,
                                    amrex::Real const time) {
-    if (m_current_controlled_ports.empty() || patch_type != PatchType::fine) {
+    if (m_current_controlled_ports.empty()) {
         return;
     }
     auto const Bfield =
-        m_fields.get_alldirs(warpx::fields::FieldType::Bfield_fp, lev);
+        m_fields.get_alldirs(patch_type == PatchType::fine ? warpx::fields::FieldType::Bfield_fp
+                                                           : warpx::fields::FieldType::Bfield_cp,
+                             lev);
     for (auto& current_port : m_current_controlled_ports) {
         current_port->ApplyBfield(Bfield, m_eb_update_B[lev], lev, patch_type,
                                   time);

@@ -177,6 +177,9 @@ MacroscopicProperties::InitData (
 
     }
 
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_mu_mf->min(0) > 0.0_rt,
+                                     "Macroscopic permeability mu must be strictly positive.");
+
     const amrex::IntVect sigma_stag = m_sigma_mf->ixType().toIntVect();
     const amrex::IntVect epsilon_stag = m_eps_mf->ixType().toIntVect();
     const amrex::IntVect mu_stag = m_mu_mf->ixType().toIntVect();

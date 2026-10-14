@@ -132,3 +132,95 @@ add_warpx_test(
     OFF  # checksum
     OFF  # dependency
 )
+
+# Static refinement: per-patch material data and independent contour measurements.
+foreach(source IN ITEMS antenna port)
+    add_warpx_test(
+        test_2d_current_${source}_smr_picmi
+        2
+        1
+        "inputs_test_smr_picmi.py --dims 2 --source ${source}"
+        "analysis_smr.py --dims 2 --source ${source}"
+        OFF
+        OFF
+    )
+    add_warpx_test(
+        test_3d_current_${source}_smr_picmi
+        3
+        1
+        "inputs_test_smr_picmi.py --dims 3 --source ${source}"
+        "analysis_smr.py --dims 3 --source ${source}"
+        OFF
+        OFF
+    )
+endforeach()
+
+foreach(method IN ITEMS backwardeuler laxwendroff)
+    add_warpx_test(
+        test_3d_material_smr_${method}_picmi
+        3
+        1
+        "inputs_test_smr_picmi.py --dims 3 --source material --method ${method}"
+        "analysis_smr.py --dims 3 --source material --method ${method}"
+        OFF
+        OFF
+    )
+endforeach()
+
+add_warpx_test(
+    test_3d_current_port_smr_outside_picmi
+    3
+    1
+    "inputs_test_smr_picmi.py --dims 3 --source port --placement outside"
+    "analysis_smr.py --dims 3 --source port"
+    OFF
+    OFF
+)
+
+foreach(source IN ITEMS antenna port)
+    add_warpx_test(
+        test_3d_current_${source}_smr_picmi_restart
+        3
+        1
+        "inputs_test_smr_picmi.py --dims 3 --source ${source} --restart ../test_3d_current_${source}_smr_picmi/diags/chk000001"
+        "analysis_smr.py --dims 3 --source ${source} --reference ../test_3d_current_${source}_smr_picmi/diags/diag1000002"
+        OFF
+        test_3d_current_${source}_smr_picmi
+    )
+endforeach()
+
+if(3 IN_LIST WarpX_DIMS AND WarpX_PYTHON)
+    add_warpx_test(
+        test_3d_current_port_smr_crossing_rejected_picmi
+        3
+        1
+        "inputs_test_smr_picmi.py --dims 3 --source port --placement crossing"
+        OFF
+        OFF
+        OFF
+    )
+    set_tests_properties(
+        test_3d_current_port_smr_crossing_rejected_picmi.run
+        PROPERTIES
+            PASS_REGULAR_EXPRESSION "contours crossing refinement boundaries are not supported"
+    )
+endif()
+
+if(RZ IN_LIST WarpX_DIMS AND WarpX_PYTHON)
+    foreach(source IN ITEMS antenna port)
+        add_warpx_test(
+            test_rz_current_${source}_smr_rejected_picmi
+            RZ
+            1
+            "inputs_test_smr_picmi.py --dims RZ --source ${source}"
+            OFF
+            OFF
+            OFF
+        )
+        set_tests_properties(
+            test_rz_current_${source}_smr_rejected_picmi.run
+            PROPERTIES
+                PASS_REGULAR_EXPRESSION "require cylindrical PML"
+        )
+    endforeach()
+endif()

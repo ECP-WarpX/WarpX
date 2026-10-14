@@ -2731,6 +2731,10 @@ class PrescribedCurrentInjection(picmistandard.PICMI_Extension):
     ``J = sign * I(t) / A`` on one or more rectangular regions via
     ``PrescribedCurrentParticleContainer`` (``warpx.current_injection.*``).
 
+    Cartesian static refined grids are supported with explicit evolution; antenna regions
+    may span refinement boundaries. Covered coarse cells do not duplicate the
+    source. RZ SMR and a moving window are unsupported; 1D Z is unsupported.
+
     Opposite-weight particle pairs deposit both the current and the
     polarization charge required by continuity. This is a local antenna
     source, not a paired-terminal or through-current model. It is unsupported
@@ -2822,6 +2826,11 @@ class CurrentControlledPort(picmistandard.PICMI_Extension):
     ion plus electron-fluid current. Both terminals may be internal and their
     surfaces may cross plasma, macroscopic material, or an EB object, provided
     the surrounding Ampere contour remains in field-carrying cells.
+
+    With Cartesian static refinement, use explicit Yee evolution and synchronized
+    timesteps. A port must be wholly inside or outside a refined patch, with
+    two coarse cells of clearance. Contours crossing refinement boundaries,
+    RZ SMR, and SMR with embedded boundaries are unsupported.
 
     Parameters
     ----------

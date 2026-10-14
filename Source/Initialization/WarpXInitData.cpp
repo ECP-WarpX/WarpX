@@ -834,10 +834,20 @@ WarpX::InitData ()
         ComputeDt();
         ::PrintDtDxDyDz(max_level, geom, dt);
         InitFromScratch();
+        InitMacroscopicProperties();
         for (auto& current_port : m_current_controlled_ports) {
-            current_port->InitData(
-                m_fields.get_alldirs(FieldType::Bfield_fp, 0),
-                m_eb_update_B[0], gett_new(0));
+            for (int lev = 0; lev <= finest_level; ++lev) {
+                for (auto const patch_type : {PatchType::fine, PatchType::coarse}) {
+                    if (lev == 0 && patch_type == PatchType::coarse) {
+                        continue;
+                    }
+                    current_port->InitData(m_fields.get_alldirs(patch_type == PatchType::fine
+                                                                    ? FieldType::Bfield_fp
+                                                                    : FieldType::Bfield_cp,
+                                                                lev),
+                                           m_eb_update_B[lev], gett_new(lev), lev, patch_type);
+                }
+            }
         }
         if (!m_current_controlled_ports.empty()) {
             FillBoundaryB(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
@@ -847,11 +857,21 @@ WarpX::InitData ()
     else
     {
         InitFromCheckpoint();
+        InitMacroscopicProperties();
         ::PrintDtDxDyDz(max_level, geom, dt);
         for (auto& current_port : m_current_controlled_ports) {
-            current_port->InitData(
-                m_fields.get_alldirs(FieldType::Bfield_fp, 0),
-                m_eb_update_B[0], gett_new(0));
+            for (int lev = 0; lev <= finest_level; ++lev) {
+                for (auto const patch_type : {PatchType::fine, PatchType::coarse}) {
+                    if (lev == 0 && patch_type == PatchType::coarse) {
+                        continue;
+                    }
+                    current_port->InitData(m_fields.get_alldirs(patch_type == PatchType::fine
+                                                                    ? FieldType::Bfield_fp
+                                                                    : FieldType::Bfield_cp,
+                                                                lev),
+                                           m_eb_update_B[lev], gett_new(lev), lev, patch_type);
+                }
+            }
         }
         if (!m_current_controlled_ports.empty()) {
             FillBoundaryB(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
@@ -869,16 +889,6 @@ WarpX::InitData ()
     }
 
     BuildBufferMasks();
-
-    if (m_em_solver_medium == MediumForEM::Macroscopic) {
-        const int lev_zero = 0;
-        m_macroscopic_properties->InitData(
-            Geom(lev_zero),
-            m_fields.get(FieldType::Efield_fp, Direction{0}, lev_zero)->ixType().toIntVect(),
-            m_fields.get(FieldType::Efield_fp, Direction{1}, lev_zero)->ixType().toIntVect(),
-            m_fields.get(FieldType::Efield_fp, Direction{2}, lev_zero)->ixType().toIntVect()
-        );
-    }
 
     m_electrostatic_solver->InitData();
 
@@ -1874,4 +1884,23 @@ WarpX::ReadExternalFieldFromFile (
 
     } // End loop over boxes.
 #endif
+}
+
+void
+WarpX::InitMacroscopicProperties ()
+{
+    using ablastr::fields::Direction;
+    using warpx::fields::FieldType;
+    if (m_em_solver_medium == MediumForEM::Macroscopic) {
+        for (int lev = 0; lev <= finest_level; ++lev) {
+            for (int patch = 0; patch < (lev == 0 ? 1 : 2); ++patch) {
+                auto const field_type = patch == 0 ? FieldType::Efield_fp : FieldType::Efield_cp;
+                m_macroscopic_properties[lev][patch]->InitData(
+                    Geom(patch == 0 ? lev : lev - 1),
+                    m_fields.get(field_type, Direction{0}, lev)->ixType().toIntVect(),
+                    m_fields.get(field_type, Direction{1}, lev)->ixType().toIntVect(),
+                    m_fields.get(field_type, Direction{2}, lev)->ixType().toIntVect());
+            }
+        }
+    }
 }

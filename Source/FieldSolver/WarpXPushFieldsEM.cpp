@@ -1217,29 +1217,23 @@ WarpX::MacroscopicEvolveE (int lev, amrex::Real a_dt, amrex::Real start_time) {
 
     ABLASTR_PROFILE("WarpX::MacroscopicEvolveE()");
 
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        lev == 0,
-        "Macroscopic EvolveE is not implemented for lev>0, yet."
-    );
-
     MacroscopicEvolveE(lev, PatchType::fine, a_dt, start_time);
+    if (lev > 0) {
+        MacroscopicEvolveE(lev, PatchType::coarse, a_dt, start_time);
+    }
 }
 
 void
 WarpX::MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real a_dt, amrex::Real start_time) {
 
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        patch_type == PatchType::fine,
-        "Macroscopic EvolveE is not implemented for lev>0, yet."
-    );
-
-    m_fdtd_solver_fp[lev]->MacroscopicEvolveE(
+    bool const fine_patch = patch_type == PatchType::fine;
+    auto* const solver = fine_patch ? m_fdtd_solver_fp[lev].get() : m_fdtd_solver_cp[lev].get();
+    solver->MacroscopicEvolveE(
         m_macroscopic_solver_algo,
-        m_fields.get_alldirs(FieldType::Efield_fp, lev),
-        m_fields.get_alldirs(FieldType::Bfield_fp, lev),
-        m_fields.get_alldirs(FieldType::current_fp, lev),
-        m_eb_update_E[lev],
-        a_dt, m_macroscopic_properties);
+        m_fields.get_alldirs(fine_patch ? FieldType::Efield_fp : FieldType::Efield_cp, lev),
+        m_fields.get_alldirs(fine_patch ? FieldType::Bfield_fp : FieldType::Bfield_cp, lev),
+        m_fields.get_alldirs(fine_patch ? FieldType::current_fp : FieldType::current_cp, lev),
+        m_eb_update_E[lev], a_dt, m_macroscopic_properties[lev][fine_patch ? 0 : 1]);
 
     if (do_pml && pml[lev]->ok()) {
         if (patch_type == PatchType::fine) {

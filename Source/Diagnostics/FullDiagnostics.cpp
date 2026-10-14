@@ -1027,7 +1027,7 @@ FullDiagnostics::InitializeFieldFunctors (int lev)
             m_all_field_functors[lev][comp] = std::make_unique<EBCoveredFunctor>(lev, m_crse_ratio);
         } else if (m_varnames[comp] == "sigma" ||
                    m_varnames[comp] == "epsilon" || m_varnames[comp] == "mu") {
-            auto* const properties = warpx.get_pointer_MacroscopicProperties();
+            auto* const properties = warpx.get_pointer_MacroscopicProperties(lev);
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 properties != nullptr,
                 "The '" + m_varnames[comp] +

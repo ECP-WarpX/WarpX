@@ -3945,6 +3945,17 @@ Maxwell solver: PSATD method
 Maxwell solver: macroscopic media
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+The Cartesian macroscopic solver supports static refined grids with explicit Yee or CKC evolution,
+synchronized timesteps, and no moving window or dynamic load balancing. Conductivity,
+permittivity, and permeability are initialized independently on every fine and coarse
+patch, including their guard cells, from constants or physical-coordinate expressions.
+Material diagnostics use the fine patch at each level. Checkpoints preserve each patch's
+PML and divergence-cleaning fields so resumed fields agree with uninterrupted evolution.
+The existing vacuum treatment of
+PML cells remains in use; place material interfaces and current sources away from patch
+PMLs. Macroscopic SMR with embedded boundaries and macroscopic evolution in RZ remain
+unsupported.
+
 .. pp:param:: algo.macroscopic_sigma_method
     :type: ``string``
     :optional:
@@ -4024,8 +4035,13 @@ theta-implicit Yee Maxwell solves and with vacuum or macroscopic media.  It is r
 Hybrid-PIC: the artificial particles are an external electromagnetic source and must not be
 included in the Hybrid-PIC ion current.
 
-The antenna currently supports one mesh level in 2D XZ, 3D, and RZ.  It aborts for AMR and
-1D Z instead of using an incorrectly normalized source.
+The antenna supports static mesh refinement (SMR) in 2D XZ and 3D with explicit
+field evolution and no moving window. Antenna regions may span refinement boundaries.
+Particles are seeded on the finest available cells, with weights set by each cell's
+physical volume; covered coarse cells do not duplicate the source. The displacement
+limit uses the finest cell spacing. On restart, all levels are reconstructed from the
+waveform integral at the checkpoint time. RZ remains limited to one level pending
+cylindrical PML support, and 1D Z remains unsupported.
 
 * ``warpx.current_injection`` (`bool`, optional, default: ``0``)
     Enable the box impressed-current antenna.
@@ -4095,7 +4111,12 @@ circulation to
 
 .. math::
 
-   \oint_{\partial S} \boldsymbol{B}\!\cdot d\boldsymbol{\ell} = \mu_0 I(t).
+   \oint_{\partial S} \boldsymbol{H}\!\cdot d\boldsymbol{\ell} = I(t),
+   \qquad \boldsymbol{H}=\boldsymbol{B}/\mu.
+
+In vacuum this reduces to :math:`\oint \boldsymbol{B}\cdot d\boldsymbol{\ell}=\mu_0 I(t)`.
+In macroscopic media, the measurement uses the patch's permeability with the same cell
+indexing as the macroscopic Ampere update.
 
 In a fully kinetic Maxwell solve this controls the **total Ampere current** through
 :math:`S`: particle current, macroscopic conduction current, and displacement current.  It
@@ -4107,14 +4128,19 @@ external circuit/power model is not yet coupled to it.  Hybrid-PIC ports cannot 
 be combined with analytic external current or split external fields because those would
 make the plasma-current target ambiguous.
 
-Current-controlled ports support a single mesh level with the Yee and Hybrid-PIC field
-solvers.  They support 3D, in-plane x or z current in 2D XZ, and radial or axial current in
+Current-controlled ports support the Yee and Hybrid-PIC field solvers on a single level,
+and Cartesian SMR with explicit Yee evolution and synchronized timesteps. They support
+3D, in-plane x or z current in 2D XZ, and radial or axial current in
 axisymmetric RZ with one azimuthal mode.  Terminal surfaces must currently be
 matching rectangles, disks or annuli for axial RZ current, or cylindrical surfaces for
 radial RZ current.  Coordinates are represented on the nearest compatible field plane.
 Multiple ports are supported when their correction regions are separated by more than one
-grid cell, as in separate coil gaps.  General curved terminal masks and AMR, moving
-windows, dynamic load balancing, and hybrid-staggered grids are future extensions.
+grid cell, as in separate coil gaps. With SMR, each port must lie wholly inside a refined
+patch or wholly outside it, with at least two coarse cells of clearance in either case.
+Corrections use
+the fine and coarse patch spacing independently. Contours crossing refinement boundaries,
+RZ SMR, SMR with embedded boundaries, implicit SMR, general curved terminal masks, moving windows,
+dynamic load balancing, and hybrid-staggered grids remain unsupported.
 
 * ``warpx.current_controlled_port`` (`bool`, optional, default: ``0``)
     Enable paired current-controlled ports.

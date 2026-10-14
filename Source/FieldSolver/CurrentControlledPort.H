@@ -29,7 +29,7 @@
  * every cross-section between them, this class projects the magnetic
  * circulation to
  *
- *     integral B.dl = mu0 I(t).
+ *     integral H.dl = I(t), with H = B/mu in macroscopic media.
  *
  * Thus the constrained quantity is the total Ampere current.  In a Maxwell
  * solve it includes particle, macroscopic, and displacement current.  In the
@@ -41,8 +41,8 @@
  */
 class CurrentControlledPort {
   public:
-    explicit CurrentControlledPort (
-        std::string parameter_prefix = "current_controlled_port");
+    explicit CurrentControlledPort (std::string parameter_prefix = "current_controlled_port",
+                                    int level = 0, PatchType patch_type = PatchType::fine);
     ~CurrentControlledPort () = default;
 
     CurrentControlledPort (CurrentControlledPort const&) = delete;
@@ -52,10 +52,9 @@ class CurrentControlledPort {
 
     [[nodiscard]] static bool is_enabled ();
 
-    void InitData (
-        ablastr::fields::VectorField const& Bfield,
-        std::array<std::unique_ptr<amrex::iMultiFab>, 3> const& eb_update_B,
-        amrex::Real time);
+    void InitData (ablastr::fields::VectorField const& Bfield,
+                   std::array<std::unique_ptr<amrex::iMultiFab>, 3> const& eb_update_B,
+                   amrex::Real time, int lev = 0, PatchType patch_type = PatchType::fine);
 
     void ApplyBfield (
         ablastr::fields::VectorField const& Bfield,
@@ -75,6 +74,14 @@ class CurrentControlledPort {
         std::array<amrex::Real, 3> lo{};
         std::array<amrex::Real, 3> hi{};
     };
+
+    std::string m_parameter_prefix;
+    int m_level = 0;
+    PatchType m_patch_type = PatchType::fine;
+    std::vector<std::unique_ptr<CurrentControlledPort>> m_refined_patches;
+    [[nodiscard]] amrex::Geometry const& Geometry () const;
+    [[nodiscard]] amrex::Array4<amrex::Real const> Permeability (amrex::MFIter const& mfi) const;
+    [[nodiscard]] bool PatchContainsPort (ablastr::fields::VectorField const& Bfield) const;
 
     int m_direction = 2;
     Terminal m_terminal_0;

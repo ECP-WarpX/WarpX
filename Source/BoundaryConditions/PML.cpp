@@ -48,6 +48,7 @@
 #include <AMReX_ParmParse.H>
 #include <AMReX_RealVect.H>
 #include <AMReX_SPACE.H>
+#include <AMReX_Utility.H>
 #include <AMReX_VisMF.H>
 
 #include <algorithm>
@@ -686,28 +687,20 @@ MultiSigmaBox::ComputePMLFactorsE (const Real* dx, Real dt)
     }
 }
 
-PML::PML (const int lev, const BoxArray& grid_ba,
-          const DistributionMapping& grid_dm, const bool do_similar_dm_pml,
-          const Geometry* geom, const Geometry* cgeom,
-          int ncell, int delta, amrex::IntVect ref_ratio,
-          Real dt, int nox_fft, int noy_fft, int noz_fft,
-          ablastr::utils::enums::GridType grid_type,
-          int do_moving_window, int /*pml_has_particles*/, int do_pml_in_domain,
-          const PSATDSolutionType psatd_solution_type,
-          const TimeDependencyJ time_dependency_J, const TimeDependencyRho time_dependency_rho,
-          const bool do_pml_dive_cleaning, const bool do_pml_divb_cleaning,
-          const amrex::IntVect& fill_guards_fields,
-          const amrex::IntVect& fill_guards_current,
-          bool eb_enabled,
-          int max_guard_EB, const amrex::Real v_sigma_sb,
-          ablastr::fields::MultiFabRegister& fields,
+PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& grid_dm,
+          const bool do_similar_dm_pml, const Geometry* geom, const Geometry* cgeom, int ncell,
+          int delta, amrex::IntVect ref_ratio, Real dt, int nox_fft, int noy_fft, int noz_fft,
+          ablastr::utils::enums::GridType grid_type, int do_moving_window,
+          int /*pml_has_particles*/, int do_pml_in_domain,
+          const PSATDSolutionType psatd_solution_type, const TimeDependencyJ time_dependency_J,
+          const TimeDependencyRho time_dependency_rho, const bool do_pml_dive_cleaning,
+          const bool do_pml_divb_cleaning, const amrex::IntVect& fill_guards_fields,
+          const amrex::IntVect& fill_guards_current, bool eb_enabled, int max_guard_EB,
+          const amrex::Real v_sigma_sb, ablastr::fields::MultiFabRegister& fields,
           const amrex::IntVect do_pml_Lo, const amrex::IntVect do_pml_Hi)
-    : m_dive_cleaning(do_pml_dive_cleaning),
-      m_divb_cleaning(do_pml_divb_cleaning),
-      m_fill_guards_fields(fill_guards_fields),
-      m_fill_guards_current(fill_guards_current),
-      m_geom(geom),
-      m_cgeom(cgeom)
+    : m_level(lev), m_dive_cleaning(do_pml_dive_cleaning), m_divb_cleaning(do_pml_divb_cleaning),
+      m_fill_guards_fields(fill_guards_fields), m_fill_guards_current(fill_guards_current),
+      m_geom(geom), m_cgeom(cgeom)
 {
 #ifndef AMREX_USE_EB
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!eb_enabled, "PML: eb_enabled is true but was not compiled in.");
@@ -1256,10 +1249,9 @@ PML::CheckPoint (
 {
     using ablastr::fields::Direction;
 
-    if (fields.has_vector(FieldType::pml_E_fp, 0))
-    {
-        ablastr::fields::VectorField pml_E_fp = fields.get_alldirs(FieldType::pml_E_fp, 0);
-        ablastr::fields::VectorField pml_B_fp = fields.get_alldirs(FieldType::pml_B_fp, 0);
+    if (fields.has_vector(FieldType::pml_E_fp, m_level)) {
+        ablastr::fields::VectorField pml_E_fp = fields.get_alldirs(FieldType::pml_E_fp, m_level);
+        ablastr::fields::VectorField pml_B_fp = fields.get_alldirs(FieldType::pml_B_fp, m_level);
         VisMF::AsyncWrite(*pml_E_fp[0], dir+"_Ex_fp");
         VisMF::AsyncWrite(*pml_E_fp[1], dir+"_Ey_fp");
         VisMF::AsyncWrite(*pml_E_fp[2], dir+"_Ez_fp");
@@ -1268,16 +1260,25 @@ PML::CheckPoint (
         VisMF::AsyncWrite(*pml_B_fp[2], dir+"_Bz_fp");
     }
 
-    if (fields.has_vector(FieldType::pml_E_cp, 0))
-    {
-        ablastr::fields::VectorField pml_E_cp = fields.get_alldirs(FieldType::pml_E_cp, 0);
-        ablastr::fields::VectorField pml_B_cp = fields.get_alldirs(FieldType::pml_B_cp, 0);
+    if (fields.has_vector(FieldType::pml_E_cp, m_level)) {
+        ablastr::fields::VectorField pml_E_cp = fields.get_alldirs(FieldType::pml_E_cp, m_level);
+        ablastr::fields::VectorField pml_B_cp = fields.get_alldirs(FieldType::pml_B_cp, m_level);
         VisMF::AsyncWrite(*pml_E_cp[0], dir+"_Ex_cp");
         VisMF::AsyncWrite(*pml_E_cp[1], dir+"_Ey_cp");
         VisMF::AsyncWrite(*pml_E_cp[2], dir+"_Ez_cp");
         VisMF::AsyncWrite(*pml_B_cp[0], dir+"_Bx_cp");
         VisMF::AsyncWrite(*pml_B_cp[1], dir+"_By_cp");
         VisMF::AsyncWrite(*pml_B_cp[2], dir+"_Bz_cp");
+    }
+    std::array<std::pair<FieldType, std::string>, 4> const scalar_fields{
+        {{FieldType::pml_F_fp, "_F_fp"},
+         {FieldType::pml_F_cp, "_F_cp"},
+         {FieldType::pml_G_fp, "_G_fp"},
+         {FieldType::pml_G_cp, "_G_cp"}}};
+    for (auto const& [field_type, suffix] : scalar_fields) {
+        if (fields.has(field_type, m_level)) {
+            VisMF::AsyncWrite(*fields.get(field_type, m_level), dir + suffix);
+        }
     }
 }
 
@@ -1289,10 +1290,9 @@ PML::Restart (
 {
     using ablastr::fields::Direction;
 
-    if (fields.has_vector(FieldType::pml_E_fp, 0))
-    {
-        ablastr::fields::VectorField pml_E_fp = fields.get_alldirs(FieldType::pml_E_fp, 0);
-        ablastr::fields::VectorField pml_B_fp = fields.get_alldirs(FieldType::pml_B_fp, 0);
+    if (fields.has_vector(FieldType::pml_E_fp, m_level)) {
+        ablastr::fields::VectorField pml_E_fp = fields.get_alldirs(FieldType::pml_E_fp, m_level);
+        ablastr::fields::VectorField pml_B_fp = fields.get_alldirs(FieldType::pml_B_fp, m_level);
         VisMF::Read(*pml_E_fp[0], dir+"_Ex_fp");
         VisMF::Read(*pml_E_fp[1], dir+"_Ey_fp");
         VisMF::Read(*pml_E_fp[2], dir+"_Ez_fp");
@@ -1301,16 +1301,26 @@ PML::Restart (
         VisMF::Read(*pml_B_fp[2], dir+"_Bz_fp");
     }
 
-    if (fields.has_vector(FieldType::pml_E_cp, 0))
-    {
-        ablastr::fields::VectorField pml_E_cp = fields.get_alldirs(FieldType::pml_E_cp, 0);
-        ablastr::fields::VectorField pml_B_cp = fields.get_alldirs(FieldType::pml_B_cp, 0);
+    if (fields.has_vector(FieldType::pml_E_cp, m_level)) {
+        ablastr::fields::VectorField pml_E_cp = fields.get_alldirs(FieldType::pml_E_cp, m_level);
+        ablastr::fields::VectorField pml_B_cp = fields.get_alldirs(FieldType::pml_B_cp, m_level);
         VisMF::Read(*pml_E_cp[0], dir+"_Ex_cp");
         VisMF::Read(*pml_E_cp[1], dir+"_Ey_cp");
         VisMF::Read(*pml_E_cp[2], dir+"_Ez_cp");
         VisMF::Read(*pml_B_cp[0], dir+"_Bx_cp");
         VisMF::Read(*pml_B_cp[1], dir+"_By_cp");
         VisMF::Read(*pml_B_cp[2], dir+"_Bz_cp");
+    }
+    std::array<std::pair<FieldType, std::string>, 4> const scalar_fields{
+        {{FieldType::pml_F_fp, "_F_fp"},
+         {FieldType::pml_F_cp, "_F_cp"},
+         {FieldType::pml_G_fp, "_G_fp"},
+         {FieldType::pml_G_cp, "_G_cp"}}};
+    for (auto const& [field_type, suffix] : scalar_fields) {
+        // Older checkpoints did not store the PML cleaning fields.
+        if (fields.has(field_type, m_level) && amrex::FileExists(dir + suffix + "_H")) {
+            VisMF::Read(*fields.get(field_type, m_level), dir + suffix);
+        }
     }
 }
 

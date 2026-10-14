@@ -201,9 +201,11 @@ PrescribedCurrentParticleContainer::compute_velocity_scale () {
         "warpx.current_injection: all waveforms are identically zero.");
 
     Real min_cell_size = std::numeric_limits<Real>::max();
-    auto const cell_size = Geom(0).CellSizeArray();
-    for (int direction = 0; direction < AMREX_SPACEDIM; ++direction) {
-        min_cell_size = std::min(min_cell_size, cell_size[direction]);
+    for (int lev = 0; lev <= finestLevel(); ++lev) {
+        auto const cell_size = Geom(lev).CellSizeArray();
+        for (int direction = 0; direction < AMREX_SPACEDIM; ++direction) {
+            min_cell_size = std::min(min_cell_size, cell_size[direction]);
+        }
     }
     Real const speed_limited = 0.05_rt * PhysConst::c / I_peak;
     Real const displacement_limited =
@@ -222,60 +224,101 @@ PrescribedCurrentParticleContainer::InitData () {
     WARPX_ABORT_WITH_MESSAGE(
         "Prescribed current injection is not implemented in 1D_Z geometry.");
 #else
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(maxLevel() == 0,
-                                     "Prescribed current injection currently "
-                                     "supports only a single mesh level.");
-
-    const int lev = 0;
-    const auto& geom = Geom(lev);
-    const auto problo = geom.ProbLoArray();
-    const auto dx = geom.CellSizeArray();
-    const Box& domain = geom.Domain();
-
-#ifdef WARPX_DIM_3D
-    const Real dV = dx[0] * dx[1] * dx[2];
-#elif defined(WARPX_DIM_XZ)
-    // 2D XZ: per-unit-length in the invariant y-direction. AMReX index 0 -> x,
-    // index 1 -> z. The cross-sectional area is also per unit length in y.
-    const Real dV = dx[0] * dx[1];
-#elif defined(WARPX_DIM_RZ)
-    // RZ uses AMReX index 0 for r and index 1 for z.
-    const Real dr = dx[0];
-    const Real dz = dx[1];
-    const Real two_pi = MathConst::pi * 2._rt;
-#else
-    WARPX_ABORT_WITH_MESSAGE("PrescribedCurrentParticleContainer is only "
-                             "implemented in 3D, 2D (XZ) and RZ.");
+#ifdef WARPX_DIM_RZ
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        maxLevel() == 0,
+        "RZ current antennas with SMR require cylindrical PML support and are not supported yet.");
 #endif
-
-    // Keep both the peak speed below 0.05c and the total charge-separation
-    // excursion below 0.05 of the smallest cell.
+    // Bound particle excursions using the finest spacing before assigning weights.
     compute_velocity_scale();
+    WarpX const& warpx = WarpX::GetInstance();
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        maxLevel() == 0 ||
+            (warpx.evolve_scheme == EvolveScheme::Explicit && !warpx.getdo_moving_window()),
+        "SMR current antennas require explicit evolution and no moving window.");
+    for (int lev = 0; lev <= finestLevel(); ++lev) {
+        const auto& geom = Geom(lev);
+        const auto problo = geom.ProbLoArray();
+        const auto dx = geom.CellSizeArray();
+        auto const& level_boxes = warpx.boxArray(lev);
+        const Box domain = level_boxes.minimalBox();
+        amrex::BoxArray covered;
+        if (lev < finestLevel()) {
+            covered = amrex::coarsen(warpx.boxArray(lev + 1), warpx.refRatio(lev));
+        }
+        auto const active_cell = [&] (amrex::IntVect const& cell) {
+            return level_boxes.contains(cell) && !covered.contains(cell);
+        };
 
-    // Each cell gets a coincident +/- weight pair. The two members move in
-    // opposite directions, so their currents add while their charge separation
-    // supplies the rho required by div(J) at a finite antenna region's ends.
-    Vector<ParticleReal> xs, ys, zs, ws;
-    Vector<int> drive_ids;
-    Real const initial_time = WarpX::GetInstance().gett_new(lev);
-    if (ParallelDescriptor::MyProc() == 0) {
-        const auto lo = domain.smallEnd();
-        const auto hi = domain.bigEnd();
-        for (int drive_id = 0; drive_id < static_cast<int>(m_drives.size());
-             ++drive_id) {
-            const Drive& drive = m_drives[drive_id];
+#ifdef WARPX_DIM_3D
+        const Real dV = dx[0] * dx[1] * dx[2];
+#elif defined(WARPX_DIM_XZ)
+        // 2D XZ: per-unit-length in the invariant y-direction. AMReX index 0 -> x,
+        // index 1 -> z. The cross-sectional area is also per unit length in y.
+        const Real dV = dx[0] * dx[1];
+#elif defined(WARPX_DIM_RZ)
+        // RZ uses AMReX index 0 for r and index 1 for z.
+        const Real dr = dx[0];
+        const Real dz = dx[1];
+        const Real two_pi = MathConst::pi * 2._rt;
+#else
+        WARPX_ABORT_WITH_MESSAGE("PrescribedCurrentParticleContainer is only "
+                                 "implemented in 3D, 2D (XZ) and RZ.");
+#endif
+
+        // Each cell gets a coincident +/- weight pair. The two members move in
+        // opposite directions, so their currents add while their charge separation
+        // supplies the rho required by div(J) at a finite antenna region's ends.
+        Vector<ParticleReal> xs, ys, zs, ws;
+        Vector<int> drive_ids;
+        Real const initial_time = WarpX::GetInstance().gett_new(lev);
+        if (ParallelDescriptor::MyProc() == 0) {
+            const auto lo = domain.smallEnd();
+            const auto hi = domain.bigEnd();
+            for (int drive_id = 0; drive_id < static_cast<int>(m_drives.size()); ++drive_id) {
+                const Drive& drive = m_drives[drive_id];
 #if defined(WARPX_DIM_3D) || defined(WARPX_DIM_XZ)
-            const Real W = 0.5_rt * dV / (m_vel_coeff * drive.A);
+                const Real W = 0.5_rt * dV / (m_vel_coeff * drive.A);
 #endif
 #ifdef WARPX_DIM_3D
-            for (int k = lo[2]; k <= hi[2]; ++k) {
+                for (int k = lo[2]; k <= hi[2]; ++k) {
+                    for (int j = lo[1]; j <= hi[1]; ++j) {
+                        for (int i = lo[0]; i <= hi[0]; ++i) {
+                            if (!active_cell(amrex::IntVect(i, j, k))) {
+                                continue;
+                            }
+                            const Real xc = problo[0] + (i + 0.5_rt) * dx[0];
+                            const Real yc = problo[1] + (j + 0.5_rt) * dx[1];
+                            const Real zc = problo[2] + (k + 0.5_rt) * dx[2];
+                            if (xc >= drive.lo[0] && xc < drive.hi[0] && yc >= drive.lo[1] &&
+                                yc < drive.hi[1] && zc >= drive.lo[2] && zc < drive.hi[2]) {
+                                Real const displacement = m_vel_coeff * drive.sign *
+                                                          drive.waveform.integral(initial_time);
+                                for (int const polarity : {-1, 1}) {
+                                    xs.push_back(
+                                        xc + (drive.dir == 0 ? polarity * displacement : 0.0_rt));
+                                    ys.push_back(
+                                        yc + (drive.dir == 1 ? polarity * displacement : 0.0_rt));
+                                    zs.push_back(
+                                        zc + (drive.dir == 2 ? polarity * displacement : 0.0_rt));
+                                    ws.push_back(polarity * W);
+                                    drive_ids.push_back(drive_id);
+                                }
+                            }
+                        }
+                    }
+                }
+#elif defined(WARPX_DIM_XZ)
+                // AMReX index 0 -> x, index 1 -> z; y is invariant, so the region's
+                // y bounds are ignored. AddNParticles drops the seeded y = 0.
                 for (int j = lo[1]; j <= hi[1]; ++j) {
                     for (int i = lo[0]; i <= hi[0]; ++i) {
+                        if (!active_cell(amrex::IntVect(i, j))) {
+                            continue;
+                        }
                         const Real xc = problo[0] + (i + 0.5_rt) * dx[0];
-                        const Real yc = problo[1] + (j + 0.5_rt) * dx[1];
-                        const Real zc = problo[2] + (k + 0.5_rt) * dx[2];
+                        const Real zc = problo[1] + (j + 0.5_rt) * dx[1];
                         if (xc >= drive.lo[0] && xc < drive.hi[0] &&
-                            yc >= drive.lo[1] && yc < drive.hi[1] &&
                             zc >= drive.lo[2] && zc < drive.hi[2]) {
                             Real const displacement =
                                 m_vel_coeff * drive.sign *
@@ -284,9 +327,7 @@ PrescribedCurrentParticleContainer::InitData () {
                                 xs.push_back(xc + (drive.dir == 0
                                                        ? polarity * displacement
                                                        : 0.0_rt));
-                                ys.push_back(yc + (drive.dir == 1
-                                                       ? polarity * displacement
-                                                       : 0.0_rt));
+                                ys.push_back(0.0_rt);
                                 zs.push_back(zc + (drive.dir == 2
                                                        ? polarity * displacement
                                                        : 0.0_rt));
@@ -296,109 +337,83 @@ PrescribedCurrentParticleContainer::InitData () {
                         }
                     }
                 }
-            }
-#elif defined(WARPX_DIM_XZ)
-            // AMReX index 0 -> x, index 1 -> z; y is invariant, so the region's
-            // y bounds are ignored. AddNParticles drops the seeded y = 0.
-            for (int j = lo[1]; j <= hi[1]; ++j) {
-                for (int i = lo[0]; i <= hi[0]; ++i) {
-                    const Real xc = problo[0] + (i + 0.5_rt) * dx[0];
+#elif defined(WARPX_DIM_RZ)
+                // AMReX index 0 -> r, index 1 -> z; theta is invariant, so the
+                // region's y bounds are ignored. Seed at theta = 0, i.e.
+                // (x = r, y = 0): AddNParticles stores (r, theta=0, z), and the
+                // Cartesian position push in Evolve is then exactly a radial
+                // (Jr), azimuthal (Jtheta) or axial (Jz) step at theta = 0.
+                //
+                // Per-cell weight so that, after
+                // ApplyInverseVolumeScalingToCurrentDensity divides the raw deposit
+                // by 2*pi*r, the physical current density is the prescribed
+                // profile:
+                //   dir = 0 (Jr, conserved total I): uniform pair weight
+                //       |W| = dr / (2*Nz*vel_coeff)
+                //     -> Jr = I(t) / (2*pi*r*Nz*dz) (the 1/r coaxial profile; total
+                //        radial current I is distributed across the box in z)
+                //   dir = 1,2 (Jtheta/Jz, uniform J): weight ~ r
+                //       |W| = (2*pi*r*dr*dz) / (2*vel_coeff*A)
+                //     -> J = sign * I(t) / A        (uniform over the r-z box)
+                int n_axial_cells = 0;
+                for (int j = lo[1]; j <= hi[1]; ++j) {
                     const Real zc = problo[1] + (j + 0.5_rt) * dx[1];
-                    if (xc >= drive.lo[0] && xc < drive.hi[0] &&
-                        zc >= drive.lo[2] && zc < drive.hi[2]) {
-                        Real const displacement =
-                            m_vel_coeff * drive.sign *
-                            drive.waveform.integral(initial_time);
-                        for (int const polarity : {-1, 1}) {
-                            xs.push_back(xc + (drive.dir == 0
-                                                   ? polarity * displacement
-                                                   : 0.0_rt));
-                            ys.push_back(0.0_rt);
-                            zs.push_back(zc + (drive.dir == 2
-                                                   ? polarity * displacement
-                                                   : 0.0_rt));
-                            ws.push_back(polarity * W);
-                            drive_ids.push_back(drive_id);
-                        }
+                    if (zc >= drive.lo[2] && zc < drive.hi[2]) {
+                        ++n_axial_cells;
                     }
                 }
-            }
-#elif defined(WARPX_DIM_RZ)
-            // AMReX index 0 -> r, index 1 -> z; theta is invariant, so the
-            // region's y bounds are ignored. Seed at theta = 0, i.e.
-            // (x = r, y = 0): AddNParticles stores (r, theta=0, z), and the
-            // Cartesian position push in Evolve is then exactly a radial
-            // (Jr), azimuthal (Jtheta) or axial (Jz) step at theta = 0.
-            //
-            // Per-cell weight so that, after
-            // ApplyInverseVolumeScalingToCurrentDensity divides the raw deposit
-            // by 2*pi*r, the physical current density is the prescribed
-            // profile:
-            //   dir = 0 (Jr, conserved total I): uniform pair weight
-            //       |W| = dr / (2*Nz*vel_coeff)
-            //     -> Jr = I(t) / (2*pi*r*Nz*dz) (the 1/r coaxial profile; total
-            //        radial current I is distributed across the box in z)
-            //   dir = 1,2 (Jtheta/Jz, uniform J): weight ~ r
-            //       |W| = (2*pi*r*dr*dz) / (2*vel_coeff*A)
-            //     -> J = sign * I(t) / A        (uniform over the r-z box)
-            int n_axial_cells = 0;
-            for (int j = lo[1]; j <= hi[1]; ++j) {
-                const Real zc = problo[1] + (j + 0.5_rt) * dx[1];
-                if (zc >= drive.lo[2] && zc < drive.hi[2]) {
-                    ++n_axial_cells;
-                }
-            }
-            for (int j = lo[1]; j <= hi[1]; ++j) {
-                for (int i = lo[0]; i <= hi[0]; ++i) {
-                    const Real rc = problo[0] + (i + 0.5_rt) * dx[0];
-                    const Real zc = problo[1] + (j + 0.5_rt) * dx[1];
-                    if (rc >= drive.lo[0] && rc < drive.hi[0] &&
-                        zc >= drive.lo[2] && zc < drive.hi[2]) {
-                        const int n_spokes =
-                            std::max(1, WarpX::n_rz_azimuthal_modes);
-                        const Real W =
-                            (drive.dir == 0)
-                                ? 0.5_rt * dr /
-                                      (n_spokes * n_axial_cells * m_vel_coeff)
-                                : 0.5_rt * (two_pi * rc * dr * dz) /
-                                      (n_spokes * m_vel_coeff * drive.A);
-                        Real const displacement =
-                            m_vel_coeff * drive.sign *
-                            drive.waveform.integral(initial_time);
+                for (int j = lo[1]; j <= hi[1]; ++j) {
+                    for (int i = lo[0]; i <= hi[0]; ++i) {
+                        if (!active_cell(amrex::IntVect(i, j))) {
+                            continue;
+                        }
+                        const Real rc = problo[0] + (i + 0.5_rt) * dx[0];
+                        const Real zc = problo[1] + (j + 0.5_rt) * dx[1];
+                        if (rc >= drive.lo[0] && rc < drive.hi[0] && zc >= drive.lo[2] &&
+                            zc < drive.hi[2]) {
+                            const int n_spokes = std::max(1, WarpX::n_rz_azimuthal_modes);
+                            const Real W =
+                                (drive.dir == 0)
+                                    ? 0.5_rt * dr / (n_spokes * n_axial_cells * m_vel_coeff)
+                                    : 0.5_rt * (two_pi * rc * dr * dz) /
+                                          (n_spokes * m_vel_coeff * drive.A);
+                            Real const displacement =
+                                m_vel_coeff * drive.sign * drive.waveform.integral(initial_time);
 
-                        for (int spoke = 0; spoke < n_spokes; spoke++) {
-                            const Real phase = two_pi * spoke / n_spokes;
-                            for (int const polarity : {-1, 1}) {
-                                Real radius = rc;
-                                Real angle = phase;
-                                Real z_position = zc;
-                                if (drive.dir == 0) {
-                                    radius += polarity * displacement;
-                                } else if (drive.dir == 1) {
-                                    angle += polarity * displacement / rc;
-                                } else {
-                                    z_position += polarity * displacement;
+                            for (int spoke = 0; spoke < n_spokes; spoke++) {
+                                const Real phase = two_pi * spoke / n_spokes;
+                                for (int const polarity : {-1, 1}) {
+                                    Real radius = rc;
+                                    Real angle = phase;
+                                    Real z_position = zc;
+                                    if (drive.dir == 0) {
+                                        radius += polarity * displacement;
+                                    } else if (drive.dir == 1) {
+                                        angle += polarity * displacement / rc;
+                                    } else {
+                                        z_position += polarity * displacement;
+                                    }
+                                    xs.push_back(radius * std::cos(angle));
+                                    ys.push_back(radius * std::sin(angle));
+                                    zs.push_back(z_position);
+                                    ws.push_back(polarity * W);
+                                    drive_ids.push_back(drive_id);
                                 }
-                                xs.push_back(radius * std::cos(angle));
-                                ys.push_back(radius * std::sin(angle));
-                                zs.push_back(z_position);
-                                ws.push_back(polarity * W);
-                                drive_ids.push_back(drive_id);
                             }
                         }
                     }
                 }
-            }
 #endif
+            }
         }
-    }
 
-    const auto np = static_cast<long>(xs.size());
-    const Vector<ParticleReal> ux(np, 0.0), uy(np, 0.0), uz(np, 0.0);
-    Vector<Vector<ParticleReal>> attr;
-    attr.push_back(ws);
-    const Vector<Vector<int>> attr_int{drive_ids};
-    AddNParticles(lev, np, xs, ys, zs, ux, uy, uz, 1, attr, 1, attr_int, 1);
+        const auto np = static_cast<long>(xs.size());
+        const Vector<ParticleReal> ux(np, 0.0), uy(np, 0.0), uz(np, 0.0);
+        Vector<Vector<ParticleReal>> attr;
+        attr.push_back(ws);
+        const Vector<Vector<int>> attr_int{drive_ids};
+        AddNParticles(lev, np, xs, ys, zs, ux, uy, uz, 1, attr, 1, attr_int, 1);
+    }
 
     if (Verbose()) {
         amrex::Print() << Utils::TextMsg::Info(

@@ -495,8 +495,20 @@ WarpX::WarpX ()
     m_field_factory.resize(nlevs_max);
 
     if (m_em_solver_medium == MediumForEM::Macroscopic) {
-        // create object for macroscopic solver
-        m_macroscopic_properties = std::make_unique<MacroscopicProperties>();
+        m_macroscopic_properties.resize(nlevs_max);
+        for (int lev = 0; lev < nlevs_max; ++lev) {
+            m_macroscopic_properties[lev][0] = std::make_unique<MacroscopicProperties>();
+            if (lev > 0) {
+                m_macroscopic_properties[lev][1] = std::make_unique<MacroscopicProperties>();
+            }
+        }
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            maxLevel() == 0 || (evolve_scheme == EvolveScheme::Explicit &&
+                (electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee ||
+                 electromagnetic_solver_id == ElectromagneticSolverAlgo::CKC) &&
+                !m_do_subcycling && !do_moving_window && !load_balance_intervals.isActivated()),
+            "Macroscopic SMR requires explicit Yee or CKC evolution, synchronized timesteps, "
+            "static grids, and no moving window.");
     }
 
     // Set default values for particle and cell weights for costs update.
@@ -2694,9 +2706,14 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 
     // Allocate extra multifabs for macroscopic properties of the medium
     if (m_em_solver_medium == MediumForEM::Macroscopic) {
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE( lev==0,
-            "Macroscopic properties are not supported with mesh refinement.");
-        m_macroscopic_properties->AllocateLevelMFs(ba, dm, ngEB);
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            lev == 0 || !EB::enabled(),
+            "Macroscopic SMR with embedded boundaries is not supported.");
+        m_macroscopic_properties[lev][0]->AllocateLevelMFs(ba, dm, ngEB);
+        if (lev > 0) {
+            auto const coarse_boxes = amrex::coarsen(ba, refRatio(lev - 1));
+            m_macroscopic_properties[lev][1]->AllocateLevelMFs(coarse_boxes, dm, ngEB);
+        }
     }
 
     if (fft_do_time_averaging)
@@ -2862,16 +2879,14 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 
     if (do_dive_cleaning)
     {
-        m_fields.alloc_init(FieldType::F_fp,
-            lev, amrex::convert(ba, F_nodal_flag), dm,
-            ncomps, ngF, 0.0_rt);
+        m_fields.alloc_init(FieldType::F_fp, lev, amrex::convert(ba, F_nodal_flag), dm, ncomps, ngF,
+                            0.0_rt, true, true, true);
     }
 
     if (do_divb_cleaning)
     {
-        m_fields.alloc_init(FieldType::G_fp,
-            lev, amrex::convert(ba, G_nodal_flag), dm,
-            ncomps, ngG, 0.0_rt);
+        m_fields.alloc_init(FieldType::G_fp, lev, amrex::convert(ba, G_nodal_flag), dm, ncomps, ngG,
+                            0.0_rt, true, true, true);
     }
 
     if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD)
@@ -3088,24 +3103,23 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 
         if (do_dive_cleaning)
         {
-            m_fields.alloc_init(FieldType::F_cp,
-                lev, amrex::convert(cba, IntVect::TheUnitVector()), dm,
-                ncomps, ngF, 0.0_rt);
+            m_fields.alloc_init(FieldType::F_cp, lev, amrex::convert(cba, IntVect::TheUnitVector()),
+                                dm, ncomps, ngF, 0.0_rt, true, true, true);
         }
 
         if (do_divb_cleaning)
         {
             if (grid_type == GridType::Collocated)
             {
-                m_fields.alloc_init(FieldType::G_cp,
-                    lev, amrex::convert(cba, IntVect::TheUnitVector()), dm,
-                    ncomps, ngG, 0.0_rt);
+                m_fields.alloc_init(FieldType::G_cp, lev,
+                                    amrex::convert(cba, IntVect::TheUnitVector()), dm, ncomps, ngG,
+                                    0.0_rt, true, true, true);
             }
             else // grid_type=staggered or grid_type=hybrid
             {
-                m_fields.alloc_init(FieldType::G_cp,
-                    lev, amrex::convert(cba, IntVect::TheZeroVector()), dm,
-                    ncomps, ngG, 0.0_rt);
+                m_fields.alloc_init(FieldType::G_cp, lev,
+                                    amrex::convert(cba, IntVect::TheZeroVector()), dm, ncomps, ngG,
+                                    0.0_rt, true, true, true);
             }
         }
 

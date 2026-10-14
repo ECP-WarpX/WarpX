@@ -130,6 +130,7 @@ public:
                                                int  bdry_side ) const;
 
     void InitData ();
+    void InitMacroscopicProperties ();
 
     void Evolve (int numsteps = -1);
 
@@ -1027,6 +1028,11 @@ public:
 #endif
 
     FiniteDifferenceSolver * get_pointer_fdtd_solver_fp (int lev) { return m_fdtd_solver_fp[lev].get(); }
+    FiniteDifferenceSolver*
+    get_pointer_fdtd_solver_cp (int lev)
+    {
+        return m_fdtd_solver_cp[lev].get();
+    }
 
     // Field container
     ablastr::fields::MultiFabRegister m_fields;
@@ -1037,8 +1043,12 @@ public:
     void PostProcessBaseGrids (amrex::BoxArray& ba0) const final;
 
     [[nodiscard]] MacroscopicProperties*
-    get_pointer_MacroscopicProperties () const {
-        return m_macroscopic_properties.get();
+    get_pointer_MacroscopicProperties (int lev = 0, PatchType patch_type = PatchType::fine) const
+    {
+        if (m_macroscopic_properties.empty()) {
+            return nullptr;
+        }
+        return m_macroscopic_properties[lev][patch_type == PatchType::fine ? 0 : 1].get();
     }
 
 #ifdef AMREX_USE_EB
@@ -1406,7 +1416,7 @@ private:
     bool m_verboncoeur_axis_correction = true;
 
     // Macroscopic properties
-    std::unique_ptr<MacroscopicProperties> m_macroscopic_properties;
+    amrex::Vector<std::array<std::unique_ptr<MacroscopicProperties>, 2>> m_macroscopic_properties;
 
     // Electrostatic solver
     std::unique_ptr<ElectrostaticSolver> m_electrostatic_solver;

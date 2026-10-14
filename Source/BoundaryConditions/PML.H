@@ -208,6 +208,7 @@ public:
     static void Exchange (amrex::MultiFab& pml, amrex::MultiFab& reg, const amrex::Geometry& geom, int do_pml_in_domain);
 
 private:
+    int m_level;
     bool m_ok;
 
     bool m_dive_cleaning;
