@@ -3486,11 +3486,13 @@ Details about the collision models can be found in the :ref:`theory section <mul
 
     The parent species decay rate (only for ``pulsed_decay``).
 
-.. pp:param:: <collision_name>.fixed_product_weight
-    :type: `float`
+.. pp:param:: <collision_name>.weight_ratio
+    :type: ``int``
+    :default: 1
+    :optional:
 
-    Fixed particle weight of product species (only for ``pulsed_decay``).
-    Can be estimated as :math:`n_{\text{target}}dV/N_{ppc}`, where :math:`n_{\text{target}}` is the target density of the product species, :math:`dV` is the cell volume, and :math:`N_{ppc}` is the target number of particle per cell for each product species.
+    The ratio of the weight of the paraent particle to the product particles (only for ``pulsed_decay``).
+    This can only be an integer, since this is the number of product particles of each species created from each parent particle.
 
 .. pp:param:: <collision_name>.productA_temperature_eV
     :type: `float array, size 3`
