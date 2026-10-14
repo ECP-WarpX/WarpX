@@ -69,7 +69,9 @@ namespace
     * \param[in] safe_guard_cells flag to enable "safe mode" data exchanges with more guard cells
     * \param[in] do_single_precision_comms flag to enable single precision communications
     * \param[in,out] cost the pointer to the data structure holding costs for timer-based load-balance
-    * \param[in] PMLRZ_flag flag to enable a special treatment for PML in RZ simulations
+    * \param[in] PMLRZ_flag flag to enable a special treatment for PML in RZ simulations.
+    *            When the RZ PML is used, it must be set for all fields: the corner guard
+    *            cells must also be exchanged, otherwise the results are incorrect.
     * \param[in] external_field the external field (used to initialize EM fields)
     * \param[in] useparser flag to enable the use of a field parser to initialize EM fields
     * \param[in] field_parser the field parser
