@@ -202,10 +202,10 @@ void init_WarpX (py::module& m)
             R"pbdoc(Save the particle positions and velocities at the start of the step)pbdoc"
         )
         .def("deposit_mass_matrices",
-            [](WarpX& wx, std::optional<int> particle_shape){
-                wx.DepositMassMatrices(particle_shape.value_or(WarpX::nox));
+            [](WarpX& wx, amrex::Real a_dt, std::optional<int> particle_shape){
+                wx.DepositMassMatrices(a_dt, particle_shape.value_or(WarpX::nox));
             },
-            py::arg("particle_shape") = py::none(),
+            py::arg("dt"), py::arg("particle_shape") = py::none(),
             R"pbdoc(Zero and deposit the mass matrices from all species, with shape factors
             of order particle_shape (defaults to algo.particle_shape))pbdoc"
         )

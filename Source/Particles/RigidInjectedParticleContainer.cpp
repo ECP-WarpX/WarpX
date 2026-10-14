@@ -313,9 +313,13 @@ void
 RigidInjectedParticleContainer::PushP (int lev, Real dt,
                                        const MultiFab& Ex, const MultiFab& Ey, const MultiFab& Ez,
                                        const MultiFab& Bx, const MultiFab& By, const MultiFab& Bz,
-                                       MomentumPushType momentum_push_type)
+                                       MomentumPushType momentum_push_type,
+                                       std::optional<FieldGatherOrders> gather_orders)
 {
     ABLASTR_PROFILE("RigidInjectedParticleContainer::PushP");
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!gather_orders.has_value(),
+        "Explicit field gather orders are not supported for rigid-injected species");
 
     if (do_not_push) { return; }
 
@@ -475,16 +479,4 @@ RigidInjectedParticleContainer::PushP (int lev, Real dt,
             amrex::Gpu::synchronize();
         }
     }
-}
-
-void
-RigidInjectedParticleContainer::PushPDarwin (int lev, Real dt,
-                                             const MultiFab& Ex, const MultiFab& Ey,
-                                             const MultiFab& Ez, const MultiFab& Bx,
-                                             const MultiFab& By, const MultiFab& Bz,
-                                             int e_shape, bool e_galerkin, int b_shape)
-{
-    amrex::ignore_unused(lev, dt, Ex, Ey, Ez, Bx, By, Bz, e_shape, e_galerkin, b_shape);
-    WARPX_ABORT_WITH_MESSAGE(
-        "Rigid-injected species are not supported with the semi-implicit Darwin solver");
 }

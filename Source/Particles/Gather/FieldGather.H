@@ -19,10 +19,8 @@
 /**
  * \brief Gather vector field F for a single particle
  *
- * \tparam depos_order_perp       Particle shape order along the directions perpendicular
- *                                to each field component
- * \tparam depos_order_para       Particle shape order along the direction of each field
- *                                component
+ * \tparam depos_order_perp       Particle shape order in perpendicular direction
+ * \tparam depos_order_para       Particle shape order in parallel direction
  *
  * \param xp,yp,zp                Particle position coordinates
  * \param Fxp,Fyp,Fzp             Vector field on particle
@@ -1520,7 +1518,7 @@ void doGatherPicnicShapeN (
     amrex::Real const costheta_mid = (rp_mid > 0. ? xp_mid/rp_mid: 1._rt);
     amrex::Real const sintheta_mid = (rp_mid > 0._rt ? yp_mid/rp_mid: 0._rt);
 #if defined(WARPX_DIM_RZ)
-    const Complex xy_mid0 = Complex{costheta_mid, sintheta_mid};
+    const Complex xy_mid0 = Complex{costheta_mid, -sintheta_mid};
 #endif
 
     // Keep these double to avoid bug in single precision

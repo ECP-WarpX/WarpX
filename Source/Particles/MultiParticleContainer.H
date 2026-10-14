@@ -148,17 +148,8 @@ public:
     void PushP (int lev, amrex::Real dt,
                 const amrex::MultiFab& Ex, const amrex::MultiFab& Ey, const amrex::MultiFab& Ez,
                 const amrex::MultiFab& Bx, const amrex::MultiFab& By, const amrex::MultiFab& Bz,
-                MomentumPushType momentum_push_type);
-
-    /**
-    * \brief Push the particle momenta by dt for all the species with the gather
-    * orders used by the semi-implicit Darwin solver (see WarpXParticleContainer::PushPDarwin).
-    */
-    void PushPDarwin (int lev, amrex::Real dt,
-                      const amrex::MultiFab& Ex, const amrex::MultiFab& Ey,
-                      const amrex::MultiFab& Ez, const amrex::MultiFab& Bx,
-                      const amrex::MultiFab& By, const amrex::MultiFab& Bz,
-                      int e_shape, bool e_galerkin, int b_shape);
+                MomentumPushType momentum_push_type,
+                std::optional<FieldGatherOrders> gather_orders = std::nullopt);
 
     /**
     * \brief This returns a MultiFAB filled with zeros. It is used to return the charge density

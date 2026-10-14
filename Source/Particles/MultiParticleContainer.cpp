@@ -555,21 +555,11 @@ void
 MultiParticleContainer::PushP (int lev, Real dt,
                                const MultiFab& Ex, const MultiFab& Ey, const MultiFab& Ez,
                                const MultiFab& Bx, const MultiFab& By, const MultiFab& Bz,
-                               MomentumPushType momentum_push_type)
+                               MomentumPushType momentum_push_type,
+                               std::optional<FieldGatherOrders> gather_orders)
 {
     for (auto& pc : allcontainers) {
-        pc->PushP(lev, dt, Ex, Ey, Ez, Bx, By, Bz, momentum_push_type);
-    }
-}
-
-void
-MultiParticleContainer::PushPDarwin (int lev, Real dt,
-                                     const MultiFab& Ex, const MultiFab& Ey, const MultiFab& Ez,
-                                     const MultiFab& Bx, const MultiFab& By, const MultiFab& Bz,
-                                     int e_shape, bool e_galerkin, int b_shape)
-{
-    for (auto& pc : allcontainers) {
-        pc->PushPDarwin(lev, dt, Ex, Ey, Ez, Bx, By, Bz, e_shape, e_galerkin, b_shape);
+        pc->PushP(lev, dt, Ex, Ey, Ez, Bx, By, Bz, momentum_push_type, gather_orders);
     }
 }
 

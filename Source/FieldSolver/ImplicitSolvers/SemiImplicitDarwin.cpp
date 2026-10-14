@@ -106,11 +106,9 @@ void SemiImplicitDarwin::Define ( WarpX*  a_WarpX, bool from_restart)
     // is set by the magnetostatic particle shape)
     InitializeMassMatrices(m_ms_particle_shape);
 
-    // The predictor velocity push in OneStep() gathers the electrostatic E-field
-    // with the Galerkin scheme, i.e. with the same shape-factor order used for the
-    // charge deposition. Skip that, and warn, if the user has explicitly selected
-    // momentum-conserving gathering, since forcing Galerkin gathering there would
-    // silently negate that choice.
+    // The predictor velocity push gathers the electrostatic E-field with the
+    // Galerkin scheme. Skip that, and warn, if the user has explicitly selected
+    // momentum-conserving gathering.
     m_predictor_use_galerkin = (WarpX::field_gathering_algo != GatheringAlgo::MomentumConserving);
     if (!m_predictor_use_galerkin) {
         ablastr::warn_manager::WMRecordWarning("Semi-implicit Darwin solver",
@@ -165,12 +163,12 @@ int SemiImplicitDarwin::OneStep ( [[maybe_unused]] amrex::Real  start_time,
 
     // Push particle velocities with E_fp (which currently just contains -grad(phi) since
     // the E-field was cleared during the last Poisson solve). E is gathered with the
-    // Galerkin scheme (unless the user explicitly requested momentum-conserving gathering),
-    // with the electrostatic particle shape. B is gathered exactly as in the corrector push
-    // and the mass matrices below, i.e., with the magnetostatic particle shape.
+    // Galerkin scheme (unless the user explicitly requested momentum-conserving
+    // gathering), with the electrostatic particle shape. B is gathered exactly as in
+    // the corrector push and the mass matrices, i.e., with the magnetostatic particle shape.
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        m_WarpX->GetPartContainer().PushPDarwin(
+        m_WarpX->GetPartContainer().PushP(
             lev,
             m_dt,
             *m_WarpX->m_fields.get(FieldType::Efield_fp, Direction{0}, lev),
@@ -179,8 +177,9 @@ int SemiImplicitDarwin::OneStep ( [[maybe_unused]] amrex::Real  start_time,
             *m_WarpX->m_fields.get(FieldType::Bfield_fp, Direction{0}, lev),
             *m_WarpX->m_fields.get(FieldType::Bfield_fp, Direction{1}, lev),
             *m_WarpX->m_fields.get(FieldType::Bfield_fp, Direction{2}, lev),
-            /*e_shape=*/WarpX::nox, /*e_galerkin=*/m_predictor_use_galerkin,
-            /*b_shape=*/m_ms_particle_shape
+            MomentumPushType::Full,
+            FieldGatherOrders{/*e_shape=*/WarpX::nox, /*e_galerkin=*/m_predictor_use_galerkin,
+                              /*b_shape=*/m_ms_particle_shape}
         );
     }
 
@@ -212,10 +211,9 @@ int SemiImplicitDarwin::OneStep ( [[maybe_unused]] amrex::Real  start_time,
     m_linear_solver->setVerbose(verbosity);
     m_linear_solver->solve(m_Z, m_source, m_linsol_rtol, m_linsol_atol);
 
-    // AMReX's GMRES::getStatus() returns 0 on convergence and a positive
-    // value (e.g. 1 if the iteration count was exceeded) otherwise. Map
-    // that onto the negative-means-failure convention used by the caller.
-    const int exit_status = (m_linear_solver->getStatus() == 0) ? 0 : -1;
+    // Map a failed linear solve onto the negative-means-failure convention
+    // used by the caller.
+    const int exit_status = m_linear_solver->converged() ? 0 : -1;
     if (exit_status < 0) {
         return exit_status;
     }
@@ -234,7 +232,7 @@ int SemiImplicitDarwin::OneStep ( [[maybe_unused]] amrex::Real  start_time,
     // mass matrices.
     for (int lev = 0; lev <= finest_level; ++lev)
     {
-        m_WarpX->GetPartContainer().PushPDarwin(
+        m_WarpX->GetPartContainer().PushP(
             lev,
             m_dt,
             *m_WarpX->m_fields.get(FieldType::Efield_fp, Direction{0}, lev),
@@ -243,8 +241,9 @@ int SemiImplicitDarwin::OneStep ( [[maybe_unused]] amrex::Real  start_time,
             *m_WarpX->m_fields.get(FieldType::Bfield_fp, Direction{0}, lev),
             *m_WarpX->m_fields.get(FieldType::Bfield_fp, Direction{1}, lev),
             *m_WarpX->m_fields.get(FieldType::Bfield_fp, Direction{2}, lev),
-            /*e_shape=*/m_ms_particle_shape, /*e_galerkin=*/false,
-            /*b_shape=*/m_ms_particle_shape
+            MomentumPushType::Full,
+            FieldGatherOrders{/*e_shape=*/m_ms_particle_shape, /*e_galerkin=*/false,
+                              /*b_shape=*/m_ms_particle_shape}
         );
     }
 
@@ -266,7 +265,8 @@ void SemiImplicitDarwin::ComputeRHS ( [[maybe_unused]] WarpXSolverVec& a_RHS,
                                       [[maybe_unused]] const WarpXSolverVec& a_Z,
                                       [[maybe_unused]] amrex::Real start_time,
                                       [[maybe_unused]] int a_nl_iter,
-                                      [[maybe_unused]] bool a_from_jacobian )
+                                      [[maybe_unused]] bool a_from_jacobian,
+                                      [[maybe_unused]] const bool update_pc )
 {
     // The Darwin scheme is linear in its unknown and never installs a
     // nonlinear solver, so it has no nonlinear residual to compute. This
@@ -360,7 +360,7 @@ void SemiImplicitDarwin::AccumulateCurrentAndMassMatrices ()
     // (see ImplicitSolver::PreLinearSolve), which drive the same
     // WarpX::DepositMassMatrices() -> MultiParticleContainer::DepositMassMatrices(),
     // here with the magnetostatic particle shape.
-    m_WarpX->DepositMassMatrices(m_ms_particle_shape);
+    m_WarpX->DepositMassMatrices(m_dt, m_ms_particle_shape);
 
     // The deposit routine only fills half of each diagonal mass matrix's
     // band (exploiting symmetry); mirror the other half to complete
@@ -593,6 +593,12 @@ void SemiImplicitDarwin::ApplyScaledMassMatrices (
 
     const amrex::Real scale = 2._prt * PhysConst::mu0 / m_dt;
 
+    // The mass matrices were summed over their guard cells (SyncMassMatrices),
+    // so that the stencil of a valid cell reaches one cell beyond the guard
+    // cells of J (see guardCellManager::Init). Only the valid cells of rhs are
+    // checked, since its guard cells are overwritten by FillBoundaryAndSync below.
+    AssertMassMatricesStencilNotClipped(rhs, dA);
+
     ApplyMassMatrices(
         /* a_out           = */ rhs,
         /* a_in            = */ dA,
@@ -609,7 +615,9 @@ void SemiImplicitDarwin::ApplyScaledMassMatrices (
     }
 }
 
-void SemiImplicitDarwin::ComputeScaledMassMatrixCC ( amrex::MultiFab& a_chi_cc ) const
+void SemiImplicitDarwin::ComputeScaledMassMatrixCC ( amrex::MultiFab& a_chi_xx_cc,
+                                                     amrex::MultiFab& a_chi_yy_cc,
+                                                     amrex::MultiFab& a_chi_zz_cc ) const
 {
     BL_PROFILE("SemiImplicitDarwin::ComputeScaledMassMatrixCC()");
 
@@ -620,48 +628,38 @@ void SemiImplicitDarwin::ComputeScaledMassMatrixCC ( amrex::MultiFab& a_chi_cc )
         m_WarpX->m_fields.get(FieldType::MassMatrices_X, Direction{0}, lev),
         m_WarpX->m_fields.get(FieldType::MassMatrices_Y, Direction{1}, lev),
         m_WarpX->m_fields.get(FieldType::MassMatrices_Z, Direction{2}, lev)};
+    amrex::MultiFab* chi_cc[3] = {&a_chi_xx_cc, &a_chi_yy_cc, &a_chi_zz_cc};
 
-    a_chi_cc.setVal(0.0);
-
-    // Average over the three diagonal blocks and scale by the same 2 mu0/dt
-    // prefactor the operator applies to the mass-matrix product.
-    const amrex::Real fac = 2.0_rt * PhysConst::mu0 / (3.0_rt * m_dt);
+    // Scale by the same 2 mu0/dt prefactor the operator applies to the
+    // mass-matrix product.
+    const amrex::Real fac = 2.0_rt * PhysConst::mu0 / m_dt;
 
     for (int d = 0; d < 3; ++d) {
         const int nc = Sdiag[d]->nComp();
-        const amrex::IntVect et = Sdiag[d]->ixType().toIntVect();
-        const int e0 = et[0];
-        const int e1 = (AMREX_SPACEDIM >= 2) ? et[1] : 0;
-        const int e2 = (AMREX_SPACEDIM >= 3) ? et[2] : 0;
-        // Each staggered point contributes with equal weight to the average
-        // onto the cell center (2 points per nodal dimension of the block).
-        const amrex::Real wt =
-            fac / static_cast<amrex::Real>((e0 + 1)*(e1 + 1)*(e2 + 1));
 
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
-        for (amrex::MFIter mfi(a_chi_cc, amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi)
+        for (amrex::MFIter mfi(*chi_cc[d], amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi)
         {
             const amrex::Box& tbx = mfi.tilebox();
-            amrex::Array4<amrex::Real> const& chi = a_chi_cc.array(mfi);
+            amrex::Array4<amrex::Real> const& chi = chi_cc[d]->array(mfi);
             amrex::Array4<const amrex::Real> const& S = Sdiag[d]->const_array(mfi);
             amrex::ParallelFor(tbx, [=] AMREX_GPU_DEVICE (int i, int j, int k)
             {
+                // Row-sum this block's stencil-band components at (i,j,k),
+                // then collocate onto the cell center by index identification
+                // (same convention DarwinMLMGPC uses for Z): a plain (i,j,k)
+                // fetch already reads the point at S's own native staggering
+                // that shares (i,j,k) with the target cell-centered array.
+                // This keeps chi_dd collocated with where curl(Z)_d itself
+                // would land under the same convention, and avoids zeroing the
+                // nodal-dimension Nyquist mode the way pair-averaging would.
                 amrex::Real s = 0.0;
-                // Perform row-sum of mass matrix elements
                 for (int c = 0; c < nc; ++c) {
-                    // Perform interpolation from `S`'s
-                    // original staggering to the desired staggering
-                    for (int kk = 0; kk <= e2; ++kk) {
-                        for (int jj = 0; jj <= e1; ++jj) {
-                            for (int ii = 0; ii <= e0; ++ii) {
-                                s += S(i+ii,j+jj,k+kk,c);
-                            }
-                        }
-                    }
+                    s += S(i,j,k,c);
                 }
-                chi(i,j,k) += wt*s;
+                chi(i,j,k) = fac*s;
             });
         }
     }
