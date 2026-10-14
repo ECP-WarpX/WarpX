@@ -168,7 +168,7 @@ void EffectivePotentialES::ComputeSigma (
         // Handle the parallel transfer of guard cells and apply filtering
         warpx.ApplyFilterandSumBoundaryRho(lev, lev, *rho, 0, rho->nComp());
         // Apply boundary conditions to rho, and then apply volume scaling
-        warpx.FinalizeRho(lev, rho.get(), PatchType::fine);
+        warpx.FinalizeRhoOnLevel(lev, rho.get(), PatchType::fine);
 
         // Add rho for this species to the total charge density MultiFab,
         // but only over the guard region that exists in both MultiFabs

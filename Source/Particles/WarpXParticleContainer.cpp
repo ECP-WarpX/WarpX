@@ -1944,7 +1944,7 @@ WarpXParticleContainer::GetChargeDensity (int lev, bool local, bool finalize)
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
             !local,
             "GetChargeDensity requires local=false when finalize=true.");
-        WarpX::GetInstance().FinalizeRho(lev, rho.get(), PatchType::fine);
+        WarpX::GetInstance().FinalizeRhoOnLevel(lev, rho.get(), PatchType::fine);
     }
     return rho;
 }

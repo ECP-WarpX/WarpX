@@ -722,7 +722,7 @@ public:
     /** Fold physical boundaries and convert unscaled deposits to charge density.
      *  Call after filtering, guard summation, and transfers between levels.
      *  scomp/ncomp select array components; ncomp=-1 selects all remaining components. */
-    void FinalizeRho (int lev, amrex::MultiFab* rho, PatchType patch_type, int scomp = 0, int ncomp = -1);
+    void FinalizeRhoOnLevel (int lev, amrex::MultiFab* rho, PatchType patch_type, int scomp = 0, int ncomp = -1);
 
     [[nodiscard]] bool UseVerboncoeurAxisCorrection () const
     {

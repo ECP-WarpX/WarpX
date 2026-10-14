@@ -121,7 +121,7 @@ void RelativisticExplicitES::AddSpaceChargeField (
         amrex::GetVecOfPtrs(rho_buf));
 
     for (int lev = 0; lev < num_levels; ++lev) {
-        warpx.FinalizeRho(lev, rho[lev].get(), PatchType::fine);
+        warpx.FinalizeRhoOnLevel(lev, rho[lev].get(), PatchType::fine);
     }
 
     // Get the particle beta vector

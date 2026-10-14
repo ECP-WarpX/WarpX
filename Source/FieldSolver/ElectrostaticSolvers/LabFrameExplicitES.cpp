@@ -54,7 +54,7 @@ void LabFrameExplicitES::ComputeSpaceChargeField (
 
     for (int lev = 0; lev < num_levels; lev++) {
         // Apply boundary conditions to rho_fp, and then apply volume scaling
-        warpx.FinalizeRho(lev, rho_fp[lev], PatchType::fine);
+        warpx.FinalizeRhoOnLevel(lev, rho_fp[lev], PatchType::fine);
     }
 
     // beta is zero in lab frame
