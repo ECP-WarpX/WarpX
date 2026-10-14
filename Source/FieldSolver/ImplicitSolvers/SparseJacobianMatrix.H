@@ -214,7 +214,8 @@ public:
      * from global DOF index to local-extended index. Owned DOFs use their local
      * index [0, nlocal). Ghost DOFs are assigned indices [nlocal, nlocal+nghost).
      * Verifies that every column index in the CSR matrix is covered.
-     * Also extracts the diagonal.
+     * Also extracts the diagonal. After a remap, Update() refreshes the diagonal,
+     * or clears the remap if the row stride (nnz per row) has changed.
      *
      * \param[in] a_dofs pointer to the WarpXSolverDOF object
      */
@@ -280,6 +281,9 @@ private:
 
     void readParameters ();
 
+    /** \brief Copy the diagonal of the current assembly into m_diagonal. */
+    void ExtractDiagonal ();
+
     bool m_is_defined = false;
     bool m_is_remapped = false;
     bool m_verbose = true;
@@ -289,6 +293,7 @@ private:
     int m_ndofs_g = 0;
     int m_ndofs_ext = 0;
     int m_pc_mat_nnz = 1;
+    int m_remap_nnz = 0;  /**< row stride at the last RemapColumns() */
     int m_num_realloc = 0;
 
     amrex::Gpu::DeviceVector<int> m_r_indices_g;

@@ -120,6 +120,43 @@ void SparseJacobianMatrix::Update (
                         << "is greater than 1 (" << m_num_realloc << "). This is unexpected.\n";
         ablastr::warn_manager::WMRecordWarning("SparseJacobianMatrix", warning_message.str());
     }
+
+    // The column pattern is rebuilt in the same order on every assembly, so the
+    // remapped columns stay valid unless the row stride has changed.
+    if (m_is_remapped) {
+        if (m_pc_mat_nnz != m_remap_nnz) {
+            m_is_remapped = false;
+        } else {
+            ExtractDiagonal();
+        }
+    }
+}
+
+void SparseJacobianMatrix::ExtractDiagonal ()
+{
+    BL_PROFILE("SparseJacobianMatrix::ExtractDiagonal()");
+
+    m_diagonal.resize(m_ndofs_l);
+    const int nnz_max = m_pc_mat_nnz;
+    const auto* num_nz_ptr = m_num_nz.data();
+    const auto* r_g_ptr = m_r_indices_g.data();
+    const auto* c_g_ptr = m_c_indices_g.data();
+    const auto* a_ij_ptr = m_a_ij.data();
+    auto* diag_ptr = m_diagonal.data();
+
+    amrex::ParallelFor(m_ndofs_l, [=] AMREX_GPU_DEVICE (int row)
+    {
+        amrex::Real diag = amrex::Real(1.0);
+        for (int col = 0; col < num_nz_ptr[row]; col++) {
+            const int idx = row * nnz_max + col;
+            if (c_g_ptr[idx] == r_g_ptr[row]) {
+                diag = a_ij_ptr[idx];
+                break;
+            }
+        }
+        diag_ptr[row] = diag;
+    });
+    amrex::Gpu::streamSynchronize();
 }
 
 void SparseJacobianMatrix::GetMatrix (
@@ -813,31 +850,7 @@ void SparseJacobianMatrix::RemapColumns (const WarpXSolverDOF* a_dofs)
                    m_c_indices_ext.begin());
 
     // Step 3: Extract diagonal
-    m_diagonal.resize(m_ndofs_l);
-    Gpu::PinnedVector<Real> diag_h(m_ndofs_l, Real(1.0));
-
-    Gpu::PinnedVector<int> r_indices_h(m_ndofs_l);
-    Gpu::copyAsync(Gpu::deviceToHost, m_r_indices_g.begin(), m_r_indices_g.end(),
-                   r_indices_h.begin());
-    Gpu::PinnedVector<Real> a_ij_h(m_a_ij.size());
-    Gpu::copyAsync(Gpu::deviceToHost, m_a_ij.begin(), m_a_ij.end(),
-                   a_ij_h.begin());
-    Gpu::streamSynchronize();
-
-    for (int row = 0; row < m_ndofs_l; row++) {
-        const int row_g = r_indices_h[row];
-        for (int col = 0; col < num_nz_h[row]; col++) {
-            const int idx = row * nnz_max + col;
-            if (c_global_h[idx] == row_g) {
-                diag_h[row] = a_ij_h[idx];
-                break;
-            }
-        }
-    }
-
-    Gpu::copyAsync(Gpu::hostToDevice, diag_h.begin(), diag_h.end(),
-                   m_diagonal.begin());
-    Gpu::streamSynchronize();
+    ExtractDiagonal();
 
     // Step 4: Store ghost DOF mapping as parallel device vectors
     // for use by BuildExtendedDOFVector
@@ -865,6 +878,7 @@ void SparseJacobianMatrix::RemapColumns (const WarpXSolverDOF* a_dofs)
     }
 
     m_is_remapped = true;
+    m_remap_nnz = m_pc_mat_nnz;
 
     if (m_verbose) {
         Print() << "SparseJacobianMatrix::RemapColumns(): "
