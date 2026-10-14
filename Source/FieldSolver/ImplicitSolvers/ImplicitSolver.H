@@ -62,13 +62,21 @@ public:
 
     bool DoParticleSuborbits () const { return m_particle_suborbits; }
 
+    virtual void SetupStep(amrex::Real /* start_time */) {}
+
+    virtual int DoSolve(amrex::Real a_start_time, int a_step, bool verbose_step) = 0;
+
+    virtual void ResetStep(amrex::Real /* start_time */) {}
+
+    virtual void FinishStep(amrex::Real /* a_start_time */, int /* a_step */) {}
+
     /**
      * \brief Advance fields and particles by one time step using the specified implicit algorithm
      */
-    virtual int OneStep (amrex::Real  a_time,
+    virtual int OneStep (amrex::Real  start_time,
                          amrex::Real  a_dt,
                          int          a_step,
-                         bool verbose_step) = 0;
+                         bool verbose_step);
 
     //
     // the following routines are called by the linear and nonlinear solvers
@@ -86,16 +94,17 @@ public:
      * e.g., Ebar - E^n = cvac^2*0.5*dt*(curl(Bbar) - mu0*Jbar(Ebar,Bbar))
      * Here, U = Ebar, b = E^n, and the expression on the right is RHS(U).
      */
-    virtual void ComputeRHS ( WarpXSolverVec&  a_RHS,
-                        const WarpXSolverVec&  a_E,
-                              amrex::Real      a_time,
-                              int              a_nl_iter,
-                              bool             a_from_jacobian ) = 0;
+    virtual void ComputeRHS (WarpXSolverVec& a_RHS,
+                       const WarpXSolverVec& a_E,
+                             amrex::Real     a_time,
+                             int             a_nl_iter,
+                             bool            a_from_jacobian,
+                             bool            update_pc = true) = 0;
 
     /**
      * Prepare for the linear solve. This includes depositing the mass matrices and updating the PC.
      */
-    void PreLinearSolve ();
+    void PreLinearSolve (bool update_pc = true);
 
     [[nodiscard]] int numAMRLevels () const { return m_num_amr_levels; }
 
@@ -210,6 +219,11 @@ protected:
     mutable amrex::Real m_dt = 0.0;
 
     /**
+     * \brief Number of substeps
+     */
+    int m_nsubsteps = 1;
+
+    /**
      * \brief Time-biasing parameter for fields used on RHS to advance system.
      */
     amrex::Real m_theta = 0.5;
@@ -309,6 +323,8 @@ protected:
      */
     void parseNonlinearSolverParams ( const amrex::ParmParse&  pp );
 
+    void CopyVectorField (warpx::fields::FieldType dst, warpx::fields::FieldType src);
+
     void SaveEoldMultifab ();
 
     /**
@@ -321,9 +337,11 @@ protected:
     /**
      * \brief Perform operations needed before computing the Right Hand Side
      */
-    void PreRHSOp ( amrex::Real  a_cur_time,
-                    int          a_nl_iter,
-                    bool         a_from_jacobian );
+    void PreRHSOp (amrex::Real a_cur_time,
+                   int         a_nl_iter,
+                   bool        a_from_jacobian,
+                   amrex::Real a_dt_scale,
+                   bool        update_pc = true);
 
     /**
      * \brief Communicate Mass Matrices used for PC and apply boundary conditions

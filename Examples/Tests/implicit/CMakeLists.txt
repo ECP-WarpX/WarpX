@@ -12,6 +12,16 @@ add_warpx_test(
 )
 
 add_warpx_test(
+    test_1d_theta_implicit_planar_pinch_substeps  # name
+    1  # dims
+    2  # nprocs
+    inputs_test_1d_theta_implicit_planar_pinch_substeps  # inputs
+    "analysis_pinch.py diags/diag1000020"  # analysis
+    "analysis_default_regression.py --path diags/diag1000020"  # checksum
+    OFF  # dependency
+)
+
+add_warpx_test(
     test_1d_semi_implicit_picard  # name
     1  # dims
     2  # nprocs
@@ -28,6 +38,16 @@ add_warpx_test(
     inputs_test_1d_theta_implicit_picard  # inputs
     "analysis_1d.py"  # analysis
     "analysis_default_regression.py --path diags/diag1000100"  # checksum
+    OFF  # dependency
+)
+
+add_warpx_test(
+    test_2d_theta_implicit_planar_pinch_algmg  # name
+    2  # dims
+    2  # nprocs
+    inputs_test_2d_theta_implicit_planar_pinch_algmg  # inputs
+    "analysis_pinch.py diags/diag1000020"  # analysis
+    "analysis_default_regression.py --path diags/diag1000020"  # checksum
     OFF  # dependency
 )
 
@@ -68,6 +88,28 @@ if(AMReX_PETSC)
         2  # nprocs
         inputs_test_2d_theta_implicit_planar_pinch  # inputs
         "analysis_pinch.py diags/diag1000020"  # analysis
+        "analysis_default_regression.py --path diags/diag1000020"  # checksum
+        OFF  # dependency
+    )
+
+    # petsc_snes and the native Newton solver follow the same algorithm: the checksum file
+    # of this test is a symbolic link to that of test_2d_theta_implicit_planar_pinch
+    add_warpx_test(
+        test_2d_theta_implicit_planar_pinch_petsc_snes  # name
+        2  # dims
+        2  # nprocs
+        inputs_test_2d_theta_implicit_planar_pinch_petsc_snes  # inputs
+        "analysis_pinch.py diags/diag1000020"  # analysis
+        "analysis_default_regression.py --path diags/diag1000020"  # checksum
+        OFF  # dependency
+    )
+
+    add_warpx_test(
+        test_2d_semi_implicit_planar_pinch_petsc_snes  # name
+        2  # dims
+        2  # nprocs
+        inputs_test_2d_semi_implicit_planar_pinch_petsc_snes  # inputs
+        "analysis_pinch.py diags/diag1000020 --gmres-iters-tol 4 --newton-iters-tol 4"  # analysis
         "analysis_default_regression.py --path diags/diag1000020"  # checksum
         OFF  # dependency
     )

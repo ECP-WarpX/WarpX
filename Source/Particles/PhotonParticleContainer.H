@@ -79,6 +79,11 @@ public:
         ablastr::fields::MultiFabRegister& fields,
         int lev,  amrex::Real t, amrex::Real dt) override;
 
+    /**
+     * \brief No reset is needed for photons since they are not updated during implicit iterations
+     */
+    void ResetImplicitParticleData (int /*lev*/) override {}
+
     // Do nothing
     void PushP (int /*lev*/,
                         amrex::Real /*dt*/,
@@ -88,7 +93,8 @@ public:
                         const amrex::MultiFab& /*Bx*/,
                         const amrex::MultiFab& /*By*/,
                         const amrex::MultiFab& /*Bz*/,
-                        MomentumPushType /*momentum_push_type*/) override {}
+                        MomentumPushType /*momentum_push_type*/,
+                        std::optional<FieldGatherOrders> /*gather_orders*/) override {}
 
     // DepositCharge should do nothing for photons
     void DepositCharge (WarpXParIter& /*pti*/,
