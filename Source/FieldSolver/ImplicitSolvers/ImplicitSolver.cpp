@@ -197,7 +197,7 @@ int ImplicitSolver::OneStep (const amrex::Real  start_time,
 {
     BL_PROFILE("ImplicitSolver::OneStep()");
 
-    // Fields have Eg^{n} and Bg^{n}
+    // Fields have E^{n} and B^{n}
     // Particles have up^{n} and xp^{n}.
 
     // Set the member time step
@@ -221,6 +221,8 @@ int ImplicitSolver::OneStep (const amrex::Real  start_time,
             }
 
             // Solve nonlinear system at t_{n+theta}
+            // Disable PC lagging throughout adaptive substepping.
+            m_nlsolver->ForcePreconditionerUpdate(m_nsubsteps > 1);
             exit_status = DoSolve(substep_start_time, a_step, verbose_step);
 
             if (exit_status >= 0) {
@@ -239,6 +241,7 @@ int ImplicitSolver::OneStep (const amrex::Real  start_time,
                 m_nsubsteps *= 2;
                 if (m_nsubsteps > max_substeps) {
                     // Give up and just return the bad exit status
+                    m_nlsolver->InvalidatePreconditioner();
                     return exit_status;
                 }
                 m_dt /= 2._rt;
@@ -251,6 +254,11 @@ int ImplicitSolver::OneStep (const amrex::Real  start_time,
 
         substep_start_time += m_dt;
 
+    }
+
+    if (m_nsubsteps > 1) {
+        // Rebuild the PC with the full timestep's dt on the next solve.
+        m_nlsolver->InvalidatePreconditioner();
     }
 
     return exit_status;
@@ -999,33 +1007,33 @@ void ImplicitSolver::InitializeMassMatrices ()
 
 }
 
-void ImplicitSolver::PreLinearSolve ()
+void ImplicitSolver::PreLinearSolve (const bool update_pc)
 {
     BL_PROFILE("ImplicitSolver::PreLinearSolve()");
 
-    if (m_use_mass_matrices) {
-
+    // The deposit is skipped when the mass matrices are used only for a PC that is not updated
+    if (m_use_mass_matrices_jacobian || (m_use_mass_matrices_pc && update_pc)) {
         m_WarpX->DepositMassMatrices(m_dt);
         FinishMassMatricesDeposition();
+    }
 
-        if (m_use_mass_matrices_jacobian) {
-            SaveE();
-        }
+    if (m_use_mass_matrices_jacobian) {
+        SaveE();
+    }
 
-        if (m_use_mass_matrices_pc) {
-            SyncMassMatricesPCAndApplyBCs();
-            const amrex::Real theta_dt = m_theta*m_dt;
-            SetMassMatricesForPC( theta_dt );
-        }
-
+    if (m_use_mass_matrices_pc && update_pc) {
+        SyncMassMatricesPCAndApplyBCs();
+        const amrex::Real theta_dt = m_theta*m_dt;
+        SetMassMatricesForPC( theta_dt );
     }
 
 }
 
-void ImplicitSolver::PreRHSOp ( const amrex::Real  a_cur_time,
-                                const int          a_nl_iter,
-                                const bool         a_from_jacobian,
-                                const amrex::Real  a_dt_scale)
+void ImplicitSolver::PreRHSOp (const amrex::Real a_cur_time,
+                               const int         a_nl_iter,
+                               const bool        a_from_jacobian,
+                               const amrex::Real a_dt_scale,
+                               const bool        update_pc)
 {
     BL_PROFILE("ImplicitSolver::PreRHSOp()");
 
@@ -1045,7 +1053,8 @@ void ImplicitSolver::PreRHSOp ( const amrex::Real  a_cur_time,
     // Set the implict solver options for particles and setting the current density
     ImplicitOptions options;
     options.linear_stage_of_jfnk = a_from_jacobian;
-    options.use_mass_matrices_pc = m_use_mass_matrices_pc;
+    // PC deposition and zeroing follow the same schedule as sparse assembly.
+    options.use_mass_matrices_pc = m_use_mass_matrices_pc && update_pc && !a_from_jacobian;
     options.use_mass_matrices_jacobian = m_use_mass_matrices_jacobian;
     options.evolve_suborbit_particles_only = false;
 
@@ -1086,13 +1095,6 @@ void ImplicitSolver::PreRHSOp ( const amrex::Real  a_cur_time,
 
     // Apply BCs to J and communicate
     m_WarpX->SyncCurrentAndRho();
-
-    if (m_nlsolver_type == NonlinearSolverType::petsc_snes && !a_from_jacobian) {
-        // The native Newton solver calls this routine immediately before the linear solve,
-        // and only when a linear solve is required (i.e., the system is not converged).
-        // PETSc's SNES solver does not provide this optimization, so we must call it here.
-        PreLinearSolve();
-    }
 
 }
 

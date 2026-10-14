@@ -119,6 +119,9 @@ void WarpX::HybridPICEvolveFields ()
     // Push the B field from t=n to t=n+1/2 using the current and density
     // at t=n, while updating the E field along with B using the electron
     // momentum equation
+    if (m_hybrid_pic_model->m_solve_electron_energy_equation) {
+        m_hybrid_pic_model->QDSMCFillElectronPressureFromTe(rho_fp_temp);
+    }
     m_hybrid_pic_model->BfieldEvolve(
         m_fields.get_mr_levels_alldirs(FieldType::Bfield_fp, finest_level),
         m_fields.get_mr_levels_alldirs(FieldType::Efield_fp, finest_level),
@@ -161,6 +164,9 @@ void WarpX::HybridPICEvolveFields ()
     }
 
     // Now push the B field from t=n+1/2 to t=n+1 using the n+1/2 quantities
+    if (m_hybrid_pic_model->m_solve_electron_energy_equation) {
+        m_hybrid_pic_model->QDSMCFillElectronPressureFromTe(rho_fp_temp);
+    }
     m_hybrid_pic_model->BfieldEvolve(
         m_fields.get_mr_levels_alldirs(FieldType::Bfield_fp, finest_level),
         m_fields.get_mr_levels_alldirs(FieldType::Efield_fp, finest_level),
@@ -198,6 +204,10 @@ void WarpX::HybridPICEvolveFields ()
     }
 
     // Update the E field to t=n+1 using the extrapolated J_i^n+1 value
+    if (m_hybrid_pic_model->m_solve_electron_energy_equation) {
+        m_hybrid_pic_model->QDSMCFillElectronPressureFromTe(
+            m_fields.get_mr_levels(FieldType::rho_fp, finest_level));
+    }
     m_hybrid_pic_model->CalculatePlasmaCurrent(
         m_fields.get_mr_levels_alldirs(FieldType::Bfield_fp, finest_level),
         m_eb_update_E);
@@ -489,20 +499,22 @@ void WarpX::HybridPICInitializeRhoJandB ()
         // needs) rather than re-running the adiabat seed, which would
         // overwrite it and discard the evolved thermal structure.
         for (int lev = 0; lev <= finest_level; ++lev) {
-            m_hybrid_pic_model->QDSMCFillElectronPressureFromTe(lev);
-            ApplyElectronPressureBoundary(lev, PatchType::fine);
-            ablastr::utils::communication::FillBoundary(
-                *m_fields.get(FieldType::hybrid_electron_pressure_fp, lev),
-                do_single_precision_comms,
-                Geom(lev).periodicity(),
-                true);
+            m_hybrid_pic_model->QDSMCFillElectronPressureFromTe(
+                lev, *m_fields.get(FieldType::rho_fp, lev));
         }
     } else {
         m_hybrid_pic_model->CalculateElectronPressure(energy_eq);
     }
 
-    if (restart_chkfile.empty()) {
-        // Handle field splitting for Hybrid field push
+    // Handle field splitting for the hybrid field push: stage the external
+    // fields and add their contribution to the total field once, at the
+    // true start of the run. This entry point executes at the first step
+    // of EVERY Evolve() call, and beyond the first entry Bfield_fp already
+    // carries the external contribution (segmented stepping through
+    // repeated sim.step() calls re-enters here mid-run) -- adding it again
+    // double-counts the external field on every re-entry. On restart the
+    // checkpointed fields likewise already contain it.
+    if (restart_chkfile.empty() && istep[0] == 0) {
         if (m_hybrid_pic_model->m_add_external_fields) {
             // Get the external fields
             // Currently t_new is what t_old will be when entering the solver since
