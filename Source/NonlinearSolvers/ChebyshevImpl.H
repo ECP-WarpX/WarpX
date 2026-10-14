@@ -271,7 +271,9 @@ void ChebyshevImpl<T>::Solve (T& a_x, const T& a_b)
         } else {
             // Three-term recurrence:
             // x_{k+1} = omega * (tau * z + x_k - x_{k-1}) + x_{k-1}
-            const RT omega_new = RT(1) / (RT(1) - sigma * sigma * omega / RT(4));
+            const RT omega_new = (k == 1)
+                ? RT(1) / (RT(1) - sigma * sigma / RT(2))
+                : RT(1) / (RT(1) - sigma * sigma * omega / RT(4));
 
             // Save x_k in m_w1 (reuse, we're done with the residual)
             m_w1.Copy(a_x);
