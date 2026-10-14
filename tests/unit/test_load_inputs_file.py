@@ -76,3 +76,19 @@ def test_inputs_file_path_with_equals_sign(monkeypatch):
     geom = load_inputs_file(monkeypatch, ["run.py"], scan_dir / "inputs_test")
 
     assert list(geom.domain.size) == [16] * N_AXES[pywarpx.libwarpx.geometry_dim]
+
+
+@pytest.mark.parametrize("override_first", [True, False])
+def test_double_dash_ends_the_overrides(monkeypatch, override_first):
+    """AMReX parses no argument after "--", which leaves them to the script
+    itself and, in a PETSc build, to PETSc, which ``amrex::Initialize`` starts
+    with the same arguments. ``python run.py amr.n_cell=8 8 -- amr.n_cell=32 32``
+    keeps 8 cells, and without the first override, the file's 16 cells.
+    """
+    n_axes = N_AXES[pywarpx.libwarpx.geometry_dim]
+    before = ["amr.n_cell=8"] + ["8"] * (n_axes - 1) if override_first else []
+    after = ["--", "amr.n_cell=32"] + ["32"] * (n_axes - 1)
+
+    geom = load_inputs_file(monkeypatch, ["run.py"] + before + after)
+
+    assert list(geom.domain.size) == [8 if override_first else 16] * n_axes
