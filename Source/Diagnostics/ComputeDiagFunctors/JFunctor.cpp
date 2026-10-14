@@ -53,8 +53,7 @@ JFunctor::operator() (amrex::MultiFab& mf_dst, int dcomp, const int /*i_buffer*/
         // Sum deposited guard contributions without filtering.
         for (int idim = 0; idim < 3; ++idim) {
             auto& J = *current_fp_temp[0][idim];
-            WarpXSumGuardCells(J, warpx.Geom(m_lev).periodicity(), J.nGrowVect(),
-                              0, J.nComp());
+            WarpXSumGuardCells(J, warpx.Geom(m_lev).periodicity(), J.nGrowVect(), 0, J.nComp());
         }
 
         warpx.FinalizeJOnLevel(m_lev,
