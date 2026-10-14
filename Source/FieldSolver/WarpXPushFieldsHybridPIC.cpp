@@ -341,7 +341,7 @@ void WarpX::HybridPICDepositRhoAndJ ()
                         WarpX::do_single_precision_comms, Geom(lev).periodicity());
                 }
                 // Apply boundary conditions to rho_spec, and then apply volume scaling
-                FinalizeRho(lev, rho_spec[lev], PatchType::fine);
+                FinalizeRhoOnLevel(lev, rho_spec[lev], PatchType::fine);
                 ApplyJfieldBoundary(lev, J_spec[lev][0], J_spec[lev][1],
                                     J_spec[lev][2], PatchType::fine);
             }

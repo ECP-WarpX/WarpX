@@ -59,7 +59,7 @@ RhoFunctor::operator() ( amrex::MultiFab& mf_dst, const int dcomp, const int /*i
     // Handle the parallel transfers of guard cells and
     // apply the filtering if requested.
     warpx.ApplyFilterandSumBoundaryRho(m_lev, m_lev, *rho, 0, rho->nComp());
-    warpx.FinalizeRho(m_lev, rho.get(), PatchType::fine);
+    warpx.FinalizeRhoOnLevel(m_lev, rho.get(), PatchType::fine);
 
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_FFT)
     // Apply k-space filtering when using the PSATD solver
