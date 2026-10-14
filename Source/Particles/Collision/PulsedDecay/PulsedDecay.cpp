@@ -43,6 +43,10 @@ PulsedDecay::PulsedDecay (std::string const& collision_name, MultiParticleContai
     m_weight_ratio = 1;
     pp_collision_name.query("weight_ratio", m_weight_ratio);
 
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        m_weight_ratio >= 1,
+        "PulsedDecay: weight_ratio must be greater than or equal to one");
+
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE( m_product_species.size() == 2,
         "PulsedDecay: product_species size must be equal to two");
 
