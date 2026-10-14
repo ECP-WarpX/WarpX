@@ -11,6 +11,7 @@
 #include <AMReX_ParmParse.H>
 #include <AMReX_Print.H>
 
+#include <filesystem>
 #include <fstream>
 #include <string>
 
@@ -18,7 +19,9 @@
 void
 ablastr::utils::write_used_inputs_file (std::string const & filename, bool verbose)
 {
-    if (filename.empty() || filename == "/dev/null") {
+    namespace fs = std::filesystem;
+
+    if (filename.empty() || (fs::path{filename} == fs::path{"/dev/null"})) {
         return;
     }
 
