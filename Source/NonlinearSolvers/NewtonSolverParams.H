@@ -12,6 +12,8 @@
 #include "PreconditionerLibrary.H"
 #include "Utils/TextMsg.H"
 
+#include <ablastr/warn_manager/WarnManager.H>
+
 #include <AMReX_Enum.H>
 #include <AMReX_ParmParse.H>
 #include <AMReX_Print.H>
@@ -86,15 +88,25 @@ struct NewtonSolverParams
         else { pp_l.query("use_pcmat", use_pcmat); }
 
         /* backward compatibility */
-        const amrex::ParmParse pp_gmres("gmres");
-        pp_gmres.query("verbose_int",         linsol_verbose_int);
-        pp_gmres.query("restart_length",      linsol_restart_length);
-        pp_gmres.query("absolute_tolerance",  linsol_atol);
-        pp_gmres.query("relative_tolerance",  linsol_rtol);
-        pp_gmres.query("max_iterations",      linsol_maxits);
+        if (IsKrylov()) {
+            const amrex::ParmParse pp_gmres("gmres");
+            pp_gmres.query("verbose_int",         linsol_verbose_int);
+            pp_gmres.query("restart_length",      linsol_restart_length);
+            pp_gmres.query("absolute_tolerance",  linsol_atol);
+            pp_gmres.query("relative_tolerance",  linsol_rtol);
+            pp_gmres.query("max_iterations",      linsol_maxits);
+        }
 
         const amrex::ParmParse pp_jac("jacobian");
         pp_jac.query("pc_type", pc_type);
+        // The weighted Jacobi and Chebyshev linear solvers do not apply a preconditioner
+        if (!IsKrylov() && pc_type != PreconditionerType::none) {
+            ablastr::warn_manager::WMRecordWarning("NewtonSolver",
+                amrex::getEnumNameString(linear_solver_type) +
+                " linear solver does not use a preconditioner; ignoring jacobian.pc_type = " +
+                amrex::getEnumNameString(pc_type));
+            pc_type = PreconditionerType::none;
+        }
 
         // Jacobi and Chebyshev may read MassMatrices_PC directly. A scheduled PC update can
         // clear these coefficients during residual evaluation and leave them unfinished if

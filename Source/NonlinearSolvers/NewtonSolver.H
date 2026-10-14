@@ -179,18 +179,8 @@ void NewtonSolver<Vec,Ops>::Define ( const Vec&  a_U,
 #endif
     } else if (m_newton_params.linear_solver_type == LinearSolverType::weighted_jacobi) {
         m_linear_solver = std::make_unique<JacobiSolver<Vec,JacobianFunctionMF<Vec,Ops>>>();
-        if (!m_newton_params.use_pcmat && m_newton_params.pc_type != PreconditionerType::none) {
-            ablastr::warn_manager::WMRecordWarning("NewtonSolver",
-                "weighted_jacobi linear solver does not use an external preconditioner;"
-                " ignoring jacobian.pc_type = " + amrex::getEnumNameString(m_newton_params.pc_type));
-        }
     } else if (m_newton_params.linear_solver_type == LinearSolverType::chebyshev) {
         m_linear_solver = std::make_unique<ChebyshevSolver<Vec,JacobianFunctionMF<Vec,Ops>>>();
-        if (!m_newton_params.use_pcmat && m_newton_params.pc_type != PreconditionerType::none) {
-            ablastr::warn_manager::WMRecordWarning("NewtonSolver",
-                "chebyshev linear solver does not use an external preconditioner;"
-                " ignoring jacobian.pc_type = " + amrex::getEnumNameString(m_newton_params.pc_type));
-        }
     } else {
         WARPX_ABORT_WITH_MESSAGE("NewtonSolver::Define(): invalid linear solver type");
     }

@@ -21,9 +21,9 @@
 /**
  * \brief LinearSolver wrapper for weighted Jacobi.
  *
- *  When use_pcmat=false (default), the matrix-vector product is provided
- *  by JacobianFunctionMF::apply(). When use_pcmat=true, the assembled
- *  PC matrix (stencil or CSR) is used instead.
+ *  When use_pcmat=true (default), the assembled PC matrix (stencil or CSR)
+ *  is used. When use_pcmat=false, the matrix-vector product is provided
+ *  by JacobianFunctionMF::apply().
  */
 template <typename Vec, typename LinOp>
 class JacobiSolver : public LinearSolver<Vec, LinOp>

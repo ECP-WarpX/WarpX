@@ -279,7 +279,8 @@ Overall simulation parameters
             Updates are allowed only when the zero-based simulation
             step index is divisible by this interval. Both interval conditions must
             hold for the preconditioner to be updated; otherwise it is reused, including
-            the PETSc factorization. The same schedule applies to the native Newton
+            the PETSc factorization and the assembled matrix of the ``weighted_jacobi`` and
+            ``chebyshev`` linear solvers with ``use_pcmat = true``. The same schedule applies to the native Newton
             solver and to PETSc SNES.
             The first required linear solve always initializes the PC, including
             after restart. During adaptive implicit substepping, PC updates are forced
@@ -307,8 +308,8 @@ Overall simulation parameters
           - These parameters can also be given with the name of the linear solver as prefix (``amrex_gmres`` or ``petsc_ksp``); the ``gmres`` prefix takes precedence.
 
           - ``newton.linear_solver = weighted_jacobi`` or ``chebyshev``: Use weighted Jacobi or Chebyshev iterations instead of GMRES to solve the linear system at each nonlinear iteration.
-            These solvers do not use a preconditioner (``jacobian.pc_type``).
-            The parameters below use the name of the linear solver as their prefix:
+            These solvers do not use a preconditioner: ``jacobian.pc_type`` is ignored, with a warning.
+            The parameters below use the name of the linear solver as their prefix; the ``gmres`` parameters do not apply:
 
           - ``<linear_solver>.verbose_int`` (``int``, default: 2)
           - ``<linear_solver>.max_iterations`` (``int``, default: 1000)
@@ -317,9 +318,13 @@ Overall simulation parameters
           - ``<linear_solver>.use_pcmat`` (``bool``, default: true)
             When ``true``, the solver iterates on the assembled matrix that is also used by ``jacobian.pc_type = pc_jacobi`` and ``pc_chebyshev`` (see below), with the plasma response included if ``implicit_evolve.use_mass_matrices_pc = true``.
             This matrix approximates the Jacobian, so more nonlinear iterations may be needed.
-            The assembled matrix is updated on the preconditioner update schedule (see ``newton.pc_update_newton_interval``).
+            It is assembled on the preconditioner update schedule (``newton.pc_update_newton_interval`` and ``newton.pc_update_time_step_interval``).
+            When these updates are lagged, the Newton step uses the matrix assembled at an earlier Newton iteration or time step.
+            The residual is still evaluated at every Newton iteration, so a converged solve meets the same tolerances; lagging can slow the nonlinear convergence.
+            A solve that stops at ``newton.max_iterations`` without converging (``newton.require_convergence = false``) can give a different result than without lagging.
             When ``false``, the solver uses matrix-free evaluations of the Jacobian.
             Its diagonal is then taken as the identity, plus the diagonal of the curl curl operator for ``theta_implicit_em``, plus the diagonal of the mass matrices if ``implicit_evolve.use_mass_matrices_jacobian = true``.
+            Nothing is lagged in this case: the diagonal is updated at every Newton iteration.
           - ``weighted_jacobi.omega`` (``float``, default: Gershgorin estimate from the assembled matrix, or 1.0 if ``use_pcmat = false``) Relaxation factor.
             Setting it turns off ``weighted_jacobi.adaptive_omega``.
           - ``weighted_jacobi.adaptive_omega`` (``bool``, default: true)
@@ -392,6 +397,7 @@ Overall simulation parameters
             With diagonal mass matrices (``implicit_evolve.mass_matrices_pc_width = 0``) and ``semi_implicit_em``, the solve is exact in one step.
 
             - ``pc_jacobi.verbose`` (``bool``, default: false)
+            - ``pc_jacobi.verbose_int`` (``int``) If given, overrides ``pc_jacobi.verbose``: a positive value turns on the output.
             - ``pc_jacobi.max_iter`` (``int``, default: 200)
             - ``pc_jacobi.relative_tolerance`` (``float``, default: 1.0e-4)
             - ``pc_jacobi.absolute_tolerance`` (``float``, default: 1.0e-16)
@@ -404,6 +410,7 @@ Overall simulation parameters
             The iteration needs bounds on the eigenvalues of :math:`D^{-1}A`, where :math:`D` is the diagonal of :math:`A`.
 
             - ``pc_chebyshev.verbose`` (``bool``, default: false)
+            - ``pc_chebyshev.verbose_int`` (``int``) If given, overrides ``pc_chebyshev.verbose``: a positive value turns on the output.
             - ``pc_chebyshev.max_iter`` (``int``, default: 200)
             - ``pc_chebyshev.relative_tolerance`` (``float``, default: 1.0e-4)
             - ``pc_chebyshev.absolute_tolerance`` (``float``, default: 1.0e-16)
@@ -433,7 +440,7 @@ Overall simulation parameters
             - ``pc_algmg.max_levels`` (``int``, default: 25)
 
         - ``precon_mat.verbose`` (``bool``, default: true)
-          Print information on the assembly of the sparse matrix used by ``pc_petsc`` and ``pc_algmg``, and by ``pc_jacobi`` and ``pc_chebyshev`` with ``theta_implicit_em``.
+          Print information on the assembly of the sparse matrix used by ``pc_petsc`` and ``pc_algmg``, and with ``theta_implicit_em`` by ``pc_jacobi``, ``pc_chebyshev``, and the ``weighted_jacobi`` and ``chebyshev`` linear solvers with ``use_pcmat = true``.
           This replaces ``pc_petsc.verbose``.
 
       - **References:** (WarpX includes relativistic extensions not discussed in references.)

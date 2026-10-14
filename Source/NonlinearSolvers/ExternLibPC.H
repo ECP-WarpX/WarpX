@@ -13,6 +13,7 @@
 
 #include <AMReX.H>
 #include <AMReX_GpuContainers.H>
+#include <AMReX_ParmParse.H>
 #include <AMReX_Print.H>
 
 #include <string>
@@ -107,6 +108,11 @@ void ExternLibPC<T,Ops>::Define ( const T& a_U,
 
     amrex::ignore_unused(a_U);
     m_ops = a_ops;
+
+    // The update line belongs to the matrix assembly output
+    const amrex::ParmParse pp("precon_mat");
+    pp.query("verbose", m_verbose);
+
     m_is_defined = true;
 }
 
@@ -123,7 +129,8 @@ void ExternLibPC<T,Ops>::Update ()
 
     if (m_verbose) {
         amrex::Print() << "Updated " << m_name
-                       << " (ExternLibPC): theta*dt = " << this->m_dt << "\n";
+                       << " (ExternLibPC): theta*dt = "
+                       << m_ops->GetThetaForPC()*this->m_dt << "\n";
     }
 }
 

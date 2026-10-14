@@ -1694,12 +1694,32 @@ class PreconditionerBase(picmistandard.PICMI_Extension):
     # solver (rather than only via a nonlinear solver's Jacobian).
     supports_direct_gmres: ClassVar[bool] = False
 
+    # Attributes that are not written with the preconditioner name as prefix.
+    other_inputs: ClassVar[tuple[str, ...]] = ()
+
     def preconditioner_type_initialize_inputs(self, jacobian=None):
         if jacobian is not None:
             jacobian.pc_type = self.name
         bucket = pywarpx.warpx.get_bucket(self.name)
         for attr in type(self).model_fields:
-            setattr(bucket, attr, getattr(self, attr))
+            if attr not in self.other_inputs:
+                setattr(bucket, attr, getattr(self, attr))
+
+
+class AssembledMatrixPreconditionerBase(PreconditionerBase):
+    """Base class of the preconditioners that can use the assembled sparse matrix"""
+
+    other_inputs: ClassVar[tuple[str, ...]] = ("precon_mat_verbose",)
+
+    precon_mat_verbose: bool | None = Field(
+        default=None,
+        description="Whether to print information on the assembly of the sparse matrix (default True)",
+    )
+
+    def preconditioner_type_initialize_inputs(self, jacobian=None):
+        super().preconditioner_type_initialize_inputs(jacobian)
+        if self.precon_mat_verbose is not None:
+            pywarpx.warpx.get_bucket("precon_mat").verbose = self.precon_mat_verbose
 
 
 class GMRESLinearSolver(LinearSolverBase):
@@ -1786,6 +1806,10 @@ class WeightedJacobiLinearSolver(LinearSolverBase):
         default=None,
         description="Whether to iterate on the assembled preconditioner matrix instead of matrix-free evaluations of the Jacobian (default True)",
     )
+    precon_mat_verbose: bool | None = Field(
+        default=None,
+        description="Whether to print information on the assembly of the sparse matrix used with use_pcmat (default True)",
+    )
     omega: float | None = Field(
         default=None,
         description="Relaxation factor. Setting it turns off adaptive_omega.",
@@ -1804,6 +1828,8 @@ class WeightedJacobiLinearSolver(LinearSolverBase):
         weighted_jacobi.relative_tolerance = self.relative_tolerance
         weighted_jacobi.max_iterations = self.max_iterations
         weighted_jacobi.use_pcmat = self.use_pcmat
+        if self.precon_mat_verbose is not None:
+            pywarpx.warpx.get_bucket("precon_mat").verbose = self.precon_mat_verbose
         weighted_jacobi.omega = self.omega
         weighted_jacobi.adaptive_omega = self.adaptive_omega
 
@@ -1830,6 +1856,10 @@ class ChebyshevLinearSolver(LinearSolverBase):
         default=None,
         description="Whether to iterate on the assembled preconditioner matrix instead of matrix-free evaluations of the Jacobian (default True)",
     )
+    precon_mat_verbose: bool | None = Field(
+        default=None,
+        description="Whether to print information on the assembly of the sparse matrix used with use_pcmat (default True)",
+    )
     power_iterations: int | None = Field(
         default=None,
         description="Number of power-method iterations used to estimate the largest eigenvalue (default 20)",
@@ -1851,6 +1881,8 @@ class ChebyshevLinearSolver(LinearSolverBase):
         chebyshev.relative_tolerance = self.relative_tolerance
         chebyshev.max_iterations = self.max_iterations
         chebyshev.use_pcmat = self.use_pcmat
+        if self.precon_mat_verbose is not None:
+            pywarpx.warpx.get_bucket("precon_mat").verbose = self.precon_mat_verbose
         chebyshev.power_iterations = self.power_iterations
         chebyshev.lambda_min = self.lambda_min
         chebyshev.lambda_max = self.lambda_max
@@ -1932,7 +1964,7 @@ class DarwinMLMGPreconditioner(PreconditionerBase):
     )
 
 
-class JacobiPreconditioner(PreconditionerBase):
+class JacobiPreconditioner(AssembledMatrixPreconditionerBase):
     """
     Sets up the weighted Jacobi preconditioner used during the nonlinear solver
     """
@@ -1961,7 +1993,7 @@ class JacobiPreconditioner(PreconditionerBase):
     )
 
 
-class ChebyshevPreconditioner(PreconditionerBase):
+class ChebyshevPreconditioner(AssembledMatrixPreconditionerBase):
     """
     Sets up the Chebyshev preconditioner used during the nonlinear solver
     """
@@ -1993,7 +2025,7 @@ class ChebyshevPreconditioner(PreconditionerBase):
     )
 
 
-class PETScPreconditioner(PreconditionerBase):
+class PETScPreconditioner(AssembledMatrixPreconditionerBase):
     """
     Sets up the PETSc preconditioner used during the nonlinear solver
     """
@@ -2021,7 +2053,7 @@ class PETScPreconditioner(PreconditionerBase):
     )
 
 
-class AlgMGPreconditioner(PreconditionerBase):
+class AlgMGPreconditioner(AssembledMatrixPreconditionerBase):
     """
     Sets up the AMReX algebraic multigrid (AlgMG) preconditioner used during the nonlinear solver
     """
