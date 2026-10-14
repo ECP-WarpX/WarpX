@@ -40,3 +40,14 @@ add_warpx_test(
     "analysis_default_regression.py --path diags/diag1000010"  # checksum
     test_2d_ohm_solver_checkpoint_picmi  # dependency
 )
+
+# A saved adaptive count must not override an explicitly increased RK4 count.
+add_warpx_test(
+    test_2d_ohm_solver_fixed_substeps_restart  # name
+    2  # dims
+    1  # nprocs
+    "inputs_base_2d_ohm_solver_adaptive_checkpoint amr.restart='../test_2d_ohm_solver_adaptive_checkpoint/diags/chk000003' hybrid_pic_model.use_rkf45=0 hybrid_pic_model.substeps=80"  # inputs
+    "analysis_adaptive_substeps.py 80"  # analysis
+    OFF  # checksum
+    test_2d_ohm_solver_adaptive_checkpoint  # dependency
+)
