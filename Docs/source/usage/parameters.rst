@@ -330,9 +330,10 @@ Overall simulation parameters
           - ``weighted_jacobi.adaptive_omega`` (``bool``, default: true)
             When ``true``, the relaxation factor is reduced by a factor of 0.9 whenever the residual increases.
             If the residual still increases after 10 reductions, the linear solve fails.
-          - ``chebyshev.power_iterations`` (``int``, default: 20) Number of power-method iterations used to estimate the largest eigenvalue.
-          - ``chebyshev.lambda_min`` (``float``, default: 1.0) Lower bound of the eigenvalues.
-          - ``chebyshev.lambda_max`` (``float``, default: estimated with the power method) Upper bound of the eigenvalues.
+          - ``chebyshev.power_iterations`` (``int``, default: 20) Number of power-method iterations used to estimate each eigenvalue bound.
+          - ``chebyshev.lambda_min`` (``float``, default: estimated with the power method) Lower bound of the eigenvalues of :math:`D^{-1}A`, where :math:`D` is the diagonal of :math:`A`.
+          - ``chebyshev.lambda_max`` (``float``, default: estimated with the power method) Upper bound of the eigenvalues of :math:`D^{-1}A`.
+            The estimated bounds are recomputed on the preconditioner update schedule.
 
           - If the linear solver fails to converge (for example, on reaching ``gmres.max_iterations``), the nonlinear solve stops and the time step is repeated with substeps, as for any failed nonlinear solve. This does not depend on ``newton.require_convergence``.
 
@@ -415,9 +416,10 @@ Overall simulation parameters
             - ``pc_chebyshev.max_iter`` (``int``, default: 200)
             - ``pc_chebyshev.relative_tolerance`` (``float``, default: 1.0e-4)
             - ``pc_chebyshev.absolute_tolerance`` (``float``, default: 1.0e-16)
-            - ``pc_chebyshev.power_iterations`` (``int``, default: 20) Number of power-method iterations used to estimate the largest eigenvalue.
-            - ``pc_chebyshev.lambda_min`` (``float``, default: 1.0) Lower bound of the eigenvalues.
+            - ``pc_chebyshev.power_iterations`` (``int``, default: 20) Number of power-method iterations used to estimate each eigenvalue bound.
+            - ``pc_chebyshev.lambda_min`` (``float``, default: estimated with the power method) Lower bound of the eigenvalues.
             - ``pc_chebyshev.lambda_max`` (``float``, default: estimated with the power method) Upper bound of the eigenvalues.
+              The estimated bounds are recomputed whenever the preconditioner is updated.
 
           - ``jacobian.pc_type = pc_petsc``: Use the PETSc solver.
 

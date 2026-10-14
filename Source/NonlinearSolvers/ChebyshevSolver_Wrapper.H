@@ -87,7 +87,8 @@ public:
             // The assembled PC matrix follows the PC update schedule
             return;
         }
-        m_solver.Update();
+        // Eigenvalue bounds are re-estimated on the PC update schedule
+        m_solver.Update(m_matrix_stale);
         m_matrix_stale = false;
     }
 

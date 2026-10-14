@@ -1862,10 +1862,11 @@ class ChebyshevLinearSolver(LinearSolverBase):
     )
     power_iterations: int | None = Field(
         default=None,
-        description="Number of power-method iterations used to estimate the largest eigenvalue (default 20)",
+        description="Number of power-method iterations used to estimate each eigenvalue bound (default 20)",
     )
     lambda_min: float | None = Field(
-        default=None, description="Lower bound of the eigenvalues (default 1.)"
+        default=None,
+        description="Lower bound of the eigenvalues. Estimated with the power method if not set.",
     )
     lambda_max: float | None = Field(
         default=None,
@@ -2014,10 +2015,11 @@ class ChebyshevPreconditioner(AssembledMatrixPreconditionerBase):
     )
     power_iterations: int | None = Field(
         default=None,
-        description="Number of power-method iterations used to estimate the largest eigenvalue",
+        description="Number of power-method iterations used to estimate each eigenvalue bound",
     )
     lambda_min: float | None = Field(
-        default=None, description="Lower bound of the eigenvalues"
+        default=None,
+        description="Lower bound of the eigenvalues. Estimated with the power method if not set.",
     )
     lambda_max: float | None = Field(
         default=None,
