@@ -78,7 +78,6 @@ void SparseMatrixUtils::BuildExtendedDOFVector (
 
             for (amrex::MFIter mfi(dof_fab); mfi.isValid(); ++mfi) {
                 const amrex::Box gbx = mfi.growntilebox();
-                const amrex::Box vbx = mfi.validbox();
                 auto dof_arr = dof_fab.const_array(mfi);
                 auto data_arr = data_fab.const_array(mfi);
                 const int nl = ndofs_l;
@@ -87,18 +86,16 @@ void SparseMatrixUtils::BuildExtendedDOFVector (
                 // Scatter into ext_ptr with data-dependent indices, but
                 // iterations stay independent as ParallelFor requires (see
                 // issue #7097): the DOF numbering is injective over owned
-                // cells, and repeat ghost writes store the same
-                // FillBoundary'd value, so they are idempotent.
+                // cells, and repeat ghost writes store the same value
+                // (ghost cells are FillBoundary'd, shared nodes agree across
+                // boxes), so they are idempotent.
                 amrex::ParallelFor(gbx,
                     [=] AMREX_GPU_DEVICE (int i, int j, int k)
                 {
-                    const amrex::IntVect iv(
-                        AMREX_D_DECL(i, j, k));
-                    if (vbx.contains(iv)) {
-                        const int ldof = dof_arr(i, j, k, 0);
-                        if (ldof >= 0 && ldof < nl) {
-                            ext_ptr[ldof] = data_arr(i, j, k);
-                        }
+                    // Valid shared nodes owned by another box are ghosts too
+                    const int ldof = dof_arr(i, j, k, 0);
+                    if (ldof >= 0 && ldof < nl) {
+                        ext_ptr[ldof] = data_arr(i, j, k);
                     } else if (ng > 0) {
                         const int gdof = dof_arr(i, j, k, 1);
                         if (gdof < 0) { return; }

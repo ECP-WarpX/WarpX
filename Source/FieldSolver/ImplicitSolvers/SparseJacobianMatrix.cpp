@@ -23,8 +23,10 @@
 #include <AMReX_Reduce.H>
 
 #include <algorithm>
+#include <cstddef>
 #include <sstream>
 #include <unordered_map>
+#include <vector>
 
 void SparseJacobianMatrix::readParameters ()
 {
@@ -710,20 +712,19 @@ void SparseJacobianMatrix::RemapColumns (const WarpXSolverDOF* a_dofs)
     const auto& dofs_mfarrvec = a_dofs->m_array;
     const int num_amr_levels = static_cast<int>(dofs_mfarrvec.size());
 
-    // Step 1: Build global-to-local-extended map on host by iterating
-    // over owned + ghost cells of the DOF iMultiFab.
-    // Owned cells: local_ext = local_dof (comp 0), range [0, m_ndofs_l)
-    // Ghost cells: assigned sequential indices starting from m_ndofs_l
+    // Step 1: Build global-to-local-extended map on host from the owned + ghost
+    // cells of the DOF iMultiFab. Owned DOFs (local id >= 0) keep their local id,
+    // in [0, m_ndofs_l). All other DOFs, including valid shared nodes owned by
+    // another box, get ghost indices from m_ndofs_l, after all owned DOFs are known.
 
-    std::unordered_map<int, int> global_to_ext;
-    int next_ghost_idx = m_ndofs_l;
+    std::vector<Gpu::PinnedVector<int>> ldofs_h;
+    std::vector<Gpu::PinnedVector<int>> gdofs_h;
 
     for (int lev = 0; lev < num_amr_levels; lev++) {
         for (int dir = 0; dir < 3; dir++) {
             const auto& dof_fab = *(dofs_mfarrvec[lev][dir]);
             for (MFIter mfi(dof_fab); mfi.isValid(); ++mfi) {
                 const Box gbx = mfi.growntilebox();
-                const Box vbx = mfi.validbox();
 
                 // Use a GPU kernel to read DOF data via const_array() — the
                 // same access path used by Assemble — then copy to host.
@@ -747,34 +748,31 @@ void SparseJacobianMatrix::RemapColumns (const WarpXSolverDOF* a_dofs)
                 });
                 Gpu::streamSynchronize();
 
-                Gpu::PinnedVector<int> ldof_h(npts), gdof_h(npts);
+                ldofs_h.emplace_back(npts);
+                gdofs_h.emplace_back(npts);
                 Gpu::copyAsync(Gpu::deviceToHost, ldof_d.begin(), ldof_d.end(),
-                               ldof_h.begin());
+                               ldofs_h.back().begin());
                 Gpu::copyAsync(Gpu::deviceToHost, gdof_d.begin(), gdof_d.end(),
-                               gdof_h.begin());
+                               gdofs_h.back().begin());
                 Gpu::streamSynchronize();
+            }
+        }
+    }
 
-                for (int idx = 0; idx < npts; ++idx) {
-                    const int gdof = gdof_h[idx];
-                    if (gdof < 0) { continue; }
-                    if (global_to_ext.contains(gdof)) {
-                        continue;
-                    }
-                    // Recover (i,j,k) from flat index for the owned-cell check.
-                    // Offsets folded in: in 1D, mutating j/k would be a dead store.
-                    const int kk = idx / (gbx_len.x * gbx_len.y);
-                    const int jj = (idx - kk * gbx_len.x * gbx_len.y) / gbx_len.x;
-                    const int ii = idx - kk * gbx_len.x * gbx_len.y - jj * gbx_len.x;
-                    const IntVect iv(AMREX_D_DECL(ii + gbx_lo.x,
-                                                  jj + gbx_lo.y,
-                                                  kk + gbx_lo.z));
-                    if (vbx.contains(iv)) {
-                        global_to_ext[gdof] = ldof_h[idx];
-                    } else {
-                        global_to_ext[gdof] = next_ghost_idx;
-                        next_ghost_idx++;
-                    }
-                }
+    std::unordered_map<int, int> global_to_ext;
+    for (std::size_t ibox = 0; ibox < ldofs_h.size(); ++ibox) {
+        for (std::size_t idx = 0; idx < ldofs_h[ibox].size(); ++idx) {
+            const int ldof = ldofs_h[ibox][idx];
+            if (ldof >= 0) { global_to_ext[gdofs_h[ibox][idx]] = ldof; }
+        }
+    }
+    int next_ghost_idx = m_ndofs_l;
+    for (std::size_t ibox = 0; ibox < ldofs_h.size(); ++ibox) {
+        for (std::size_t idx = 0; idx < ldofs_h[ibox].size(); ++idx) {
+            const int gdof = gdofs_h[ibox][idx];
+            if (gdof >= 0 && !global_to_ext.contains(gdof)) {
+                global_to_ext[gdof] = next_ghost_idx;
+                next_ghost_idx++;
             }
         }
     }
