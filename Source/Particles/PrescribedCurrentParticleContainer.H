@@ -16,6 +16,7 @@
 #include <AMReX_BaseFwd.H>
 #include <AMReX_REAL.H>
 
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -74,8 +75,8 @@ class PrescribedCurrentParticleContainer : public WarpXParticleContainer {
            const amrex::MultiFab&, const amrex::MultiFab&,
            const amrex::MultiFab&, const amrex::MultiFab&,
            const amrex::MultiFab&,
-           MomentumPushType /*momentum_push_type*/ =
-               MomentumPushType::Full) final {}
+           MomentumPushType /*momentum_push_type*/ = MomentumPushType::Full,
+           std::optional<FieldGatherOrders> /*gather_orders*/ = std::nullopt) final {}
 
     void PostRestart () final;
 
