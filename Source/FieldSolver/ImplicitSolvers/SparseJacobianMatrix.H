@@ -263,6 +263,10 @@ public:
      */
     void MatInitialGuess (amrex::Real* a_x, const amrex::Real* a_b) const;
 
+    /** \brief Copy the diagonal of the current assembly into m_diagonal.
+     *         Public because it launches a device lambda (CUDA requirement). */
+    void ExtractDiagonal ();
+
     /** Gershgorin estimate: omega = 2 / (2 + max_i r_i),
      *  r_i = (row_sum_i - |diag_i|) / |diag_i|. MPI-reduced. */
     [[nodiscard]] amrex::Real EstimateOmega () const;
@@ -280,9 +284,6 @@ public:
 private:
 
     void readParameters ();
-
-    /** \brief Copy the diagonal of the current assembly into m_diagonal. */
-    void ExtractDiagonal ();
 
     bool m_is_defined = false;
     bool m_is_remapped = false;
