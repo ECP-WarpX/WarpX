@@ -30,7 +30,8 @@
  *  Adaptive omega (enabled by default): omega starts at its initial
  *  value (1.0 or Gershgorin estimate) and is automatically reduced
  *  (by a factor of 0.9) when the residual increases. When the user
- *  explicitly sets omega, adaptive behavior is disabled.
+ *  explicitly sets omega, adaptive behavior is disabled. The solve fails
+ *  if the residual still increases after the last reduction.
  *
  *  This class is used by both:
  *  - JacobiPC (as a preconditioner)
@@ -92,7 +93,7 @@ private:
 
     int m_num_iters = 0;
     RT m_res_norm = RT(0);
-    int m_status = 0;  /**< 0 = converged/exact, 1 = max iterations reached */
+    int m_status = 0;  /**< 0 = converged/exact, 1 = max iterations reached, 2 = diverged */
 
     MatrixSolverOps<T>* m_matrix_ops = nullptr;
 };
@@ -162,6 +163,7 @@ void WeightedJacobiImpl<T>::Solve (T& a_x, const T& a_b)
 
     const int max_omega_reductions = m_adaptive_omega ? 10 : 0;
     RT omega = m_omega;
+    int total_iters = 0;
 
     for (int adapt = 0; adapt <= max_omega_reductions; adapt++) {
 
@@ -199,7 +201,7 @@ void WeightedJacobiImpl<T>::Solve (T& a_x, const T& a_b)
 
             const RT res_norm = m_matrix_ops->ResidualNorm(a_x, a_b);
 
-            m_num_iters = iter + 1;
+            m_num_iters = total_iters + iter + 1;
             m_res_norm = res_norm;
 
             if (m_verbose) {
@@ -235,6 +237,9 @@ void WeightedJacobiImpl<T>::Solve (T& a_x, const T& a_b)
             m_status = 1;
             break;
         }
+        // The residual still increases after the last omega reduction
+        if (adapt == max_omega_reductions) { m_status = 2; }
+        total_iters = m_num_iters;
     }
 
     m_omega = omega;

@@ -329,6 +329,7 @@ Overall simulation parameters
             Setting it turns off ``weighted_jacobi.adaptive_omega``.
           - ``weighted_jacobi.adaptive_omega`` (``bool``, default: true)
             When ``true``, the relaxation factor is reduced by a factor of 0.9 whenever the residual increases.
+            If the residual still increases after 10 reductions, the linear solve fails.
           - ``chebyshev.power_iterations`` (``int``, default: 20) Number of power-method iterations used to estimate the largest eigenvalue.
           - ``chebyshev.lambda_min`` (``float``, default: 1.0) Lower bound of the eigenvalues.
           - ``chebyshev.lambda_max`` (``float``, default: estimated with the power method) Upper bound of the eigenvalues.
