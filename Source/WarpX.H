@@ -973,13 +973,10 @@ public:
      * \param[in] scomp The starting component index in the source MultiFab
      * \param[in] dcomp The starting component index in the destination MultiFab
      * \param[in] ncomp The number of components to filter
-     * \param[in] is_volume_scaled Whether input contains physical density.
-     *            If false, input and output contain density times the radial volume factor.
      * \returns the guard-cell width over which dst holds filtered data.
      */
     amrex::IntVect ApplyVolumeWeightedFilter (amrex::MultiFab& dst, const amrex::MultiFab& src_mf,
-                                    int lev, int scomp, int dcomp, int ncomp,
-                                    bool is_volume_scaled = true);
+                                    int lev, int scomp, int dcomp, int ncomp);
 #endif
 
     /** Filter a current density. In radial geometries this dispatches to
