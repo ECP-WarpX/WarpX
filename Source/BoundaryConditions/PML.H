@@ -203,7 +203,7 @@ public:
     [[nodiscard]] bool ok () const { return m_ok; }
 
     void CheckPoint (ablastr::fields::MultiFabRegister& fields, const std::string& dir) const;
-    void Restart (ablastr::fields::MultiFabRegister& fields, const std::string& dir);
+    void Restart (ablastr::fields::MultiFabRegister& fields, const std::string& dir) const;
 
     static void Exchange (amrex::MultiFab& pml, amrex::MultiFab& reg, const amrex::Geometry& geom, int do_pml_in_domain);
 

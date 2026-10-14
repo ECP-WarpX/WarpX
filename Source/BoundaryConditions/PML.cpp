@@ -1286,7 +1286,7 @@ void
 PML::Restart (
     ablastr::fields::MultiFabRegister& fields,
     const std::string& dir
-)
+) const
 {
     using ablastr::fields::Direction;
 
