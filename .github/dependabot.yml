@@ -3,7 +3,10 @@
 
 version: 2
 updates:
-  # Enable version updates for GitHub Actions
+  # Enable version updates for GitHub Actions.
+  # Workflows pin every action to a full commit SHA, with the release tag as a
+  # trailing comment, e.g., `uses: actions/checkout@<sha> # v7.0.1`, because
+  # tags can be moved. Dependabot updates both the SHA and the comment.
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
