@@ -804,7 +804,8 @@ void ImplicitSolver::InitializeMassMatrices (int particle_shape)
     using ablastr::fields::Direction;
     using warpx::fields::FieldType;
 
-    m_mass_matrices_particle_shape = particle_shape;
+    // The mass matrices are deposited with the shape their stencil is sized for
+    m_implicit_options.particle_shape = particle_shape;
     const int shape = particle_shape;
     const amrex::IntVect ngJ = m_WarpX->m_fields.get(FieldType::current_fp, Direction{0}, 0)->nGrowVect();
     const amrex::IntVect ngE = m_WarpX->m_fields.get(FieldType::Efield_fp, Direction{0}, 0)->nGrowVect();
@@ -1040,7 +1041,6 @@ void ImplicitSolver::InitializeImplicitOptions ()
     m_implicit_options.ncomp_pc_xx = m_ncomp_pc_xx;
     m_implicit_options.ncomp_pc_yy = m_ncomp_pc_yy;
     m_implicit_options.ncomp_pc_zz = m_ncomp_pc_zz;
-    m_implicit_options.particle_shape = m_mass_matrices_particle_shape;
 }
 
 void ImplicitSolver::PreLinearSolve (const bool update_pc)

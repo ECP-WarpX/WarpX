@@ -289,11 +289,6 @@ protected:
     int m_mass_matrices_pc_width = -1;
 
     /**
-     * \brief Order of the particle shape factors that the mass matrices stencil is sized for
-     */
-    int m_mass_matrices_particle_shape = 1;
-
-    /**
      * \brief Direction-dependent component number of mass matrices elements
      */
     amrex::IntVect m_ncomp_xx = amrex::IntVect{0};
