@@ -285,7 +285,7 @@ Overall simulation parameters
             The first required linear solve always initializes the PC, including
             after restart. During adaptive implicit substepping, PC updates are forced
             on every Newton iteration, overriding both intervals.
-            With ``jacobian.pc_type = pc_jacobi``, or ``newton.linear_solver = weighted_jacobi`` with ``use_pcmat = true``,
+            With ``jacobian.pc_type = pc_jacobi`` or ``pc_chebyshev``, or a linear solver with ``use_pcmat = true``,
             an interval greater than 1 requires ``newton.pc_update_newton_interval = 0``.
           - ``newton.relative_tolerance`` (``float``, default: 1.0e-6)
             Must be in [0, 1). Other values are replaced by the default, with a warning.
@@ -323,7 +323,7 @@ Overall simulation parameters
             The residual is still evaluated at every Newton iteration, so a converged solve meets the same tolerances; lagging can slow the nonlinear convergence.
             A solve that stops at ``newton.max_iterations`` without converging (``newton.require_convergence = false``) can give a different result than without lagging.
             When ``false``, the solver uses matrix-free evaluations of the Jacobian, which include the plasma response.
-            The Jacobi iteration also needs the diagonal :math:`D` of the Jacobian, which these evaluations do not give.
+            The iteration also needs the diagonal :math:`D` of the Jacobian, which these evaluations do not give.
             It is approximated as :math:`D = 1 + (\theta \Delta t c)^2 \mathrm{diag}(\nabla \times \nabla \times) + c^2 \mu_0 \theta \Delta t \, \mathrm{diag}(M)`, with :math:`M` the mass matrices of the Jacobian.
             The curl curl term is present for ``theta_implicit_em`` only, and the mass-matrix term with ``implicit_evolve.use_mass_matrices_jacobian = true`` only.
             Nothing is lagged in this case: :math:`D` is updated at every Newton iteration.
@@ -367,7 +367,7 @@ Overall simulation parameters
 
         - ``implicit_evolve.use_mass_matrices_pc`` (``bool``, default: false).
           When ``true``, the plasma response is captured in the preconditioner.
-          Requires use of a preconditioner (``jacobian.pc_type = pc_curl_curl_mlmg``, ``pc_petsc``, ``pc_algmg``, or ``pc_jacobi``), or of a linear solver with ``use_pcmat = true`` (``newton.linear_solver = weighted_jacobi`` or ``chebyshev``).
+          Requires use of a preconditioner (``jacobian.pc_type = pc_curl_curl_mlmg``, ``pc_petsc``, ``pc_algmg``, ``pc_jacobi``, or ``pc_chebyshev``), or of a linear solver with ``use_pcmat = true`` (``newton.linear_solver = weighted_jacobi`` or ``chebyshev``).
           In 3D, ``algo.current_deposition = villasenor`` is supported only for PC-only use
           (``implicit_evolve.use_mass_matrices_jacobian = false``) with ``implicit_evolve.mass_matrices_pc_width = 0``.
 

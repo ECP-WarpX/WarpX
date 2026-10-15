@@ -39,8 +39,8 @@
  *
  *  2) CSR path (theta-implicit, GetThetaForPC()>0):
  *     A = I + curl(alpha*curl[]) + M assembled as a sparse CSR matrix
- *     by SparseJacobianMatrix. Operations (sweep, residual) are performed
- *     on flat device vectors in local-extended DOF space.
+ *     by SparseJacobianMatrix. Operations (matvec, sweep, residual) are
+ *     performed on flat device vectors in local-extended DOF space.
  */
 
 template <class T, class Ops>
