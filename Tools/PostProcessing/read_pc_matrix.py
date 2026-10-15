@@ -56,7 +56,9 @@ def read_dofmap(directory):
 
     Keys: "lev", "comp" (0: x, 1: y, 2: z), "i", "j", "k" (cell indices).
     """
-    data = np.loadtxt(os.path.join(directory, "dofmap.txt"), comments="#", dtype=np.int64)
+    data = np.loadtxt(
+        os.path.join(directory, "dofmap.txt"), comments="#", dtype=np.int64
+    )
     data = data[np.argsort(data[:, 0])]
     return {key: data[:, n + 1] for n, key in enumerate(("lev", "comp", "i", "j", "k"))}
 
