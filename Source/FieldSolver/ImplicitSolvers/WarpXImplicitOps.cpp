@@ -357,19 +357,13 @@ WarpX::ImplicitComputeRHSE (int lev, PatchType patch_type, amrex::Real a_dt, War
     // a_Erhs_vec storing only the RHS of the update equation. I.e.,
     // c^2*dt*(curl(B^{n+theta} - mu0*J^{n+1/2})
     if (patch_type == PatchType::fine) {
-        m_fdtd_solver_fp[lev]->EvolveE( m_fields,
-                                        lev,
-                                        patch_type,
-                                        a_Erhs_vec.getArrayVec()[lev],
-                                        m_eb_update_E[lev],
-                                        a_dt );
+        m_fdtd_solver_fp[lev]->EvolveE(m_fields, lev, patch_type,
+                                       a_Erhs_vec.getArrayVec()[lev],
+                                       GetEBUpdateEFlag(patch_type)[lev], a_dt);
     } else {
-        m_fdtd_solver_cp[lev]->EvolveE( m_fields,
-                                        lev,
-                                        patch_type,
-                                        a_Erhs_vec.getArrayVec()[lev],
-                                        m_eb_update_E[lev],
-                                        a_dt );
+        m_fdtd_solver_cp[lev]->EvolveE(m_fields, lev, patch_type,
+                                       a_Erhs_vec.getArrayVec()[lev],
+                                       GetEBUpdateEFlag(patch_type)[lev], a_dt);
     }
 
     // Compute Efield_rhs in PML cells by calling EvolveEPML

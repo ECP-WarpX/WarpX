@@ -134,6 +134,29 @@ add_warpx_test(
 )
 
 # Static refinement: per-patch material data and independent contour measurements.
+if(WarpX_EB)
+    foreach(source IN ITEMS port material)
+        add_warpx_test(
+            test_2d_current_${source}_smr_eb_picmi
+            2
+            1
+            "inputs_test_smr_picmi.py --dims 2 --source ${source} --eb"
+            "analysis_smr.py --dims 2 --source ${source} --eb"
+            OFF
+            OFF
+        )
+        add_warpx_test(
+            test_3d_current_${source}_smr_eb_picmi
+            3
+            1
+            "inputs_test_smr_picmi.py --dims 3 --source ${source} --eb"
+            "analysis_smr.py --dims 3 --source ${source} --eb"
+            OFF
+            OFF
+        )
+    endforeach()
+endif()
+
 foreach(source IN ITEMS antenna port)
     add_warpx_test(
         test_2d_current_${source}_smr_picmi
@@ -189,22 +212,49 @@ foreach(source IN ITEMS antenna port)
     )
 endforeach()
 
-if(3 IN_LIST WarpX_DIMS AND WarpX_PYTHON)
+foreach(placement IN ITEMS crossing axial)
     add_warpx_test(
-        test_3d_current_port_smr_crossing_rejected_picmi
+        test_2d_current_port_smr_${placement}_picmi
+        2
+        1
+        "inputs_test_smr_picmi.py --dims 2 --source port --placement ${placement}"
+        "analysis_smr.py --dims 2 --source port"
+        OFF
+        OFF
+    )
+    add_warpx_test(
+        test_3d_current_port_smr_${placement}_picmi
         3
         1
-        "inputs_test_smr_picmi.py --dims 3 --source port --placement crossing"
-        OFF
+        "inputs_test_smr_picmi.py --dims 3 --source port --placement ${placement}"
+        "analysis_smr.py --dims 3 --source port"
         OFF
         OFF
     )
-    set_tests_properties(
-        test_3d_current_port_smr_crossing_rejected_picmi.run
-        PROPERTIES
-            PASS_REGULAR_EXPRESSION "contours crossing refinement boundaries are not supported"
+endforeach()
+
+
+if(WarpX_EB)
+    add_warpx_test(
+        test_3d_current_port_smr_crossing_eb_picmi
+        3
+        1
+        "inputs_test_smr_picmi.py --dims 3 --source port --placement crossing --eb"
+        "analysis_smr.py --dims 3 --source port --eb"
+        OFF
+        OFF
     )
 endif()
+
+add_warpx_test(
+    test_3d_current_port_smr_crossing_picmi_restart
+    3
+    1
+    "inputs_test_smr_picmi.py --dims 3 --source port --placement crossing --restart ../test_3d_current_port_smr_crossing_picmi/diags/chk000001"
+    "analysis_smr.py --dims 3 --source port --reference ../test_3d_current_port_smr_crossing_picmi/diags/diag1000002"
+    OFF
+    test_3d_current_port_smr_crossing_picmi
+)
 
 if(RZ IN_LIST WarpX_DIMS AND WarpX_PYTHON)
     foreach(source IN ITEMS antenna port)

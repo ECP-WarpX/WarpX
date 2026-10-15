@@ -407,6 +407,8 @@ WarpX::WarpX ()
 
     m_eb_update_E.resize(nlevs_max);
     m_eb_update_B.resize(nlevs_max);
+    m_eb_update_E_cp.resize(nlevs_max);
+    m_eb_update_B_cp.resize(nlevs_max);
     m_eb_reduce_particle_shape.resize(nlevs_max);
 
     m_flag_info_face.resize(nlevs_max);
@@ -2706,9 +2708,6 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
 
     // Allocate extra multifabs for macroscopic properties of the medium
     if (m_em_solver_medium == MediumForEM::Macroscopic) {
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            lev == 0 || !EB::enabled(),
-            "Macroscopic SMR with embedded boundaries is not supported.");
         m_macroscopic_properties[lev][0]->AllocateLevelMFs(ba, dm, ngEB);
         if (lev > 0) {
             auto const coarse_boxes = amrex::coarsen(ba, refRatio(lev - 1));
@@ -2736,33 +2735,30 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         AllocInitMultiFab(m_eb_reduce_particle_shape[lev], amrex::convert(ba, IntVect::TheCellVector()), dm, ncomps,
             ngRho, lev, "m_eb_reduce_particle_shape");
 
-        // EB info are needed only at the finest level
-        if (lev == maxLevel()) {
-
-            if (WarpX::electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD) {
-
-                // Initialize the flags to 1 (i.e. "update this point") so that
-                // every allocated entry is well-defined, including the guard
-                // cells beyond a non-periodic domain boundary, which the
-                // marking functions (e.g. `MarkUpdateCellsStairCase`) never
-                // visit but which are read by consumers that loop over grown
-                // tileboxes (e.g. `CalculateCurrentAmpere` or
-                // `ComputeExternalFieldOnGridUsingParser`). This matches the
-                // initialization of the corresponding PML flags in PML.cpp.
-                AllocInitMultiFab(m_eb_update_E[lev][0], amrex::convert(ba, Ex_nodal_flag), dm, ncomps,
-                                  guard_cells.ng_FieldSolver, lev, "m_eb_update_E[x]", 1);
-                AllocInitMultiFab(m_eb_update_E[lev][1], amrex::convert(ba, Ey_nodal_flag), dm, ncomps,
-                                  guard_cells.ng_FieldSolver, lev, "m_eb_update_E[y]", 1);
-                AllocInitMultiFab(m_eb_update_E[lev][2], amrex::convert(ba, Ez_nodal_flag), dm, ncomps,
-                                  guard_cells.ng_FieldSolver, lev, "m_eb_update_E[z]", 1);
-
-                AllocInitMultiFab(m_eb_update_B[lev][0], amrex::convert(ba, Bx_nodal_flag), dm, ncomps,
-                                  guard_cells.ng_FieldSolver, lev, "m_eb_update_B[x]", 1);
-                AllocInitMultiFab(m_eb_update_B[lev][1], amrex::convert(ba, By_nodal_flag), dm, ncomps,
-                                  guard_cells.ng_FieldSolver, lev, "m_eb_update_B[y]", 1);
-                AllocInitMultiFab(m_eb_update_B[lev][2], amrex::convert(ba, Bz_nodal_flag), dm, ncomps,
-                                  guard_cells.ng_FieldSolver, lev, "m_eb_update_B[z]", 1);
+        // Staircase field masks are required on every mesh level.
+        if (WarpX::electromagnetic_solver_id !=
+            ElectromagneticSolverAlgo::PSATD) {
+            for (int component = 0; component < 3; ++component) {
+                AllocInitMultiFab(
+                    m_eb_update_E[lev][component],
+                    m_fields
+                        .get(FieldType::Efield_fp, Direction{component}, lev)
+                        ->boxArray(),
+                    dm, ncomps, guard_cells.ng_FieldSolver, lev,
+                    "m_eb_update_E", 1);
+                AllocInitMultiFab(
+                    m_eb_update_B[lev][component],
+                    m_fields
+                        .get(FieldType::Bfield_fp, Direction{component}, lev)
+                        ->boxArray(),
+                    dm, ncomps, guard_cells.ng_FieldSolver, lev,
+                    "m_eb_update_B", 1);
             }
+        }
+
+        // ECT metric and extension data are currently defined on the finest
+        // level.
+        if (lev == maxLevel()) {
             if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
 
                 //! EB: Lengths of the mesh edges
@@ -3078,6 +3074,26 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
         m_fields.alloc_init(FieldType::Efield_cp, Direction{0}, lev, amrex::convert(cba, Ex_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
         m_fields.alloc_init(FieldType::Efield_cp, Direction{1}, lev, amrex::convert(cba, Ey_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
         m_fields.alloc_init(FieldType::Efield_cp, Direction{2}, lev, amrex::convert(cba, Ez_nodal_flag), dm, ncomps, ngEB, 0.0_rt);
+
+        if (EB::enabled() &&
+            electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD) {
+            for (int component = 0; component < 3; ++component) {
+                AllocInitMultiFab(
+                    m_eb_update_E_cp[lev][component],
+                    m_fields
+                        .get(FieldType::Efield_cp, Direction{component}, lev)
+                        ->boxArray(),
+                    dm, ncomps, guard_cells.ng_FieldSolver, lev,
+                    "m_eb_update_E_cp", 1);
+                AllocInitMultiFab(
+                    m_eb_update_B_cp[lev][component],
+                    m_fields
+                        .get(FieldType::Bfield_cp, Direction{component}, lev)
+                        ->boxArray(),
+                    dm, ncomps, guard_cells.ng_FieldSolver, lev,
+                    "m_eb_update_B_cp", 1);
+            }
+        }
 
         if (fft_do_time_averaging)
         {

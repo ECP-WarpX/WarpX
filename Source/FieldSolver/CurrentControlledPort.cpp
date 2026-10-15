@@ -7,6 +7,7 @@
 #include "CurrentControlledPort.H"
 
 #include "EmbeddedBoundary/Enabled.H"
+#include "FieldSolver/CompositeCurrentControlledPort.H"
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
 #include "Utils/Parser/ParserUtils.H"
@@ -230,6 +231,8 @@ CurrentControlledPort::Geometry () const
     return WarpX::GetInstance().Geom(m_patch_type == PatchType::fine ? m_level : m_level - 1);
 }
 
+CurrentControlledPort::~CurrentControlledPort () = default;
+
 amrex::Array4<amrex::Real const>
 CurrentControlledPort::Permeability (amrex::MFIter const& mfi) const
 {
@@ -290,9 +293,6 @@ CurrentControlledPort::ValidateGeometry (
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         warpx.maxLevel() == 0 || (warpx.evolve_scheme == EvolveScheme::Explicit && !subcycling),
         "SMR current-controlled ports require explicit evolution and synchronized timesteps.");
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        warpx.maxLevel() == 0 || !EB::enabled(),
-        "SMR current-controlled ports with embedded boundaries are not supported.");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         warpx.getdo_moving_window() == 0,
         "Current-controlled ports do not yet support a moving window.");
@@ -398,6 +398,61 @@ CurrentControlledPort::InitData (
     std::array<std::unique_ptr<amrex::iMultiFab>, 3> const& eb_update_B, amrex::Real const time,
     int const lev, PatchType const patch_type)
 {
+    if (m_composite != nullptr) {
+        return;
+    }
+    if (lev == 0 && patch_type == PatchType::fine) {
+        ValidateGeometry(Bfield);
+        auto const& warpx = WarpX::GetInstance();
+        for (int refined_level = 1; refined_level <= warpx.finestLevel();
+             ++refined_level) {
+            for (auto const patch : {PatchType::fine, PatchType::coarse}) {
+                CurrentControlledPort const candidate(m_parameter_prefix,
+                                                refined_level, patch);
+                auto const& geometry = candidate.Geometry();
+                amrex::IntVect lower, upper;
+                for (int direction = 0; direction < AMREX_SPACEDIM;
+                     ++direction) {
+#ifdef WARPX_DIM_3D
+                    int const physical = direction;
+#else
+                    int const physical = direction == 0 ? 0 : 2;
+#endif
+                    amrex::Real const lo = std::min(m_terminal_0.lo[physical],
+                                                    m_terminal_1.lo[physical]);
+                    amrex::Real const hi = std::max(m_terminal_0.hi[physical],
+                                                    m_terminal_1.hi[physical]);
+                    lower[direction] = geometry.Domain().smallEnd(direction) +
+                                       static_cast<int>(std::floor(
+                                           (lo - geometry.ProbLo(direction)) /
+                                           geometry.CellSize(direction)));
+                    upper[direction] = geometry.Domain().smallEnd(direction) +
+                                       static_cast<int>(std::ceil(
+                                           (hi - geometry.ProbLo(direction)) /
+                                           geometry.CellSize(direction)));
+                }
+                auto const required = amrex::grow(amrex::Box(lower, upper), 2) &
+                                      geometry.Domain();
+                auto const boxes = amrex::convert(
+                    warpx.m_fields
+                        .get(patch == PatchType::fine
+                                 ? warpx::fields::FieldType::Bfield_fp
+                                 : warpx::fields::FieldType::Bfield_cp,
+                             ablastr::fields::Direction{0}, refined_level)
+                        ->boxArray(),
+                    amrex::IntVect::TheCellVector());
+                if (boxes.intersects(required) && !boxes.contains(required)) {
+                    m_composite =
+                        std::make_unique<CompositeCurrentControlledPort>(
+                            m_terminal_0.lo, m_terminal_0.hi, m_direction,
+                            m_terminal_0.lo[m_direction],
+                            m_terminal_1.lo[m_direction]);
+                    m_initialized = true;
+                    return;
+                }
+            }
+        }
+    }
     if (lev != m_level || patch_type != m_patch_type) {
         auto patch = std::make_unique<CurrentControlledPort>(m_parameter_prefix, lev, patch_type);
         patch->InitData(Bfield, eb_update_B, time, lev, patch_type);
@@ -1356,6 +1411,9 @@ CurrentControlledPort::ApplyBfield (
     ablastr::fields::VectorField const& Bfield,
     std::array<std::unique_ptr<amrex::iMultiFab>, 3> const& eb_update_B,
     int const lev, PatchType const patch_type, amrex::Real const time) {
+    if (m_composite != nullptr) {
+        return;
+    }
     if (lev != m_level || patch_type != m_patch_type) {
         for (auto& patch : m_refined_patches) {
             if (patch->m_level == lev && patch->m_patch_type == patch_type) {
@@ -1386,6 +1444,47 @@ CurrentControlledPort::ApplyBfield (
 }
 
 void
+CurrentControlledPort::ApplyComposite (amrex::Real time)
+{
+    m_last_target = m_current_scale * m_waveform.value(time);
+    m_composite->Apply(m_axis_sign * m_last_target);
+}
+
+void
+CurrentControlledPort::UpdateCompositeStatus ()
+{
+    auto const currents = m_composite->Currents(m_axis_sign * m_last_target);
+    for (int terminal = 0; terminal < 2; ++terminal) {
+        m_last_terminal_current[terminal] = m_axis_sign * currents[terminal];
+    }
+}
+
+void
+WarpX::ApplyCompositeCurrentControlledPorts (amrex::Real time)
+{
+    if (std::none_of(m_current_controlled_ports.begin(),
+                     m_current_controlled_ports.end(), [] (auto const& port) {
+                         return port->uses_composite();
+                     })) {
+        return;
+    }
+    FillBoundaryB(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
+    UpdateAuxiliaryData();
+    FillBoundaryAux(guard_cells.ng_UpdateAux);
+    FillBoundaryAux(finest_level, guard_cells.ng_UpdateAux);
+    for (auto& port : m_current_controlled_ports) {
+        if (port->uses_composite()) {
+            port->ApplyComposite(time);
+            FillBoundaryB(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
+            UpdateAuxiliaryData();
+            FillBoundaryAux(guard_cells.ng_UpdateAux);
+            FillBoundaryAux(finest_level, guard_cells.ng_UpdateAux);
+            port->UpdateCompositeStatus();
+        }
+    }
+}
+
+void
 WarpX::ApplyCurrentControlledPort (int const lev, PatchType const patch_type,
                                    amrex::Real const time) {
     if (m_current_controlled_ports.empty()) {
@@ -1396,7 +1495,7 @@ WarpX::ApplyCurrentControlledPort (int const lev, PatchType const patch_type,
                                                            : warpx::fields::FieldType::Bfield_cp,
                              lev);
     for (auto& current_port : m_current_controlled_ports) {
-        current_port->ApplyBfield(Bfield, m_eb_update_B[lev], lev, patch_type,
-                                  time);
+        current_port->ApplyBfield(Bfield, GetEBUpdateBFlag(patch_type)[lev],
+                                  lev, patch_type, time);
     }
 }

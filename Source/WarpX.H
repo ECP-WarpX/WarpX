@@ -168,12 +168,22 @@ public:
     [[nodiscard]] std::array<amrex::Real, 3> GetCurrentControlledPortStatus () const;
     [[nodiscard]] std::vector<std::array<amrex::Real, 3>>
     GetCurrentControlledPortStatuses () const;
+    [[nodiscard]] bool
+    HasCurrentControlledPorts () const {
+        return !m_current_controlled_ports.empty();
+    }
     /** Return the implicit solver, or nullptr when the evolve scheme is explicit */
     [[nodiscard]] ImplicitSolver * get_pointer_ImplicitSolver () const { return m_implicit_solver.get(); }
     MultiDiagnostics& GetMultiDiags () {return *multi_diags;}
     ParticleBoundaryBuffer& GetParticleBoundaryBuffer () { return *m_particle_boundary_buffer; }
-    amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>,3 > >& GetEBUpdateEFlag() { return m_eb_update_E; }
-    amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>,3 > >& GetEBUpdateBFlag() { return m_eb_update_B; }
+    amrex::Vector<std::array<std::unique_ptr<amrex::iMultiFab>, 3>>&
+    GetEBUpdateEFlag (PatchType patch_type = PatchType::fine) {
+        return patch_type == PatchType::fine ? m_eb_update_E : m_eb_update_E_cp;
+    }
+    amrex::Vector<std::array<std::unique_ptr<amrex::iMultiFab>, 3>>&
+    GetEBUpdateBFlag (PatchType patch_type = PatchType::fine) {
+        return patch_type == PatchType::fine ? m_eb_update_B : m_eb_update_B_cp;
+    }
     amrex::Vector< std::unique_ptr<amrex::iMultiFab> > const & GetEBReduceParticleShapeFlag() const { return m_eb_reduce_particle_shape; }
 
     /**
@@ -625,6 +635,7 @@ public:
     void ApplyEfieldBoundary (int lev, PatchType patch_type, amrex::Real cur_time);
     void ApplyBfieldBoundary (int lev, PatchType patch_type, SubcyclingHalf subcycling_half, amrex::Real cur_time);
     void ApplyCurrentControlledPort (int lev, PatchType patch_type, amrex::Real cur_time);
+    void ApplyCompositeCurrentControlledPorts (amrex::Real time);
 
 #if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
     // Applies the boundary conditions that are specific to the axis when in RZ.
@@ -1330,6 +1341,10 @@ private:
      */
     amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>,3 > > m_eb_update_E;
     amrex::Vector<std::array< std::unique_ptr<amrex::iMultiFab>,3 > > m_eb_update_B;
+    amrex::Vector<std::array<std::unique_ptr<amrex::iMultiFab>, 3>>
+        m_eb_update_E_cp;
+    amrex::Vector<std::array<std::unique_ptr<amrex::iMultiFab>, 3>>
+        m_eb_update_B_cp;
 
     /** EB: Mask that indicates whether a particle should use its regular shape factor (mask set to 0)
      *  or a reduced, order-1 shape factor instead (mask set to 1) in a given cell, when depositing charge/current.

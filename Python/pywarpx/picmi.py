@@ -2869,9 +2869,11 @@ class CurrentControlledPort(picmistandard.PICMI_Extension):
     the surrounding Ampere contour remains in field-carrying cells.
 
     With Cartesian static refinement, use explicit Yee evolution and synchronized
-    timesteps. A port must be wholly inside or outside a refined patch, with
-    two coarse cells of clearance. Contours crossing refinement boundaries,
-    RZ SMR, and SMR with embedded boundaries are unsupported.
+    timesteps. Staircase embedded boundaries and contours crossing transverse or
+    axial refinement boundaries are supported. Crossing ports use a physical
+    contour sampled from the finest available grid and must stay one coarse cell
+    inside the domain. Contours must remain outside covered EB cells. RZ SMR
+    and implicit SMR are unsupported.
 
     Parameters
     ----------

@@ -23,6 +23,8 @@
 #include <string>
 #include <vector>
 
+class CompositeCurrentControlledPort;
+
 /** Enforce one current waveform between two internal terminal surfaces.
  *
  * The two terminals are coordinate-aligned and share transverse bounds.  On
@@ -43,7 +45,7 @@ class CurrentControlledPort {
   public:
     explicit CurrentControlledPort (std::string parameter_prefix = "current_controlled_port",
                                     int level = 0, PatchType patch_type = PatchType::fine);
-    ~CurrentControlledPort () = default;
+    ~CurrentControlledPort ();
 
     CurrentControlledPort (CurrentControlledPort const&) = delete;
     CurrentControlledPort& operator=(CurrentControlledPort const&) = delete;
@@ -63,6 +65,12 @@ class CurrentControlledPort {
 
     /** {target, terminal-0 current, terminal-1 current}; A, or A/m in 2D XZ. */
     [[nodiscard]] std::array<amrex::Real, 3> status () const;
+    [[nodiscard]] bool
+    uses_composite () const {
+        return m_composite != nullptr;
+    }
+    void ApplyComposite (amrex::Real time);
+    void UpdateCompositeStatus ();
 
     /** Whether port regions overlap or are closer than the requested gap. */
     [[nodiscard]] bool correction_region_overlaps (
@@ -79,6 +87,7 @@ class CurrentControlledPort {
     int m_level = 0;
     PatchType m_patch_type = PatchType::fine;
     std::vector<std::unique_ptr<CurrentControlledPort>> m_refined_patches;
+    std::unique_ptr<CompositeCurrentControlledPort> m_composite;
     [[nodiscard]] amrex::Geometry const& Geometry () const;
     [[nodiscard]] amrex::Array4<amrex::Real const> Permeability (amrex::MFIter const& mfi) const;
     [[nodiscard]] bool PatchContainsPort (ablastr::fields::VectorField const& Bfield) const;

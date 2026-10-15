@@ -993,6 +993,31 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
         fields.alloc_init(FieldType::pml_E_cp, Direction{1}, lev, cba_Ey, cdm, ncompe, nge, 0.0_rt, false, false);
         fields.alloc_init(FieldType::pml_E_cp, Direction{2}, lev, cba_Ez, cdm, ncompe, nge, 0.0_rt, false, false);
 
+#ifdef AMREX_USE_EB
+        if (eb_enabled) {
+            auto const coarse_factory = amrex::makeEBFabFactory(
+                WarpX::GetInstance().GetEBIndexSpace(lev - 1), *cgeom, cba, cdm,
+                {max_guard_EB, max_guard_EB, max_guard_EB},
+                amrex::EBSupport::full);
+            auto const coarse_fields =
+                fields.get_alldirs(FieldType::pml_E_cp, lev);
+            for (int component = 0; component < 3; ++component) {
+                m_eb_update_E_cp[component] =
+                    std::make_unique<amrex::iMultiFab>(
+                        coarse_fields[component]->boxArray(), cdm,
+                        WarpX::ncomps, amrex::IntVect(max_guard_EB));
+                m_eb_update_E_cp[component]->setVal(1);
+            }
+            if (WarpX::electromagnetic_solver_id !=
+                ElectromagneticSolverAlgo::PSATD) {
+                warpx::embedded_boundary::MarkUpdateCellsStairCase(
+                    m_eb_update_E_cp, coarse_fields, *coarse_factory,
+                    cgeom->periodicity());
+            }
+            amrex::Gpu::streamSynchronize();
+        }
+#endif
+
         const amrex::BoxArray cba_Bx = amrex::convert(cba, fields.get(FieldType::Bfield_cp, Direction{0}, 1)->ixType().toIntVect());
         const amrex::BoxArray cba_By = amrex::convert(cba, fields.get(FieldType::Bfield_cp, Direction{1}, 1)->ixType().toIntVect());
         const amrex::BoxArray cba_Bz = amrex::convert(cba, fields.get(FieldType::Bfield_cp, Direction{2}, 1)->ixType().toIntVect());

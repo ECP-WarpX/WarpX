@@ -13,12 +13,13 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--dims", choices=("2", "3", "RZ"), required=True)
 parser.add_argument("--source", choices=("port", "antenna", "material"), required=True)
 parser.add_argument(
-    "--placement", choices=("inside", "outside", "crossing"), default="inside"
+    "--placement", choices=("inside", "outside", "crossing", "axial"), default="inside"
 )
 parser.add_argument(
     "--method", choices=("backwardeuler", "laxwendroff"), default="backwardeuler"
 )
 parser.add_argument("--restart")
+parser.add_argument("--eb", action="store_true")
 args, remaining = parser.parse_known_args()
 sys.argv = sys.argv[:1] + remaining
 
@@ -32,12 +33,15 @@ if args.placement == "outside":
     refined_upper[0] = 0.125 if is_rz else -0.25
 elif args.placement == "crossing" or args.source == "antenna":
     refined_upper[0] = 0.25 if is_rz else 0.0
+elif args.placement == "axial":
+    refined_lower[-1] = -0.0625
 
 grid_type = {
     "2": picmi.Cartesian2DGrid,
     "3": picmi.Cartesian3DGrid,
     "RZ": picmi.CylindricalGrid,
 }[args.dims]
+refined_regions = [[1, refined_lower, refined_upper]]
 grid = grid_type(
     number_of_cells=[32] * ndim,
     lower_bound=lower,
@@ -52,7 +56,7 @@ grid = grid_type(
     upper_boundary_conditions_particles=["reflecting", "periodic"]
     if is_rz
     else ["periodic"] * ndim,
-    refined_regions=[[1, refined_lower, refined_upper]],
+    refined_regions=refined_regions,
     warpx_max_grid_size=16,
     warpx_blocking_factor=4,
 )
@@ -70,6 +74,13 @@ simulation = picmi.Simulation(
     warpx_use_filter=0,
     warpx_serialize_initial_conditions=1,
     warpx_amr_restart=args.restart,
+    warpx_embedded_boundary=(
+        picmi.EmbeddedBoundary(
+            implicit_function="0.0625**2-x*x-y*y" if ndim == 3 else "0.0625**2-x*x"
+        )
+        if args.eb
+        else None
+    ),
 )
 if not is_rz:
     # Parser fields distinguish fine/coarse coordinates and exercise non-vacuum mu.
@@ -116,9 +127,20 @@ elif args.source == "antenna":
     )
 else:
     assert not is_rz
+if args.source == "material" or args.eb:
     simulation.add_applied_field(
         picmi.AnalyticInitialField(
             Ex_expression="0", Ey_expression="1.0", Ez_expression="0"
+        )
+    )
+elif args.placement in ("crossing", "axial"):
+    simulation.add_applied_field(
+        picmi.AnalyticInitialField(
+            Bx_expression="-1.e-4*cos(2*pi*x)*sin(2*pi*y)" if ndim == 3 else "0",
+            By_expression="1.e-4*sin(2*pi*x)*cos(2*pi*y)"
+            if ndim == 3
+            else "1.e-4*sin(2*pi*x)*cos(2*pi*z)",
+            Bz_expression="0",
         )
     )
 
@@ -139,6 +161,24 @@ simulation.add_diagnostic(
     picmi.Checkpoint(name="chk", period=1, write_dir="diags", warpx_file_prefix="chk")
 )
 simulation.step(1 if args.restart else 2)
+
+if args.eb:
+    assert not is_rz
+    for level, patch in ((0, "fp"), (1, "fp"), (1, "cp")):
+        ey_field = simulation.fields.get(f"Efield_{patch}", dir="y", level=level)
+        ey = np.squeeze(np.asarray(ey_field[...]))
+        origin = np.array(ey_field.box_array().minimal_box().small_end)
+        dx = 1 / (32 * (2 if level == 1 and patch != "cp" else 1))
+        x = lower[0] + (np.arange(ey.shape[0]) + origin[0]) * dx
+        if ndim == 3:
+            y = lower[1] + (np.arange(ey.shape[1]) + origin[1] + 0.5) * dx
+            covered = x[:, None] ** 2 + y[None, :] ** 2 < 0.03**2
+        else:
+            covered = np.abs(x) < 0.03
+        assert np.any(covered)
+        np.testing.assert_array_equal(ey[covered], 0)
+        assert np.max(np.abs(ey)) > 0.5
+        print(f"level {level} {patch}: covered EB electric fields stay zero")
 
 if args.source == "antenna":
     # Discrete continuity is a stronger oracle than normalization alone. The
@@ -163,6 +203,22 @@ if args.source == "port":
     status = np.asarray(libwarpx.warpx.get_current_controlled_port_status())
     print(f"terminal status: {status}")
     np.testing.assert_allclose(status, [2000.0] * 3, rtol=2.0e-12, atol=0)
+
+    if args.placement in ("crossing", "axial"):
+        from composite_contour import measure_contours
+
+        cells = 64
+        planes = np.unique(
+            [-0.125, 0.125]
+            + [
+                lower[-1] + (i + 0.5) / cells
+                for i in range(3 * cells // 8, 5 * cells // 8)
+            ]
+        )
+        currents = measure_contours(simulation, lower, upper, ndim, planes, 1)
+        print(f"independent composite currents: {currents}")
+        np.testing.assert_allclose(currents, 2000.0, rtol=2.0e-10, atol=0)
+        sys.exit(0)
 
     # Measure native B independently of the status API on every represented patch.
     for level, patch in ((0, "fp"), (1, "fp"), (1, "cp"), (1, "aux")):

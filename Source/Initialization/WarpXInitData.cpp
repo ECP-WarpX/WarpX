@@ -58,6 +58,9 @@
 #include <AMReX_BoxArray.H>
 #include <AMReX_BoxList.H>
 #include <AMReX_Config.H>
+#ifdef AMREX_USE_EB
+#include <AMReX_EBFabFactory.H>
+#endif
 #include <AMReX_Geometry.H>
 #include <AMReX_GpuLaunch.H>
 #include <AMReX_GpuQualifiers.H>
@@ -841,16 +844,19 @@ WarpX::InitData ()
                     if (lev == 0 && patch_type == PatchType::coarse) {
                         continue;
                     }
-                    current_port->InitData(m_fields.get_alldirs(patch_type == PatchType::fine
-                                                                    ? FieldType::Bfield_fp
-                                                                    : FieldType::Bfield_cp,
-                                                                lev),
-                                           m_eb_update_B[lev], gett_new(lev), lev, patch_type);
+                    current_port->InitData(
+                        m_fields.get_alldirs(patch_type == PatchType::fine
+                                                 ? FieldType::Bfield_fp
+                                                 : FieldType::Bfield_cp,
+                                             lev),
+                        GetEBUpdateBFlag(patch_type)[lev], gett_new(lev), lev,
+                        patch_type);
                 }
             }
         }
         if (!m_current_controlled_ports.empty()) {
             FillBoundaryB(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
+            ApplyCompositeCurrentControlledPorts(gett_new(0));
         }
         InitDiagnostics();
     }
@@ -865,16 +871,19 @@ WarpX::InitData ()
                     if (lev == 0 && patch_type == PatchType::coarse) {
                         continue;
                     }
-                    current_port->InitData(m_fields.get_alldirs(patch_type == PatchType::fine
-                                                                    ? FieldType::Bfield_fp
-                                                                    : FieldType::Bfield_cp,
-                                                                lev),
-                                           m_eb_update_B[lev], gett_new(lev), lev, patch_type);
+                    current_port->InitData(
+                        m_fields.get_alldirs(patch_type == PatchType::fine
+                                                 ? FieldType::Bfield_fp
+                                                 : FieldType::Bfield_cp,
+                                             lev),
+                        GetEBUpdateBFlag(patch_type)[lev], gett_new(lev), lev,
+                        patch_type);
                 }
             }
         }
         if (!m_current_controlled_ports.empty()) {
             FillBoundaryB(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
+            ApplyCompositeCurrentControlledPorts(gett_new(0));
         }
         PostRestart();
         reduced_diags->InitData();
@@ -1332,8 +1341,8 @@ WarpX::InitLevelData (int lev, Real /*time*/)
             FieldType::Bfield_cp,
             m_p_ext_field_params->Bxfield_parser->compile<4>(),
             m_p_ext_field_params->Byfield_parser->compile<4>(),
-            m_p_ext_field_params->Bzfield_parser->compile<4>(),
-            lev, PatchType::coarse, m_eb_update_B);
+            m_p_ext_field_params->Bzfield_parser->compile<4>(), lev,
+            PatchType::coarse, m_eb_update_B_cp);
     }
 
     // if the input string for the E-field is "parse_e_ext_grid_function",
@@ -1370,8 +1379,8 @@ WarpX::InitLevelData (int lev, Real /*time*/)
                 FieldType::Efield_cp,
                 m_p_ext_field_params->Exfield_parser->compile<4>(),
                 m_p_ext_field_params->Eyfield_parser->compile<4>(),
-                m_p_ext_field_params->Ezfield_parser->compile<4>(),
-                lev, PatchType::coarse, m_eb_update_E);
+                m_p_ext_field_params->Ezfield_parser->compile<4>(), lev,
+                PatchType::coarse, m_eb_update_E_cp);
 #ifdef AMREX_USE_EB
             if (eb_enabled) {
                 if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
@@ -1625,14 +1634,14 @@ void WarpX::CheckGuardCells()
 void WarpX::InitializeEBGridData (int lev)
 {
 #ifdef AMREX_USE_EB
-    if (lev == maxLevel()) {
+    using warpx::fields::FieldType;
+    if (lev == maxLevel() ||
+        electromagnetic_solver_id != ElectromagneticSolverAlgo::ECT) {
 
         auto const eb_fact = fieldEBFactory(lev);
 
         if (WarpX::electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD )
         {
-            using warpx::fields::FieldType;
-
             if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::ECT) {
 
                 auto edge_lengths_lev = m_fields.get_alldirs(FieldType::edge_lengths, lev);
@@ -1672,9 +1681,36 @@ void WarpX::InitializeEBGridData (int lev)
 
         }
 
-        ComputeDistanceToEB();
-        warpx::embedded_boundary::MarkReducedShapeCells( m_eb_reduce_particle_shape[lev], eb_fact, nox, Geom(0).periodicity());
+        if (lev == maxLevel()) {
+            ComputeDistanceToEB();
+        }
+        warpx::embedded_boundary::MarkReducedShapeCells(
+            m_eb_reduce_particle_shape[lev], eb_fact, nox,
+            Geom(lev).periodicity());
 
+        if (lev > 0 &&
+            electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD &&
+            electromagnetic_solver_id != ElectromagneticSolverAlgo::ECT) {
+            auto const coarse_fields =
+                m_fields.get_alldirs(FieldType::Efield_cp, lev);
+            auto const coarse_boxes = amrex::convert(
+                coarse_fields[0]->boxArray(), amrex::IntVect::TheCellVector());
+            int const guards = guard_cells.ng_FieldSolver.max();
+            auto const coarse_factory = amrex::makeEBFabFactory(
+                GetEBIndexSpace(lev - 1), Geom(lev - 1), coarse_boxes,
+                coarse_fields[0]->DistributionMap(), {guards, guards, guards},
+                amrex::EBSupport::full);
+            warpx::embedded_boundary::MarkUpdateCellsStairCase(
+                m_eb_update_E_cp[lev], coarse_fields, *coarse_factory,
+                Geom(lev - 1).periodicity());
+            warpx::embedded_boundary::MarkUpdateCellsStairCase(
+                m_eb_update_B_cp[lev],
+                m_fields.get_alldirs(FieldType::Bfield_cp, lev),
+                *coarse_factory, Geom(lev - 1).periodicity());
+            // The marking kernels read geometry owned by this temporary
+            // factory.
+            amrex::Gpu::streamSynchronize();
+        }
     }
 #else
     amrex::ignore_unused(lev);

@@ -286,7 +286,8 @@ WarpX::DampJPML (int lev, PatchType patch_type)
             // Skip the field update if this gridpoint is inside the embedded boundary
             amrex::Array4<int> update_Ex_arr, update_Ey_arr, update_Ez_arr;
             if (EB::enabled()) {
-                const auto &eb_update_E = pml[lev]->GetEBUpdateEFlag();
+                const auto& eb_update_E =
+                    pml[lev]->GetEBUpdateEFlag(patch_type);
 
                 update_Ex_arr = eb_update_E[0]->array(mfi);
                 update_Ey_arr = eb_update_E[1]->array(mfi);

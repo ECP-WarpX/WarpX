@@ -4028,8 +4028,8 @@ Material diagnostics use the fine patch at each level. Checkpoints preserve each
 PML and divergence-cleaning fields so resumed fields agree with uninterrupted evolution.
 The existing vacuum treatment of
 PML cells remains in use; place material interfaces and current sources away from patch
-PMLs. Macroscopic SMR with embedded boundaries and macroscopic evolution in RZ remain
-unsupported.
+PMLs. Yee SMR supports staircase embedded boundaries on every fine and coarse patch.
+Macroscopic evolution in RZ remains unsupported.
 
 .. pp:param:: algo.macroscopic_sigma_method
     :type: ``string``
@@ -4210,11 +4210,15 @@ axisymmetric RZ with one azimuthal mode.  Terminal surfaces must currently be
 matching rectangles, disks or annuli for axial RZ current, or cylindrical surfaces for
 radial RZ current.  Coordinates are represented on the nearest compatible field plane.
 Multiple ports are supported when their correction regions are separated by more than one
-grid cell, as in separate coil gaps. With SMR, each port must lie wholly inside a refined
-patch or wholly outside it, with at least two coarse cells of clearance in either case.
-Corrections use
-the fine and coarse patch spacing independently. Contours crossing refinement boundaries,
-RZ SMR, SMR with embedded boundaries, implicit SMR, general curved terminal masks, moving windows,
+grid cell, as in separate coil gaps. SMR supports staircase embedded boundaries and
+ports crossing transverse or axial refinement boundaries.
+Ports with two coarse cells of clearance use independent fine- and coarse-patch contours.
+Crossing ports use a fixed physical contour, interpolating :math:`H=B/\mu` from the
+finest available grid at each quadrature point. A coupled discrete-curl correction
+enforces the requested circulation at the terminals and at the finest axial cell planes
+between them. The contour must remain outside covered EB cells, and crossing ports
+must stay at least one coarse cell inside the global domain boundaries.
+RZ SMR, implicit SMR, general curved terminal masks, moving windows,
 dynamic load balancing, and hybrid-staggered grids remain unsupported.
 
 * ``warpx.current_controlled_port`` (`bool`, optional, default: ``0``)

@@ -954,6 +954,9 @@ WarpX::EvolveB (amrex::Real a_dt, SubcyclingHalf subcycling_half,
     }
 
     // Allow execution of Python callback after B-field push
+    if (apply_current_controlled_port) {
+        ApplyCompositeCurrentControlledPorts(start_time + a_dt);
+    }
     ExecutePythonCallback("afterBpush");
 }
 
@@ -1037,39 +1040,29 @@ WarpX::EvolveE (int lev, PatchType patch_type, amrex::Real a_dt, amrex::Real sta
 {
     // Evolve E field in regular cells
     if (patch_type == PatchType::fine) {
-        m_fdtd_solver_fp[lev]->EvolveE( m_fields,
-                                        lev,
-                                        patch_type,
-                                        m_fields.get_alldirs(FieldType::Efield_fp, lev),
-                                        m_eb_update_E[lev],
-                                        a_dt );
+        m_fdtd_solver_fp[lev]->EvolveE(
+            m_fields, lev, patch_type,
+            m_fields.get_alldirs(FieldType::Efield_fp, lev),
+            GetEBUpdateEFlag(patch_type)[lev], a_dt);
     } else {
-        m_fdtd_solver_cp[lev]->EvolveE( m_fields,
-                                        lev,
-                                        patch_type,
-                                        m_fields.get_alldirs(FieldType::Efield_cp, lev),
-                                        m_eb_update_E[lev],
-                                        a_dt );
+        m_fdtd_solver_cp[lev]->EvolveE(
+            m_fields, lev, patch_type,
+            m_fields.get_alldirs(FieldType::Efield_cp, lev),
+            GetEBUpdateEFlag(patch_type)[lev], a_dt);
     }
 
     // Evolve E field in PML cells
     if (do_pml && pml[lev]->ok()) {
         if (patch_type == PatchType::fine) {
             m_fdtd_solver_fp[lev]->EvolveEPML(
-                m_fields,
-                patch_type,
-                lev,
-                pml[lev]->GetEBUpdateEFlag(),
-                pml[lev]->GetMultiSigmaBox_fp(),
-                a_dt, pml_has_particles );
+                m_fields, patch_type, lev,
+                pml[lev]->GetEBUpdateEFlag(patch_type),
+                pml[lev]->GetMultiSigmaBox_fp(), a_dt, pml_has_particles);
         } else {
             m_fdtd_solver_cp[lev]->EvolveEPML(
-                m_fields,
-                patch_type,
-                lev,
-                pml[lev]->GetEBUpdateEFlag(),
-                pml[lev]->GetMultiSigmaBox_cp(),
-                a_dt, pml_has_particles );
+                m_fields, patch_type, lev,
+                pml[lev]->GetEBUpdateEFlag(patch_type),
+                pml[lev]->GetMultiSigmaBox_cp(), a_dt, pml_has_particles);
         }
     }
 
@@ -1230,28 +1223,26 @@ WarpX::MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real a_dt, amre
     auto* const solver = fine_patch ? m_fdtd_solver_fp[lev].get() : m_fdtd_solver_cp[lev].get();
     solver->MacroscopicEvolveE(
         m_macroscopic_solver_algo,
-        m_fields.get_alldirs(fine_patch ? FieldType::Efield_fp : FieldType::Efield_cp, lev),
-        m_fields.get_alldirs(fine_patch ? FieldType::Bfield_fp : FieldType::Bfield_cp, lev),
-        m_fields.get_alldirs(fine_patch ? FieldType::current_fp : FieldType::current_cp, lev),
-        m_eb_update_E[lev], a_dt, m_macroscopic_properties[lev][fine_patch ? 0 : 1]);
+        m_fields.get_alldirs(
+            fine_patch ? FieldType::Efield_fp : FieldType::Efield_cp, lev),
+        m_fields.get_alldirs(
+            fine_patch ? FieldType::Bfield_fp : FieldType::Bfield_cp, lev),
+        m_fields.get_alldirs(
+            fine_patch ? FieldType::current_fp : FieldType::current_cp, lev),
+        GetEBUpdateEFlag(patch_type)[lev], a_dt,
+        m_macroscopic_properties[lev][fine_patch ? 0 : 1]);
 
     if (do_pml && pml[lev]->ok()) {
         if (patch_type == PatchType::fine) {
             m_fdtd_solver_fp[lev]->EvolveEPML(
-                m_fields,
-                patch_type,
-                lev,
-                pml[lev]->GetEBUpdateEFlag(),
-                pml[lev]->GetMultiSigmaBox_fp(),
-                a_dt, pml_has_particles );
+                m_fields, patch_type, lev,
+                pml[lev]->GetEBUpdateEFlag(patch_type),
+                pml[lev]->GetMultiSigmaBox_fp(), a_dt, pml_has_particles);
         } else {
             m_fdtd_solver_cp[lev]->EvolveEPML(
-                m_fields,
-                patch_type,
-                lev,
-                pml[lev]->GetEBUpdateEFlag(),
-                pml[lev]->GetMultiSigmaBox_cp(),
-                a_dt, pml_has_particles );
+                m_fields, patch_type, lev,
+                pml[lev]->GetEBUpdateEFlag(patch_type),
+                pml[lev]->GetMultiSigmaBox_cp(), a_dt, pml_has_particles);
         }
     }
 

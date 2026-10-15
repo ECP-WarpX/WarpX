@@ -13,6 +13,7 @@ parser.add_argument("--source", choices=("port", "antenna", "material"), require
 parser.add_argument("--dims", choices=("2", "3", "RZ"), required=True)
 parser.add_argument("--method", default="backwardeuler")
 parser.add_argument("--reference")
+parser.add_argument("--eb", action="store_true")
 args = parser.parse_args()
 yt.funcs.mylog.setLevel(50)
 plotfiles = sorted(
@@ -71,6 +72,11 @@ elif args.source == "material":
     mask = (np.abs(x) < 0.2) & (np.abs(z) < 0.2)
     if args.dims == "3":
         mask &= np.abs(np.asarray(data["index", "y"])) < 0.2
+    if args.eb:
+        radius_squared = x**2
+        if args.dims == "3":
+            radius_squared += np.asarray(data["index", "y"]) ** 2
+        mask &= radius_squared > 0.125**2
     np.testing.assert_allclose(field("Ey")[mask], decay**2, rtol=2.0e-12, atol=0)
     print(f"refined material damping agrees with {args.method}: {decay**2}")
 elif args.dims == "3":
