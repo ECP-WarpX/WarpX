@@ -50,7 +50,6 @@
 #   include <cstdio>
 #endif
 #include <memory>
-#include <optional>
 #include <string>
 
 
@@ -202,16 +201,12 @@ void init_WarpX (py::module& m)
             R"pbdoc(Save the particle positions and velocities at the start of the step)pbdoc"
         )
         .def("deposit_mass_matrices",
-            [](WarpX& wx, amrex::Real a_dt, std::optional<int> particle_shape){
+            [](WarpX& wx, amrex::Real a_dt){
                 auto const* solver = wx.get_pointer_ImplicitSolver();
                 if (!solver) { throw py::value_error("deposit_mass_matrices requires an implicit solver"); }
-                ImplicitOptions options = solver->GetImplicitOptions();
-                if (particle_shape) { options.particle_shape = *particle_shape; }
-                wx.DepositMassMatrices(a_dt, options);
+                wx.DepositMassMatrices(a_dt, solver->GetImplicitOptions());
             },
-            py::arg("dt"), py::arg("particle_shape") = py::none(),
-            R"pbdoc(Zero and deposit the mass matrices from all species, with shape factors
-            of order particle_shape (defaults to the shape the mass matrices were sized for))pbdoc"
+            R"pbdoc(Zero and deposit the mass matrices from all species)pbdoc"
         )
         .def("sync_mass_matrices",
             [](WarpX& wx){ wx.SyncMassMatrices(); },
