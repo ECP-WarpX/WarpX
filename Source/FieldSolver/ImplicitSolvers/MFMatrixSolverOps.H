@@ -316,8 +316,7 @@ void MFMatrixSolverOps<T>::PrintMatrix (const std::string& a_filename,
     // The entries are not stored, so the file holds the metadata only
     std::string filename = a_filename;
     const std::string ext = ".mtx";
-    if (filename.size() > ext.size() &&
-        filename.compare(filename.size() - ext.size(), ext.size(), ext) == 0) {
+    if (filename.ends_with(ext)) {
         filename.replace(filename.size() - ext.size(), ext.size(), ".info");
     }
     MatrixMarketWriter::WriteInfo(filename, header, *dofs);

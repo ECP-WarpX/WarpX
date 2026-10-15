@@ -19,7 +19,6 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
-#include <cstdio>
 #include <fstream>
 #include <limits>
 #include <numeric>
@@ -153,13 +152,9 @@ void MatrixMarketWriter::Write (const std::string& a_filename,
 
     InRankOrder([&] () {
         std::ofstream f(a_filename, std::ios::app);
-        std::array<char, 80> buf{};
+        f.precision(17);
         for (std::size_t k = 0; k < a_local.row.size(); ++k) {
-            std::snprintf(buf.data(), buf.size(), "%lld %lld %.17g\n",
-                          static_cast<long long>(a_local.row[k] + 1),
-                          static_cast<long long>(a_local.col[k] + 1),
-                          static_cast<double>(a_local.val[k]));
-            f << buf.data();
+            f << a_local.row[k] + 1 << " " << a_local.col[k] + 1 << " " << a_local.val[k] << "\n";
         }
     });
 }
@@ -191,7 +186,7 @@ void MatrixMarketWriter::WriteDOFMap (const std::string& a_dir, const WarpXSolve
     using namespace amrex;
 
     static std::set<std::string> written;
-    if (written.count(a_dir) > 0) { return; }
+    if (written.contains(a_dir)) { return; }
     written.insert(a_dir);
 
     // row, level, field component, i, j, k
