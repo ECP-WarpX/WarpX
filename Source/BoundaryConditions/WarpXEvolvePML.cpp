@@ -80,7 +80,7 @@ WarpX::DampPML (const int lev, PatchType patch_type)
     }
 #else
     // Cylindrical convolution memories integrate damping within each field push.
-    amrex::ignore_unused(patch_type);
+    amrex::ignore_unused(lev, patch_type);
 #endif
 }
 
