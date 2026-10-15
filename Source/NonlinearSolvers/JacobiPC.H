@@ -15,6 +15,7 @@
 
 #include "MatrixSolverOps.H"
 #include "FieldSolver/ImplicitSolvers/MultiFabMatrixSolverOps.H"
+#include "FieldSolver/ImplicitSolvers/SparseMatrixSolverOps.H"
 
 #include <AMReX.H>
 #include <AMReX_ParmParse.H>
@@ -29,9 +30,17 @@
  *  Approximately solves A x = b via damped Jacobi iterations,
  *  delegating the iteration logic to WeightedJacobiImpl<T>.
  *
- *  A = I + M, where M is the mass matrix stored as MultiFab stencil
- *  coefficients (MultiFabMatrixSolverOps). When diagonal-only
- *  (mass_matrices_pc_width=0), the solve is exact in one step.
+ *  Two operating modes, selected automatically:
+ *
+ *  1) Stencil path (semi-implicit, GetThetaForPC()==0):
+ *     A = I + M where M is the mass matrix stored as MultiFab stencil
+ *     coefficients. When diagonal-only (mass_matrices_pc_width=0), the
+ *     solve is exact in one step.
+ *
+ *  2) CSR path (theta-implicit, GetThetaForPC()>0):
+ *     A = I + curl(alpha*curl[]) + M assembled as a sparse CSR matrix
+ *     by SparseJacobianMatrix. Operations (sweep, residual) are performed
+ *     on flat device vectors in local-extended DOF space.
  */
 
 template <class T, class Ops>
@@ -87,6 +96,8 @@ void JacobiPC<T,Ops>::printParameters() const
     using namespace amrex;
     auto pc_name = getEnumNameString(PreconditionerType::pc_jacobi);
     m_solver.printParameters(pc_name);
+    const bool use_csr = (m_ops != nullptr && m_ops->GetThetaForPC() > amrex::Real(0.0));
+    Print() << pc_name << " use CSR path:         " << (use_csr?"true":"false") << "\n";
     m_print.printParameters();
 }
 
@@ -110,9 +121,15 @@ void JacobiPC<T,Ops>::Define ( const T& a_U,
     m_ops = a_ops;
     m_num_amr_levels = m_ops->numAMRLevels();
 
-    auto mf_ops = std::make_unique<MultiFabMatrixSolverOps<T,Ops>>();
-    mf_ops->Define(m_ops);
-    m_matrix_ops = std::move(mf_ops);
+    if (m_ops->GetThetaForPC() > Real(0.0)) {
+        auto sp_ops = std::make_unique<SparseMatrixSolverOps<T,Ops>>();
+        sp_ops->Define(m_ops);
+        m_matrix_ops = std::move(sp_ops);
+    } else {
+        auto mf_ops = std::make_unique<MultiFabMatrixSolverOps<T,Ops>>();
+        mf_ops->Define(m_ops);
+        m_matrix_ops = std::move(mf_ops);
+    }
 
     m_solver.Define(m_matrix_ops.get(),
                     getEnumNameString(PreconditionerType::pc_jacobi));
@@ -140,8 +157,10 @@ void JacobiPC<T,Ops>::Update ()
     }
 
     if (m_solver.isVerbose()) {
+        const bool use_csr = (m_ops->GetThetaForPC() > Real(0.0));
         amrex::Print() << "Updating " << amrex::getEnumNameString(PreconditionerType::pc_jacobi)
                        << ": theta*dt = " << m_ops->GetThetaForPC()*this->m_dt
+                       << ", path = " << (use_csr ? "CSR" : "stencil")
                        << ", omega = " << m_solver.getOmega() << "\n";
     }
 }

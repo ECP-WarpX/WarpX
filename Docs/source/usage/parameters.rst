@@ -314,8 +314,7 @@ Overall simulation parameters
           - ``weighted_jacobi.relative_tolerance`` (``float``, default: 1.0e-4)
           - ``weighted_jacobi.absolute_tolerance`` (``float``, default: 0.0)
           - ``weighted_jacobi.use_pcmat`` (``bool``, default: true)
-            When ``true``, the solver iterates on the matrix :math:`A = \mathbb{I} + M` that ``jacobian.pc_type = pc_jacobi`` uses, with :math:`M` the plasma response from the mass matrices (``implicit_evolve.use_mass_matrices_pc = true``).
-            This option requires ``algo.evolve_scheme = semi_implicit_em``.
+            When ``true``, the solver iterates on the assembled matrix that is also used by ``jacobian.pc_type = pc_jacobi`` (see below), with the plasma response included if ``implicit_evolve.use_mass_matrices_pc = true``.
             This matrix approximates the Jacobian, so more nonlinear iterations may be needed.
             It is updated on the preconditioner update schedule (``newton.pc_update_newton_interval`` and ``newton.pc_update_time_step_interval``).
             When ``false``, the solver uses matrix-free evaluations of the Jacobian.
@@ -385,9 +384,10 @@ Overall simulation parameters
             - ``pc_curl_curl_mlmg.relative_tolerance`` (``float``, default: 1.0e-4)
             - ``pc_curl_curl_mlmg.absolute_tolerance`` (``float``, default: 1.0e-16)
 
-          - ``jacobian.pc_type = pc_jacobi``: Use weighted Jacobi iterations on :math:`A = \mathbb{I} + M`, where :math:`M` is the plasma response from the mass matrices (``implicit_evolve.use_mass_matrices_pc = true``).
-            The curl curl operator is not included.
-            With diagonal mass matrices (``implicit_evolve.mass_matrices_pc_width = 0``), the solve is exact in one step.
+          - ``jacobian.pc_type = pc_jacobi``: Use weighted Jacobi iterations on an assembled matrix :math:`A`.
+            For ``semi_implicit_em``, :math:`A = \mathbb{I} + M`, where :math:`M` is the plasma response from the mass matrices (``implicit_evolve.use_mass_matrices_pc = true``).
+            For ``theta_implicit_em``, :math:`A` also includes the curl curl operator and is assembled as a sparse matrix.
+            With diagonal mass matrices (``implicit_evolve.mass_matrices_pc_width = 0``) and ``semi_implicit_em``, the solve is exact in one step.
 
             - ``pc_jacobi.verbose`` (``bool``, default: false)
             - ``pc_jacobi.verbose_int`` (``int``) If given, overrides ``pc_jacobi.verbose``: a positive value turns on the output.
@@ -421,7 +421,7 @@ Overall simulation parameters
             - ``pc_algmg.max_levels`` (``int``, default: 25)
 
         - ``precon_mat.verbose`` (``bool``, default: true)
-          Print information on the assembly of the sparse matrix used by ``pc_petsc`` and ``pc_algmg``.
+          Print information on the assembly of the sparse matrix used by ``pc_petsc`` and ``pc_algmg``, and with ``theta_implicit_em`` by ``pc_jacobi`` and the ``weighted_jacobi`` linear solver with ``use_pcmat = true``.
           This replaces ``pc_petsc.verbose``.
 
         - ``<pc_type>.print_matrix`` (``bool``, default: false), ``<pc_type>.print_matrix_steps`` (list of ``int``), ``<pc_type>.print_matrix_dir`` (``string``, default: ``diags/pc_matrices``)

@@ -206,6 +206,19 @@ public:
                         const std::vector<std::string>& a_header) const;
 
     /**
+     * \brief The assembled sparse Jacobian matrix (nullptr before the first
+     *        AssemblePCMatrix()), for the CSR operations of the native solvers
+     */
+    [[nodiscard]] const SparseJacobianMatrix* GetSparseJacobian () const
+    {
+        return m_sparse_jacobian.get();
+    }
+    [[nodiscard]] SparseJacobianMatrix* GetSparseJacobian ()
+    {
+        return m_sparse_jacobian.get();
+    }
+
+    /**
      * \brief Zero-based index of the time step being advanced.
      */
     [[nodiscard]] int GetCurrentStep () const { return m_current_step; }

@@ -13,6 +13,7 @@
 #include "Utils/TextMsg.H"
 #include "FieldSolver/ImplicitSolvers/MFMatrixSolverOps.H"
 #include "FieldSolver/ImplicitSolvers/MultiFabMatrixSolverOps.H"
+#include "FieldSolver/ImplicitSolvers/SparseMatrixSolverOps.H"
 
 #include <AMReX_ParmParse.H>
 
@@ -23,8 +24,8 @@
 /**
  * \brief LinearSolver wrapper for weighted Jacobi.
  *
- *  When use_pcmat=true (default), the PC matrix A = I + M (mass-matrix
- *  stencil) is used. When use_pcmat=false, the matrix-vector product is provided
+ *  When use_pcmat=true (default), the assembled PC matrix (stencil or CSR)
+ *  is used. When use_pcmat=false, the matrix-vector product is provided
  *  by JacobianFunctionMF::apply().
  */
 template <typename Vec, typename LinOp>
@@ -51,16 +52,17 @@ public:
         pp.query("use_pcmat", m_use_pcmat);
 
         if (m_use_pcmat) {
-            // The stencil matrix I + M has no curl curl term
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                ops->GetThetaForPC() <= amrex::Real(0.0),
-                "weighted_jacobi.use_pcmat = true requires algo.evolve_scheme = semi_implicit_em; "
-                "use weighted_jacobi.use_pcmat = false");
-            // Stencil ops on the PC mass matrices, as in JacobiPC
+            // Stencil/CSR ops (same dispatch as JacobiPC)
             using OpsType = std::remove_pointer_t<decltype(ops)>;
-            auto mf_ops = std::make_unique<MultiFabMatrixSolverOps<Vec, OpsType>>();
-            mf_ops->Define(ops);
-            m_matrix_ops = std::move(mf_ops);
+            if (ops->GetThetaForPC() > amrex::Real(0.0)) {
+                auto sp_ops = std::make_unique<SparseMatrixSolverOps<Vec, OpsType>>();
+                sp_ops->Define(ops);
+                m_matrix_ops = std::move(sp_ops);
+            } else {
+                auto mf_ops = std::make_unique<MultiFabMatrixSolverOps<Vec, OpsType>>();
+                mf_ops->Define(ops);
+                m_matrix_ops = std::move(mf_ops);
+            }
         } else {
             // Matrix-free ops wrapping JacobianFunctionMF::apply()
             auto matvec = [linop = m_linop](Vec& y, const Vec& x) {

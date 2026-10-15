@@ -1942,7 +1942,7 @@ class DarwinMLMGPreconditioner(PreconditionerBase):
     )
 
 
-class JacobiPreconditioner(PrintMatrixPreconditionerBase):
+class JacobiPreconditioner(AssembledMatrixPreconditionerBase):
     """
     Sets up the weighted Jacobi preconditioner used during the nonlinear solver
     """
