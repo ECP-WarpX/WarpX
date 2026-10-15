@@ -79,6 +79,7 @@ protected:
     ChebyshevImpl<T> m_solver;
 
     MatrixPrintControl m_print;
+    bool m_print_pending = false;
 
 private:
 
@@ -143,14 +144,8 @@ void ChebyshevPC<T,Ops>::Update ()
 
     m_solver.Update();
 
-    if (m_print.ShouldPrint(m_ops->GetCurrentStep())) {
-        auto header = m_print.HeaderLines();
-        std::ostringstream ss;
-        ss.precision(10);
-        ss << "chebyshev_lambda_DinvA: " << m_solver.getLambdaMin() << " " << m_solver.getLambdaMax();
-        header.emplace_back(ss.str());
-        m_matrix_ops->PrintMatrix(m_print.FileName(), header);
-    }
+    // Written after the next Apply(), which estimates the eigenvalue bounds
+    m_print_pending = m_print.ShouldPrint(m_ops->GetCurrentStep());
 }
 
 template <class T, class Ops>
@@ -170,6 +165,17 @@ void ChebyshevPC<T,Ops>::Apply (T& a_x, const T& a_b)
         "ChebyshevPC::Apply() - a_b must be Efield_fp type");
 
     m_solver.Solve(a_x, a_b);
+
+    if (m_print_pending) {
+        auto header = m_print.HeaderLines();
+        std::ostringstream ss;
+        ss.precision(10);
+        ss << "chebyshev_lambda_DinvA: " << m_solver.getLambdaMin() << " "
+           << m_solver.getLambdaMax();
+        header.emplace_back(ss.str());
+        m_matrix_ops->PrintMatrix(m_print.FileName(), header);
+        m_print_pending = false;
+    }
 }
 
 #endif

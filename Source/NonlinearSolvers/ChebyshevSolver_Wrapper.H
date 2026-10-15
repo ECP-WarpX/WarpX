@@ -95,15 +95,8 @@ public:
         m_solver.Update(m_matrix_stale);
         m_matrix_stale = false;
 
-        if (m_print.ShouldPrint(m_linop->getOps()->GetCurrentStep())) {
-        auto header = m_print.HeaderLines();
-        std::ostringstream ss;
-        ss.precision(10);
-        ss << "chebyshev_lambda_DinvA: " << m_solver.getLambdaMin() << " " << m_solver.getLambdaMax();
-        header.emplace_back(ss.str());
-            header.emplace_back("use_pcmat: " + std::string(m_use_pcmat ? "true" : "false"));
-            m_matrix_ops->PrintMatrix(m_print.FileName(), header);
-        }
+        // Written after the next solve, which estimates the eigenvalue bounds
+        m_print_pending = m_print.ShouldPrint(m_linop->getOps()->GetCurrentStep());
     }
 
     void invalidatePreconditioner () override { m_matrix_stale = true; }
@@ -114,6 +107,18 @@ public:
         m_solver.setTolerances(a_tol_rel, a_tol_abs);
         if (a_its > 0) { m_solver.setMaxIters(a_its); }
         m_solver.Solve(a_sol, a_rhs);
+
+        if (m_print_pending) {
+            auto header = m_print.HeaderLines();
+            std::ostringstream ss;
+            ss.precision(10);
+            ss << "chebyshev_lambda_DinvA: " << m_solver.getLambdaMin() << " "
+               << m_solver.getLambdaMax();
+            header.emplace_back(ss.str());
+            header.emplace_back("use_pcmat: " + std::string(m_use_pcmat ? "true" : "false"));
+            m_matrix_ops->PrintMatrix(m_print.FileName(), header);
+            m_print_pending = false;
+        }
     }
 
     void setVerbose (int v) override
@@ -156,6 +161,7 @@ private:
     std::unique_ptr<MatrixSolverOps<Vec>> m_matrix_ops;
     ChebyshevImpl<Vec> m_solver;
     MatrixPrintControl m_print;
+    bool m_print_pending = false;
 };
 
 #endif
