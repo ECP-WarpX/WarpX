@@ -864,15 +864,21 @@ void ImplicitSolver::InitializeMassMatrices ()
                     "Villasenor deposition in 3D is not yet supported.");
             }
 #else
-            const int max_grid_crossings = ngJ[0] - shape / 2;
+            const int max_grid_crossings = WarpX::particle_max_grid_crossings;
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(max_grid_crossings > 0,
-                "Mass Matrices for Jacobian with Villasenor deposition requires particles.max_grid_crossings > 0.");
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(max_grid_crossings == WarpX::particle_max_grid_crossings,
-                "Guard cells for J are not consistent with particle_max_grid_crossings.");
+                "Mass matrices with Villasenor deposition require "
+                "particles.max_grid_crossings > 0 for both Jacobian and preconditioner use.");
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 max_grid_crossings <= WarpX::villasenor_mass_matrices_max_grid_crossings,
-                "Mass matrices for the Jacobian with Villasenor deposition support "
-                "particles.max_grid_crossings <= WarpX::villasenor_mass_matrices_max_grid_crossings.");
+                "Mass matrices with Villasenor deposition require "
+                "particles.max_grid_crossings <= WarpX::villasenor_mass_matrices_max_grid_crossings "
+                "for both Jacobian and preconditioner use.");
+            for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(ngJ[dir] >= shape / 2 + max_grid_crossings,
+                    "Mass matrices with Villasenor deposition require at least "
+                    "particle_shape / 2 + particles.max_grid_crossings guard cells for J "
+                    "in each direction for both Jacobian and preconditioner use.");
+            }
 #endif
             // Comment on direction-dependent number of mass matrices components
             // set below for charge-conserving Villasenor deposition:

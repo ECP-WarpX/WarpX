@@ -283,7 +283,7 @@ public:
     //! Maximum number of allowed grid crossings for particles
     static int particle_max_grid_crossings;
 
-    //! Maximum number of allowed grid crossings for particles when using mass matrices for Jacobian
+    //! Maximum number of allowed grid crossings for Villasenor mass-matrix deposition
     //! The Villasenor deposition requires this value at compile time for arrays used in the routine
     static constexpr int villasenor_mass_matrices_max_grid_crossings = 3;
 

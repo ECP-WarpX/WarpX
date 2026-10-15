@@ -3807,6 +3807,11 @@ Particle push, charge and current deposition, field gathering
     Maximum number of grid crossings the particles can do per time step.
     This is only used with the Strang and theta-implicit schemes since they allow the speed of light Courant limit to be violated.
 
+    In 1D and 2D, Villasenor mass-matrix deposition requires this value to be between
+    1 and 3 (inclusive). This applies when mass matrices are used for the Jacobian,
+    the preconditioner, or both, including a preconditioner width of zero.
+    The upper limit comes from fixed-size arrays used to store orbit segments.
+
 Maxwell solver
 ^^^^^^^^^^^^^^
 
