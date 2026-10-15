@@ -1040,7 +1040,6 @@ void ImplicitSolver::InitializeMassMatrices ()
         }
     }
 
-
     // Set pointers to diagonal blocks (XX, YY, ZZ) of original mass matrices
     if (m_use_mass_matrices_jacobian) {
         for (int lev = 0; lev < m_num_amr_levels; ++lev) {

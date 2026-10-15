@@ -146,7 +146,6 @@ namespace SparseJacobianMatrixUtil
  *  - m_c_indices_g: column indices in global DOF space (size n_local_rows * nnz_max)
  *  - m_a_ij:        matrix values  (size n_local_rows * nnz_max)
  *
- *
  *  After RemapColumns(), an additional array is available:
  *  - m_c_indices_ext: column indices in local-extended space (owned + ghost DOFs)
  *
@@ -208,8 +207,8 @@ public:
      *        with a_header as metadata lines. Collective over all ranks.
      */
     void PrintMatrix (const std::string& a_filename,
-                const std::vector<std::string>& a_header,
-                const WarpXSolverDOF& a_dofs) const;
+                      const std::vector<std::string>& a_header,
+                      const WarpXSolverDOF& a_dofs) const;
 
     /**
      * \brief Core assembly routine. Returns 0 on success, positive int
