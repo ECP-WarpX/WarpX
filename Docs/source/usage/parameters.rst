@@ -334,10 +334,16 @@ Overall simulation parameters
         - ``implicit_evolve.use_mass_matrices_pc`` (``bool``, default: false).
           When ``true``, the plasma response is captured in the preconditioner.
           Requires use of a preconditioner (``jacobian.pc_type = pc_curl_curl_mlmg``, ``pc_petsc``, ``pc_algmg``, or ``pc_jacobi``).
+          In 3D, ``algo.current_deposition = villasenor`` is supported only for PC-only use
+          (``implicit_evolve.use_mass_matrices_jacobian = false``) with ``implicit_evolve.mass_matrices_pc_width = 0``.
 
         - ``implicit_evolve.mass_matrices_pc_width`` (``integer``, default: 0).
-          If using ``jacobian.pc_type = pc_petsc`` or ``pc_algmg``, this parameter specifies the width of the mass matrices included in the preconditioner.
-          In most cases, a width of 1 is sufficient for good GMRES performance.
+          Specifies the non-negative spatial half-width of the mass-matrix stencil retained in the preconditioner.
+          This applies whenever ``implicit_evolve.use_mass_matrices_pc = true``, independently of whether mass matrices are also used for the Jacobian.
+          A width of 0 retains only the local diagonal entries; larger widths retain neighboring couplings, up to the full stencil extent.
+          Wider stencils are supported by ``jacobian.pc_type = pc_petsc``, ``pc_algmg``, and ``pc_jacobi``.
+          For these preconditioners, a width of 1 is sufficient for good GMRES performance in most cases.
+          The ``pc_curl_curl_mlmg`` preconditioner forces the width to 0.
 
         - ``jacobian.pc_type`` (``string``, default: None). A preconditioner can be used to minimize the number of linear GMRES iterations. The options are:
 
@@ -361,9 +367,10 @@ Overall simulation parameters
             - ``pc_curl_curl_mlmg.relative_tolerance`` (``float``, default: 1.0e-4)
             - ``pc_curl_curl_mlmg.absolute_tolerance`` (``float``, default: 1.0e-16)
 
-          - ``jacobian.pc_type = pc_jacobi``: Use weighted Jacobi iterations on :math:`A = \mathbb{I} + M`, where :math:`M` is the plasma response from the mass matrices (``implicit_evolve.use_mass_matrices_pc = true``).
+          - ``jacobian.pc_type = pc_jacobi``: Use weighted (damped) Jacobi iterations on :math:`A = \mathbb{I} + M`, where :math:`M` is the plasma response from the mass matrices (``implicit_evolve.use_mass_matrices_pc = true``).
             The curl curl operator is not included.
-            With diagonal mass matrices (``implicit_evolve.mass_matrices_pc_width = 0``), the solve is exact in one step.
+            At ``implicit_evolve.mass_matrices_pc_width = 0``, the diagonal system is solved exactly in one step.
+            For wider stencils, the iterations include the neighboring couplings.
 
             - ``pc_jacobi.verbose`` (``bool``, default: false)
             - ``pc_jacobi.verbose_int`` (``int``) If given, overrides ``pc_jacobi.verbose``: a positive value turns on the output.
@@ -378,6 +385,7 @@ Overall simulation parameters
           - ``jacobian.pc_type = pc_petsc``: Use the PETSc solver.
 
             - ``pc_petsc.type`` (``string``, default: "asm")
+              On GPUs, ``lu`` requires a single MPI rank; on several GPUs, use ``asm`` with ``pc_petsc.sub_type = lu``.
             - ``pc_petsc.asm_overlap`` (``int``, default: 0)
             - ``pc_petsc.sub_type`` (``string``, default: "ilu")
             - ``pc_petsc.ilu_factor_levels`` (``int``, default: 2)
@@ -3821,6 +3829,11 @@ Particle push, charge and current deposition, field gathering
 
     Maximum number of grid crossings the particles can do per time step.
     This is only used with the Strang and theta-implicit schemes since they allow the speed of light Courant limit to be violated.
+
+    In 1D and 2D, Villasenor mass-matrix deposition requires this value to be between
+    1 and 3 (inclusive). This applies when mass matrices are used for the Jacobian,
+    the preconditioner, or both, including a preconditioner width of zero.
+    The upper limit comes from fixed-size arrays used to store orbit segments.
 
 Maxwell solver
 ^^^^^^^^^^^^^^
