@@ -1154,13 +1154,14 @@ WarpX::ReadParameters ()
         }
 
 #if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
+#ifdef WARPX_DIM_RZ
+        bool const fdtd_pml = electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee;
+#else
+        bool constexpr fdtd_pml = false;
+#endif
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
             ::isAnyBoundaryPML(field_boundary_lo, field_boundary_hi) == false ||
-                electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD
-#ifdef WARPX_DIM_RZ
-                || electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee
-#endif
-            ,
+                electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD || fdtd_pml,
             "PML are are only implemented with Cartesian geometry with FDTD; please set a "
             "different boundary condition using boundary.field_lo and boundary.field_hi.");
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE( (do_pml_dive_cleaning == false && do_pml_divb_cleaning == false),
