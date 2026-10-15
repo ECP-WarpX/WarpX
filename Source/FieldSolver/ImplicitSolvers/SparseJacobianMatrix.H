@@ -200,8 +200,8 @@ public:
      *        with a_header as metadata lines. Collective over all ranks.
      */
     void PrintMatrix (const std::string& a_filename,
-                const std::vector<std::string>& a_header,
-                const WarpXSolverDOF& a_dofs) const;
+                      const std::vector<std::string>& a_header,
+                      const WarpXSolverDOF& a_dofs) const;
 
     /**
      * \brief Core assembly routine. Returns 0 on success, positive int
