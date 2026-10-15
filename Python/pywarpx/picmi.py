@@ -1340,7 +1340,7 @@ class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid, WarpXGridBase):
     # 2D geometry is the x-z plane; there is no second (y) axis.
     potential_ymin = _potential_not_in_geometry("potential_ymin", "2D")
     potential_ymax = _potential_not_in_geometry("potential_ymax", "2D")
-    
+
     def model_post_init(self, context) -> None:
         super().model_post_init(context)
         # Geometry
@@ -1484,7 +1484,6 @@ class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid, WarpXGridBase):
         alias="warpx_boundary_u_th",
         description="If a thermal boundary is used for particles, this dictionary should specify the thermal speed for each species in the form {`<species>`: u_th}. Note: u_th = sqrt(T*q_e/mass)/clight with T in eV.",
     )
-
 
     def model_post_init(self, context) -> None:
         super().model_post_init(context)
@@ -3605,99 +3604,76 @@ class MacroscopicProperty(
             )
 
 
+class ParticleSink(picmistandard.PICMI_Interaction):
+    """Custom class to handle set up of particle sinks specific to WarpX."""
 
-class ParticleSink(picmistandard.base._ClassWithInit):
-    """
-    Custom class to handle set up of particle sinks specific to WarpX.
-    If particle sink initialization is added to picmistandard this can be
-    changed to inherit that functionality. The geometry can be specified either as
-    an implicit function or as an STL file (ASCII or binary). In the latter case the
-    geometry specified in the STL file can be scaled, translated and inverted.
+    # Allow arbitrary extra keyword arguments for implicit function variables
+    model_config = ConfigDict(extra="allow")
 
-    Parameters
-    ----------
-    name: string
-        The partice sink name to set.
+    name: str = Field(description="The particle sink name to set.")
+    implicit_function: str | None = Field(
+        default=None,
+        description="Analytic expression describing the embedded boundary",
+    )
+    stl_file: str | None = Field(
+        default=None,
+        description="STL file path (string), file contains the embedded boundary geometry",
+    )
+    stl_scale: float | None = Field(
+        default=None,
+        description="Factor by which the STL geometry is scaled",
+    )
+    stl_center: list[float] | None = Field(
+        default=None,
+        description="Vector by which the STL geometry is translated (in meters)",
+    )
+    stl_reverse_normal: bool = Field(
+        default=False,
+        description="If True inverts the orientation of the STL geometry",
+    )
+    type: str = Field(
+        default="Absorbing",
+        description="The boundary condition applied to the particles when they reach the surface of the embedded boundary. Absorbing, Reflecting, Thermal, or None",
+    )
+    user_defined_kw: dict[str, Any] = Field(
+        default_factory=dict,
+        exclude=True,
+        description="Extra expression parameters parsed from keyword arguments",
+    )
 
-    implicit_function: string
-        Analytic expression describing the embedded boundary
-
-    stl_file: string
-        STL file path (string), file contains the embedded boundary geometry
-
-    stl_scale: float
-        Factor by which the STL geometry is scaled
-
-    stl_center: vector of floats
-        Vector by which the STL geometry is translated (in meters)
-
-    stl_reverse_normal: bool
-        If True inverts the orientation of the STL geometry
-
-    type: string, default="Absorbing", optional
-       The boundary condition applied to the particles when they reach the surface
-       of the embedded boundary. Absorbing, Reflecting, Thermal, or None
-
-    Parameters used in the analytic expressions should be given as additional keyword arguments.
-
-    """
-
-    def __init__(
-        self,
-        name,
-        implicit_function=None,
-        stl_file=None,
-        stl_scale=None,
-        stl_center=None,
-        stl_reverse_normal=False,
-        type="Absorbing",
-        **kw,
-    ):
-        self.name = name
-        assert stl_file is None or implicit_function is None, Exception(
+    @model_validator(mode="after")
+    def _validate_and_parse_kw(self) -> "ParticleSink":
+        # 1. Post-instantiation assertions
+        assert self.stl_file is None or self.implicit_function is None, (
             "Only one between implicit_function and stl_file can be specified"
         )
 
-        self.implicit_function = implicit_function
-        self.stl_file = stl_file
-
-        if stl_file is None:
-            assert stl_scale is None, Exception(
-                "EB can only be scaled only when using an stl file"
+        if self.stl_file is None:
+            assert self.stl_scale is None, (
+                "EB can only be scaled when using an stl file"
             )
-            assert stl_center is None, Exception(
-                "EB can only be translated only when using an stl file"
+            assert self.stl_center is None, (
+                "EB can only be translated when using an stl file"
             )
-            assert stl_reverse_normal is False, Exception(
-                "EB can only be reversed only when using an stl file"
+            assert self.stl_reverse_normal is False, (
+                "EB can only be reversed when using an stl file"
             )
 
-        self.stl_scale = stl_scale
-        self.stl_center = stl_center
-        self.stl_reverse_normal = stl_reverse_normal
-
-        # Handle keyword arguments used in expressions
-        self.user_defined_kw = {}
-        for k in list(kw.keys()):
-            if implicit_function is not None and re.search(
-                r"\b%s\b" % k, implicit_function
-            ):
-                self.user_defined_kw[k] = kw[k]
-                del kw[k]
-
-        self.handle_init(kw)
-
-        availible_types = ["Absorbing", "Reflecting", "Thermal", "None"]
-        assert type in availible_types, Exception(
+        available_types = ["Absorbing", "Reflecting", "Thermal", "None"]
+        assert self.type in available_types, (
             "boundaries must be Absorbing, Reflecting, Thermal, or None"
         )
 
-        self.type = type
+        # 2. Extract extra expression variables from extra kwargs
+        if self.implicit_function and self.__pydantic_extra__:
+            for k, v in list(self.__pydantic_extra__.items()):
+                if re.search(r"\b%s\b" % k, self.implicit_function):
+                    self.user_defined_kw[k] = v
+
+        return self
 
     def particle_sink_initialize_inputs(self):
         # Add the user defined keywords to my_constants
-        # The keywords are mangled if there is a conflicting variable already
-        # defined in my_constants with the same name but different value.
         self.mangle_dict = pywarpx.my_constants.add_keywords(self.user_defined_kw)
 
         # Register inputs with pywarpx for this sink
@@ -3718,7 +3694,7 @@ class ParticleSink(picmistandard.base._ClassWithInit):
         self.particle_sink.type = self.type
 
 
-class PlasmaLens(picmistandard.base._ClassWithInit):
+class PlasmaLens(picmistandard.PICMI_AppliedField):
     """
     Custom class to setup a plasma lens lattice.
     The applied fields are dependent only on the transverse position.
