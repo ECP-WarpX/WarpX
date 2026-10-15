@@ -330,6 +330,7 @@ Overall simulation parameters
             Nothing is lagged in this case: :math:`D` is updated at every Newton iteration.
           - ``weighted_jacobi.omega`` (``float``, default: Gershgorin estimate from the assembled matrix, or 1.0 if ``use_pcmat = false``) Relaxation factor.
             Setting it turns off ``weighted_jacobi.adaptive_omega``.
+            With ``use_pcmat = true``, a warning is issued if it exceeds the Gershgorin estimate, since convergence is then not guaranteed.
           - ``weighted_jacobi.adaptive_omega`` (``bool``, default: true)
             When ``true``, the relaxation factor is reduced by a factor of 0.9 whenever the residual increases.
             If the residual still increases after 10 reductions, the linear solve fails.
