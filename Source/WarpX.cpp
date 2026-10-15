@@ -505,11 +505,14 @@ WarpX::WarpX ()
             }
         }
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            maxLevel() == 0 || (evolve_scheme == EvolveScheme::Explicit &&
-                (electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee ||
-                 electromagnetic_solver_id == ElectromagneticSolverAlgo::CKC) &&
-                !m_do_subcycling && !do_moving_window && !load_balance_intervals.isActivated()),
-            "Macroscopic SMR requires explicit Yee or CKC evolution, synchronized timesteps, "
+            maxLevel() == 0 ||
+                ((evolve_scheme == EvolveScheme::Explicit ||
+                  evolve_scheme == EvolveScheme::Theta_Implicit_EM) &&
+                 (electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee ||
+                  electromagnetic_solver_id == ElectromagneticSolverAlgo::CKC) &&
+                 !m_do_subcycling && !do_moving_window && !load_balance_intervals.isActivated()),
+            "Macroscopic SMR requires explicit Yee/CKC or theta-implicit Yee evolution, "
+            "synchronized timesteps, "
             "static grids, and no moving window.");
     }
 

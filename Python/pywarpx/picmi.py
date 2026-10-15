@@ -2772,7 +2772,7 @@ class PrescribedCurrentInjection(picmistandard.PICMI_Extension):
     ``J = sign * I(t) / A`` on one or more rectangular regions via
     ``PrescribedCurrentParticleContainer`` (``warpx.current_injection.*``).
 
-    Cartesian static refined grids are supported with explicit evolution; antenna regions
+    Cartesian static refined grids support explicit and theta-implicit evolution; antenna regions
     may span refinement boundaries. Covered coarse cells do not duplicate the
     source. RZ SMR and a moving window are unsupported; 1D Z is unsupported.
 
@@ -2868,12 +2868,13 @@ class CurrentControlledPort(picmistandard.PICMI_Extension):
     surfaces may cross plasma, macroscopic material, or an EB object, provided
     the surrounding Ampere contour remains in field-carrying cells.
 
-    With Cartesian static refinement, use explicit Yee evolution and synchronized
+    With Cartesian static refinement, use explicit or theta-implicit Yee evolution and synchronized
     timesteps. Staircase embedded boundaries and contours crossing transverse or
     axial refinement boundaries are supported. Crossing ports use a physical
     contour sampled from the finest available grid and must stay one coarse cell
     inside the domain. Contours must remain outside covered EB cells. RZ SMR
-    and implicit SMR are unsupported.
+    is unsupported. Theta-implicit SMR uses Newton with no preconditioner or mass
+    matrices, filtering, or divergence cleaning.
 
     Parameters
     ----------

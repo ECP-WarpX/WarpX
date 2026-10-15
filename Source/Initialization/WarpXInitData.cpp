@@ -1047,6 +1047,9 @@ WarpX::InitFromScratch ()
 
     AmrCore::InitFromScratch(time);  // This will call MakeNewLevelFromScratch
 
+    // CP/PML fields must exist before the theta-implicit vectors are defined.
+    InitPML();
+
     if (m_implicit_solver) {
 
         m_implicit_solver->Define(this,/*from_restart=*/false);
@@ -1056,7 +1059,6 @@ WarpX::InitFromScratch ()
     mypc->AllocData();
     mypc->InitData();
 
-    InitPML();
 
     ExecutePythonCallback("allocdata");
 }
@@ -1075,6 +1077,22 @@ WarpX::InitPML ()
         }
     }
     if (max_level > 0) { do_pml = 1; }
+    if (do_pml && evolve_scheme == EvolveScheme::Theta_Implicit_EM) {
+#if !defined(WARPX_DIM_XZ) && !defined(WARPX_DIM_3D)
+        WARPX_ABORT_WITH_MESSAGE("Theta-implicit PML requires Cartesian 2D or 3D geometry.");
+#endif
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee &&
+                grid_type == GridType::Staggered && !do_moving_window &&
+                !load_balance_intervals.isActivated(),
+            "Theta-implicit SMR/PML requires static staggered Yee grids.");
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            !do_pml_in_domain && !pml_has_particles && !do_pml_dive_cleaning &&
+                !do_pml_divb_cleaning && !do_dive_cleaning && !do_divb_cleaning && !use_filter,
+            "Theta-implicit SMR/PML requires exterior vacuum layers without particles, "
+            "divergence cleaning, or filtering.");
+    }
+
     if (do_pml)
     {
         bool const eb_enabled = EB::enabled();

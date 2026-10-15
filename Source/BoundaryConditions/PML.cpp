@@ -1154,6 +1154,54 @@ void PML::Exchange (amrex::MultiFab* mf_pml,
 }
 
 void
+PML::ApplyImplicitSigma (ablastr::fields::VectorField dst, ablastr::fields::VectorField src,
+                         amrex::Real dt, bool inverse, PatchType patch_type) const
+{
+    auto const& sigma_boxes = patch_type == PatchType::fine ? *sigba_fp : *sigba_cp;
+    // Component 0 is xy/yz/zx, component 1 is xz/yx/zy.
+    for (int n = 0; n < 3; ++n) {
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            src[n]->nComp() == 2, "Implicit PML requires two transverse split field components.");
+        for (int comp = 0; comp < 2; ++comp) {
+            int const physical_direction = (n + comp + 1) % 3;
+#if defined(WARPX_DIM_XZ)
+            if (physical_direction == 1) {
+                continue;
+            }
+            int const dir = physical_direction == 2 ? 1 : physical_direction;
+#else
+            int const dir = physical_direction;
+#endif
+#if !defined(WARPX_DIM_XZ) && !defined(WARPX_DIM_3D)
+            WARPX_ABORT_WITH_MESSAGE("Implicit PML requires 2D or 3D Cartesian geometry.");
+            return;
+#endif
+            const bool nodal = src[n]->ixType().nodeCentered(dir);
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+            for (amrex::MFIter mfi(*dst[n], amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
+                const auto& sig =
+                    nodal ? sigma_boxes[mfi].sigma[dir] : sigma_boxes[mfi].sigma_star[dir];
+                const auto* sigma = sig.data();
+                const int lo = sig.lo();
+                const auto out = dst[n]->array(mfi);
+                const auto in = src[n]->const_array(mfi);
+                amrex::ParallelFor(mfi.tilebox(), [=] AMREX_GPU_DEVICE(int i, int j, int k) {
+                    const int idx[3] = {i, j, k};
+                    const amrex::Real damping = dt * sigma[idx[dir] - lo];
+                    if (inverse) {
+                        out(i, j, k, comp) = in(i, j, k, comp) / (1.0_rt + damping);
+                    } else {
+                        out(i, j, k, comp) -= damping * in(i, j, k, comp);
+                    }
+                });
+            }
+        }
+    }
+}
+
+void
 PML::Exchange (MultiFab& pml, MultiFab& reg, const Geometry& geom,
                 int do_pml_in_domain)
 {

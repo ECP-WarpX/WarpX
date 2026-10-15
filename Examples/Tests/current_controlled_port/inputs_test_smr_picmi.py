@@ -20,6 +20,10 @@ parser.add_argument(
 )
 parser.add_argument("--restart")
 parser.add_argument("--eb", action="store_true")
+parser.add_argument("--implicit", action="store_true")
+parser.add_argument("--theta", type=float, default=0.5)
+parser.add_argument("--plasma", action="store_true")
+parser.add_argument("--petsc", action="store_true")
 args, remaining = parser.parse_known_args()
 sys.argv = sys.argv[:1] + remaining
 
@@ -65,7 +69,9 @@ amr.n_error_buf = 0
 dt = 1.0e-12
 simulation = picmi.Simulation(
     solver=picmi.ElectromagneticSolver(
-        grid=grid, method="Yee", divE_cleaning=args.source == "antenna"
+        grid=grid,
+        method="Yee",
+        divE_cleaning=args.source == "antenna" and not args.implicit,
     ),
     max_steps=2,
     time_step_size=dt,
@@ -74,6 +80,27 @@ simulation = picmi.Simulation(
     warpx_use_filter=0,
     warpx_serialize_initial_conditions=1,
     warpx_amr_restart=args.restart,
+    warpx_evolve_scheme=(
+        picmi.ThetaImplicitEMEvolveScheme(
+            theta=args.theta,
+            nonlinear_solver=picmi.NewtonNonlinearSolver(
+                verbose=False,
+                require_convergence=True,
+                max_iterations=8,
+                relative_tolerance=1.0e-12,
+                absolute_tolerance=1.0e-14,
+                linear_solver=(
+                    picmi.PETScKSPLinearSolver()
+                    if args.petsc
+                    else picmi.GMRESLinearSolver(
+                        verbose_int=0, relative_tolerance=1.0e-6, max_iterations=100
+                    )
+                ),
+            ),
+        )
+        if args.implicit
+        else None
+    ),
     warpx_embedded_boundary=(
         picmi.EmbeddedBoundary(
             implicit_function="0.0625**2-x*x-y*y" if ndim == 3 else "0.0625**2-x*x"
@@ -95,6 +122,17 @@ if not is_rz:
                 implicit_function=expression,
                 method=args.method if name == "sigma" else None,
             )
+        )
+
+if args.plasma:
+    for particle_type in ("electron", "proton"):
+        simulation.add_species(
+            picmi.Species(
+                particle_type=particle_type,
+                name=particle_type,
+                initial_distribution=picmi.UniformDistribution(density=1.0e12),
+            ),
+            layout=picmi.GriddedLayout(grid=grid, n_macroparticle_per_cell=[1] * ndim),
         )
 
 waveform = str(Path(__file__).resolve().parent / "current_profile.txt")
@@ -127,7 +165,7 @@ elif args.source == "antenna":
     )
 else:
     assert not is_rz
-if args.source == "material" or args.eb:
+if args.source == "material" or args.eb or args.plasma:
     simulation.add_applied_field(
         picmi.AnalyticInitialField(
             Ex_expression="0", Ey_expression="1.0", Ez_expression="0"
@@ -160,7 +198,41 @@ simulation.add_diagnostic(
 simulation.add_diagnostic(
     picmi.Checkpoint(name="chk", period=1, write_dir="diags", warpx_file_prefix="chk")
 )
-simulation.step(1 if args.restart else 2)
+independent_rho_before = None
+if args.plasma:
+    simulation.step(1)
+    for name in ("electron", "proton"):
+        particles = simulation.particles.get(name)
+        charge = -picmi.constants.q_e if name == "electron" else picmi.constants.q_e
+        mass = picmi.constants.m_e if name == "electron" else picmi.constants.m_p
+        expected = charge * dt / mass / (1 + args.theta * 0.01)
+        for level in (0, 1):
+            sampled = []
+            for tile in libwarpx.libwarpx_so.WarpXParIter(particles, level):
+                values = tile.soa().to_numpy(copy=True).real
+                mask = (np.abs(values["y"]) < 0.05) & (np.abs(values["z"]) < 0.05)
+                mask &= values["x"] > 0.4 if level == 0 else np.abs(values["x"]) < 0.05
+                sampled.extend(values["uy"][mask])
+            assert sampled
+            np.testing.assert_allclose(
+                sampled,
+                expected,
+                rtol=1.0e-6,
+                atol=0,
+                err_msg=f"{name}: trial electric field gathered on level {level}",
+            )
+    simulation.step(1)
+elif args.implicit and args.source == "antenna" and not args.restart:
+    simulation.step(1)
+    independent_rho_before = [
+        np.squeeze(
+            np.asarray(simulation.particles.get_charge_density(level, False)[...])
+        )
+        for level in (0, 1)
+    ]
+    simulation.step(1)
+else:
+    simulation.step(1 if args.restart else 2)
 
 if args.eb:
     assert not is_rz
@@ -184,15 +256,28 @@ if args.source == "antenna":
     # Discrete continuity is a stronger oracle than normalization alone. The
     # nodal endpoint charge must match the divergence of the staggered Jz.
     for level in (0, 1):
-        rho = np.asarray(simulation.fields.get("rho_fp", level=level)[...])
+        if independent_rho_before is not None:
+            rho_after = np.squeeze(
+                np.asarray(simulation.particles.get_charge_density(level, False)[...])
+            )
+            charge_change = rho_after - independent_rho_before[level]
+        else:
+            rho = np.asarray(simulation.fields.get("rho_fp", level=level)[...])
+            rho = np.squeeze(rho)
+            charge_change = rho[..., 1] - rho[..., 0]
         jz = np.asarray(simulation.fields.get("current_fp", dir="z", level=level)[...])
-        rho = np.squeeze(rho)
         jz = np.squeeze(jz)
         dz = (upper[-1] - lower[-1]) / (32 * 2**level)
         interior = (slice(1, -1),) * ndim
-        rate = (rho[..., 1] - rho[..., 0])[interior] / dt
+        rate = charge_change[interior] / dt
         divergence = np.diff(jz, axis=ndim - 1) / dz
         divergence = divergence[(slice(1, -1),) * (ndim - 1) + (slice(None),)]
+        if independent_rho_before is not None and level == 0:
+            # Parent J includes restricted fine current. Independently deposited
+            # parent particles describe leaf cells outside the interface stencil.
+            x = lower[0] + (np.arange(rate.shape[0]) + 1) / 32
+            uncovered = x > refined_upper[0] + 2 / 32
+            rate, divergence = rate[uncovered], divergence[uncovered]
         scale = max(np.max(np.abs(rate)), np.max(np.abs(divergence)))
         assert scale > 0
         error = np.max(np.abs(rate + divergence)) / scale
@@ -201,6 +286,10 @@ if args.source == "antenna":
 
 if args.source == "port":
     status = np.asarray(libwarpx.warpx.get_current_controlled_port_status())
+    if args.plasma:
+        for name in ("electron", "proton"):
+            particles = simulation.particles.get(name)
+            assert particles.sum_particle_energy(False) > 0
     print(f"terminal status: {status}")
     np.testing.assert_allclose(status, [2000.0] * 3, rtol=2.0e-12, atol=0)
 

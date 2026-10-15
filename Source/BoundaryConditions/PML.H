@@ -156,6 +156,10 @@ public:
          amrex::IntVect do_pml_Lo = amrex::IntVect::TheUnitVector(),
          amrex::IntVect do_pml_Hi = amrex::IntVect::TheUnitVector());
 
+    /** Add -dt*sigma*src to dst, or solve dst=src/(1+dt*sigma). */
+    void ApplyImplicitSigma (ablastr::fields::VectorField dst, ablastr::fields::VectorField src,
+                             amrex::Real dt, bool inverse, PatchType patch_type) const;
+
     void ComputePMLFactors (amrex::Real dt);
 
     [[nodiscard]] const MultiSigmaBox& GetMultiSigmaBox_fp () const

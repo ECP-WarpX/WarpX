@@ -127,19 +127,13 @@ class FiniteDifferenceSolver
             bool dive_cleaning
         );
 
-       void EvolveEPML (
-            ablastr::fields::MultiFabRegister& fields,
-            PatchType patch_type,
-            int level,
-            std::array< std::unique_ptr<amrex::iMultiFab>, 3 > const& eb_update_E,
-            MultiSigmaBox const& sigba,
-            amrex::Real dt,
-            bool pml_has_particles
-        );
+        void EvolveEPML (ablastr::fields::MultiFabRegister& fields, PatchType patch_type, int level,
+                         std::array<std::unique_ptr<amrex::iMultiFab>, 3> const& eb_update_E,
+                         MultiSigmaBox const& sigba, amrex::Real dt, bool pml_has_particles,
+                         ablastr::fields::VectorField const& output = {});
 
-       void EvolveFPML ( amrex::MultiFab* Ffield,
-                         ablastr::fields::VectorField Efield,
-                         amrex::Real dt );
+        void EvolveFPML (amrex::MultiFab* Ffield, ablastr::fields::VectorField Efield,
+                         amrex::Real dt);
 
         /**
           * \brief E-update in the hybrid PIC algorithm as described in

@@ -14,6 +14,8 @@ parser.add_argument("--dims", choices=("2", "3", "RZ"), required=True)
 parser.add_argument("--method", default="backwardeuler")
 parser.add_argument("--reference")
 parser.add_argument("--eb", action="store_true")
+parser.add_argument("--implicit", action="store_true")
+parser.add_argument("--theta", type=float, default=0.5)
 args = parser.parse_args()
 yt.funcs.mylog.setLevel(50)
 plotfiles = sorted(
@@ -69,6 +71,8 @@ elif args.source == "material":
     # sigma/epsilon is spatially constant; uniform Ey has zero curl and decays
     # by the chosen conductivity update. Check cells away from patch PMLs.
     decay = 1 / 1.01 if args.method == "backwardeuler" else (1 - 0.005) / (1 + 0.005)
+    if args.implicit:
+        decay = (1 - (1 - args.theta) * 0.01) / (1 + args.theta * 0.01)
     mask = (np.abs(x) < 0.2) & (np.abs(z) < 0.2)
     if args.dims == "3":
         mask &= np.abs(np.asarray(data["index", "y"])) < 0.2

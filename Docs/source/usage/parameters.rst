@@ -4021,6 +4021,7 @@ Maxwell solver: macroscopic media
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The Cartesian macroscopic solver supports static refined grids with explicit Yee or CKC evolution,
+or theta-implicit Yee evolution,
 synchronized timesteps, and no moving window or dynamic load balancing. Conductivity,
 permittivity, and permeability are initialized independently on every fine and coarse
 patch, including their guard cells, from constants or physical-coordinate expressions.
@@ -4030,6 +4031,13 @@ The existing vacuum treatment of
 PML cells remains in use; place material interfaces and current sources away from patch
 PMLs. Yee SMR supports staircase embedded boundaries on every fine and coarse patch.
 Macroscopic evolution in RZ remains unsupported.
+
+Theta-implicit SMR uses native AMReX GMRES,
+``implicit_evolve.nonlinear_solver = newton`` and
+``jacobian.pc_type = none``, with mass matrices, filtering, and divergence cleaning
+disabled. Its nonlinear state includes fine-patch, coarse-patch, and exterior-PML
+electric fields. Conductivity is evaluated at the trial field time
+:math:`n+\theta`; ``algo.macroscopic_sigma_method`` selects only the explicit update.
 
 .. pp:param:: algo.macroscopic_sigma_method
     :type: ``string``
@@ -4110,13 +4118,15 @@ theta-implicit Yee Maxwell solves and with vacuum or macroscopic media.  It is r
 Hybrid-PIC: the artificial particles are an external electromagnetic source and must not be
 included in the Hybrid-PIC ion current.
 
-The antenna supports static mesh refinement (SMR) in 2D XZ and 3D with explicit
+The antenna supports static mesh refinement (SMR) in 2D XZ and 3D with explicit or theta-implicit
 field evolution and no moving window. Antenna regions may span refinement boundaries.
 Particles are seeded on the finest available cells, with weights set by each cell's
 physical volume; covered coarse cells do not duplicate the source. The displacement
 limit uses the finest cell spacing. On restart, all levels are reconstructed from the
 waveform integral at the checkpoint time. RZ remains limited to one level pending
 cylindrical PML support, and 1D Z remains unsupported.
+For implicit evolution, waveform integration uses the physical step endpoints,
+independently of the theta evaluation time or nonlinear iteration.
 
 * ``warpx.current_injection`` (`bool`, optional, default: ``0``)
     Enable the box impressed-current antenna.
@@ -4204,7 +4214,7 @@ be combined with analytic external current or split external fields because thos
 make the plasma-current target ambiguous.
 
 Current-controlled ports support the Yee and Hybrid-PIC field solvers on a single level,
-and Cartesian SMR with explicit Yee evolution and synchronized timesteps. They support
+and Cartesian SMR with explicit or theta-implicit Yee evolution and synchronized timesteps. They support
 3D, in-plane x or z current in 2D XZ, and radial or axial current in
 axisymmetric RZ with one azimuthal mode.  Terminal surfaces must currently be
 matching rectangles, disks or annuli for axial RZ current, or cylindrical surfaces for
@@ -4218,7 +4228,7 @@ finest available grid at each quadrature point. A coupled discrete-curl correcti
 enforces the requested circulation at the terminals and at the finest axial cell planes
 between them. The contour must remain outside covered EB cells, and crossing ports
 must stay at least one coarse cell inside the global domain boundaries.
-RZ SMR, implicit SMR, general curved terminal masks, moving windows,
+RZ SMR, general curved terminal masks, moving windows,
 dynamic load balancing, and hybrid-staggered grids remain unsupported.
 
 * ``warpx.current_controlled_port`` (`bool`, optional, default: ``0``)

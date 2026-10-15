@@ -233,9 +233,10 @@ PrescribedCurrentParticleContainer::InitData () {
     compute_velocity_scale();
     WarpX const& warpx = WarpX::GetInstance();
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        maxLevel() == 0 ||
-            (warpx.evolve_scheme == EvolveScheme::Explicit && !warpx.getdo_moving_window()),
-        "SMR current antennas require explicit evolution and no moving window.");
+        maxLevel() == 0 || ((warpx.evolve_scheme == EvolveScheme::Explicit ||
+                             warpx.evolve_scheme == EvolveScheme::Theta_Implicit_EM) &&
+                            !warpx.getdo_moving_window()),
+        "SMR current antennas require explicit or theta-implicit evolution and no moving window.");
     for (int lev = 0; lev <= finestLevel(); ++lev) {
         const auto& geom = Geom(lev);
         const auto problo = geom.ProbLoArray();
@@ -465,6 +466,14 @@ PrescribedCurrentParticleContainer::Evolve (
     // Use the exact step-average current of the piecewise-linear waveform.
     // Then the pair displacement, deposited J, and deposited endpoint charge
     // obey the same finite-step continuity equation.
+    Real step_start = t;
+    if (implicit_options) {
+        Real time_bias = 0.5_rt;
+        if (WarpX::GetInstance().evolve_scheme == EvolveScheme::Theta_Implicit_EM) {
+            amrex::ParmParse("implicit_evolve").query("theta", time_bias);
+        }
+        step_start -= time_bias * dt;
+    }
     const int ndrives = static_cast<int>(m_drives.size());
     Gpu::DeviceVector<Real> d_velocity(ndrives);
     Gpu::DeviceVector<int> d_dir(ndrives);
@@ -473,8 +482,8 @@ PrescribedCurrentParticleContainer::Evolve (
         Vector<int> hdir(ndrives);
         for (int drive = 0; drive < ndrives; ++drive) {
             h_velocity[drive] = m_drives[drive].sign * m_vel_coeff *
-                                (m_drives[drive].waveform.integral(t + dt) -
-                                 m_drives[drive].waveform.integral(t)) /
+                                (m_drives[drive].waveform.integral(step_start + dt) -
+                                 m_drives[drive].waveform.integral(step_start)) /
                                 dt;
             hdir[drive] = m_drives[drive].dir;
         }

@@ -90,3 +90,13 @@ if(WarpX_FFT)
         OFF  # dependency
     )
 endif()
+
+add_warpx_test(
+    test_2d_pml_theta_implicit
+    2
+    1
+    inputs_test_2d_pml_theta_implicit
+    analysis_pml_theta_implicit.py
+    OFF
+    OFF
+)

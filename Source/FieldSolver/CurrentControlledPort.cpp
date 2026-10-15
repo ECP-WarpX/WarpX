@@ -291,8 +291,11 @@ CurrentControlledPort::ValidateGeometry (
     bool subcycling = false;
     amrex::ParmParse("warpx").query("do_subcycling", subcycling);
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        warpx.maxLevel() == 0 || (warpx.evolve_scheme == EvolveScheme::Explicit && !subcycling),
-        "SMR current-controlled ports require explicit evolution and synchronized timesteps.");
+        warpx.maxLevel() == 0 || ((warpx.evolve_scheme == EvolveScheme::Explicit ||
+                                   warpx.evolve_scheme == EvolveScheme::Theta_Implicit_EM) &&
+                                  !subcycling),
+        "SMR current-controlled ports require explicit or theta-implicit evolution and "
+        "synchronized timesteps.");
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         warpx.getdo_moving_window() == 0,
         "Current-controlled ports do not yet support a moving window.");
