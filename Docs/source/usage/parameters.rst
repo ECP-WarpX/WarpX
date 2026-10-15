@@ -379,6 +379,7 @@ Overall simulation parameters
             - ``pc_jacobi.absolute_tolerance`` (``float``, default: 1.0e-16)
             - ``pc_jacobi.omega`` (``float``, default: Gershgorin estimate from the matrix) Relaxation factor.
               Setting it turns off ``pc_jacobi.adaptive_omega``.
+              A warning is issued if it exceeds the Gershgorin estimate, since convergence is then not guaranteed.
             - ``pc_jacobi.adaptive_omega`` (``bool``, default: true)
               When ``true``, the relaxation factor is reduced by a factor of 0.9 whenever the residual increases.
 
