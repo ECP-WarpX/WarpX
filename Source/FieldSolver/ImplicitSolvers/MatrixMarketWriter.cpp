@@ -164,6 +164,27 @@ void MatrixMarketWriter::Write (const std::string& a_filename,
     });
 }
 
+void MatrixMarketWriter::WriteInfo (const std::string& a_filename,
+                                    const std::vector<std::string>& a_header,
+                                    const WarpXSolverDOF& a_dofs)
+{
+    BL_PROFILE("MatrixMarketWriter::WriteInfo()");
+    using namespace amrex;
+
+    WriteDOFMap(ParentDirectory(a_filename), a_dofs);
+
+    if (ParallelDescriptor::IOProcessor()) {
+        std::ofstream f(a_filename, std::ios::trunc);
+        f << "% WarpX matrix-free operator: the entries are not stored\n";
+        for (const auto& h : a_header) { f << "% " << h << "\n"; }
+        f << "% global_size: " << a_dofs.m_nDoFs_g << " x " << a_dofs.m_nDoFs_g << "\n";
+        f << "% ranks: " << ParallelDescriptor::NProcs() << "\n";
+        f << "% row_offsets: " << Join(a_dofs.m_row_offsets) << "\n";
+        f << "% dof_map: dofmap.txt\n";
+    }
+    ParallelDescriptor::Barrier();
+}
+
 void MatrixMarketWriter::WriteDOFMap (const std::string& a_dir, const WarpXSolverDOF& a_dofs)
 {
     BL_PROFILE("MatrixMarketWriter::WriteDOFMap()");

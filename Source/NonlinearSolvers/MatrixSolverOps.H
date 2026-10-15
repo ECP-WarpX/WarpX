@@ -15,7 +15,7 @@
 /**
  * \brief Abstract interface for matrix operations used by iterative solvers.
  *
- *  Implementations: MultiFabMatrixSolverOps (stencil).
+ *  Implementations: MultiFabMatrixSolverOps (stencil), MFMatrixSolverOps (matrix-free).
  */
 template <class T>
 class MatrixSolverOps
@@ -52,6 +52,12 @@ public:
      *  as metadata lines. Collective over all ranks. */
     virtual void PrintMatrix (const std::string& a_filename,
                               const std::vector<std::string>& a_header) = 0;
+
+    /** Set scaling for mass matrix diagonal (MFMatrixSolverOps only). */
+    virtual void SetPCFactor ([[maybe_unused]] RT) {}
+
+    /** Set scaling for curl-curl diagonal (MFMatrixSolverOps only). */
+    virtual void SetCurlCurlFactor ([[maybe_unused]] RT) {}
 
     /** False when A is diagonal (initial guess is exact) */
     [[nodiscard]] virtual bool HasOffDiag () const = 0;

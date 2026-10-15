@@ -4,7 +4,7 @@ Preconditioner Matrices
 =======================
 
 The implicit solvers can write the matrix of a preconditioner to a file, for debugging and analysis.
-This is available for ``jacobian.pc_type = pc_jacobi``, ``pc_petsc``, and ``pc_algmg``.
+This is available for ``jacobian.pc_type = pc_jacobi``, ``pc_petsc``, and ``pc_algmg``, and for ``newton.linear_solver = weighted_jacobi``.
 It is enabled with the parameters below, which use the name of the preconditioner as prefix (see :ref:`running-cpp-parameters`):
 
 * ``<prefix>.print_matrix`` (``bool``, default: false)
@@ -20,6 +20,8 @@ The file is in `MatrixMarket <https://math.nist.gov/MatrixMarket/formats.html>`_
 Rows and columns are the global indices (1-based) of the degrees of freedom of the electric field.
 Each rank writes its own rows; the matrix is never gathered on one rank.
 For ``pc_jacobi``, every entry of the mass-matrix stencil is written, including entries that are zero.
+For ``weighted_jacobi`` with ``use_pcmat = false``, the operator is matrix-free and its entries are not stored.
+The metadata, including the range of the diagonal, is then written to a ``.info`` file with the same name.
 
 The header holds metadata as ``% key: value`` comment lines, for example:
 

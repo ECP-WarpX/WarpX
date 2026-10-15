@@ -57,6 +57,14 @@ namespace MatrixMarketWriter
                 Triplets& a_local);
 
     /**
+     * \brief Write the metadata of an operator whose entries are not stored
+     *        (matrix-free), with the DOF map. Collective over all ranks.
+     */
+    void WriteInfo (const std::string& a_filename,
+                    const std::vector<std::string>& a_header,
+                    const WarpXSolverDOF& a_dofs);
+
+    /**
      * \brief Write the DOF map (global row -> level, field component, i, j, k)
      *        to a_dir/dofmap.txt, once per directory and run. Collective.
      */

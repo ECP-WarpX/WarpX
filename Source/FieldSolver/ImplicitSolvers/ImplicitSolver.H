@@ -9,6 +9,7 @@
 
 #include "ImplicitSolver_fwd.H"
 
+#include "Utils/WarpXConst.H"
 #include "FieldSolver/ImplicitSolvers/ImplicitOptions.H"
 #include "FieldSolver/ImplicitSolvers/SparseJacobianMatrix.H"
 
@@ -119,12 +120,42 @@ public:
     [[nodiscard]] amrex::Array<amrex::LinOpBCType,AMREX_SPACEDIM> GetLinOpBCHi () const;
 
     /**
-     * \brief Return pointer to MultiFab array for mass matrix
+     * \brief Return pointer to MultiFab array for PC mass matrices
      */
     [[nodiscard]] const amrex::Vector<amrex::Array<amrex::MultiFab*,3>>* GetMassMatricesCoeff() const {
         if (m_use_mass_matrices_pc) { return &m_mmpc_mfarrvec; }
         else { return nullptr; }
     }
+
+    /**
+     * \brief Return pointer to diagonal blocks (XX, YY, ZZ) of the original mass matrices
+     */
+    [[nodiscard]] const amrex::Vector<amrex::Array<amrex::MultiFab*,3>>* GetMassMatricesJacDiag() const {
+        if (m_use_mass_matrices_jacobian) { return &m_mm_diag_mfarrvec; }
+        else { return nullptr; }
+    }
+
+    /**
+     * \brief Return the scaling factor c^2 * mu0 * theta * dt for the mass matrix diagonal
+     */
+    [[nodiscard]] amrex::Real GetMassMatrixDiagScale () const {
+        return PhysConst::c * PhysConst::c * PhysConst::mu0 * m_theta * m_dt;
+    }
+
+    /**
+     * \brief Return the scaling factor (c * theta * dt)^2 for the curl-curl operator
+     */
+    [[nodiscard]] amrex::Real GetCurlCurlDiagScale () const {
+        const amrex::Real theta_dt = GetThetaForPC() * m_dt;
+        return (theta_dt * PhysConst::c) * (theta_dt * PhysConst::c);
+    }
+
+    /**
+     * \brief Return pointer to the diagonal of the curl-curl operator (unscaled),
+     *        or nullptr if light waves are not treated implicitly.
+     *        The diagonal is computed on the first call.
+     */
+    [[nodiscard]] const amrex::Vector<amrex::Array<amrex::MultiFab*,3>>* GetCurlCurlDiag ();
 
     /**
      * \brief Return reference to the multifabs for curl curl mask
@@ -339,6 +370,17 @@ protected:
      * \brief Array of multifab pointers to mass matrix preconditioner
      */
     amrex::Vector<amrex::Array<amrex::MultiFab*,3>> m_mmpc_mfarrvec;
+
+    /**
+     * \brief Array of multifab pointers to diagonal blocks (XX, YY, ZZ) of original mass matrices
+     */
+    amrex::Vector<amrex::Array<amrex::MultiFab*,3>> m_mm_diag_mfarrvec;
+
+    /**
+     * \brief Diagonal of the curl-curl operator (unscaled) for each field component
+     */
+    amrex::Vector<amrex::Array<std::unique_ptr<amrex::MultiFab>,3>> m_curlcurl_diag;
+    amrex::Vector<amrex::Array<amrex::MultiFab*,3>> m_curlcurl_diag_mfarrvec;
 
     /**
      * \brief Whether InitializePCMatrixFields() has been called

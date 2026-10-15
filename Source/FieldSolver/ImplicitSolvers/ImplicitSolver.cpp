@@ -1,6 +1,8 @@
 #include "ImplicitSolver.H"
 #include "SparseJacobianMatrix.H"
+#include "SparseMatrixUtils.H"
 #include "Fields.H"
+#include "NonlinearSolvers/LinearSolverLibrary.H"
 #include "WarpX.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Utils/WarpXAlgorithmSelection.H"
@@ -787,10 +789,22 @@ void ImplicitSolver::InitializeMassMatrices ()
     // dJy = MassMatrices_yx*dEx + MassMatrices_yy*dEy + MassMatrices_yz*dEz
     // dJz = MassMatrices_zx*dEx + MassMatrices_zy*dEy + MassMatrices_zz*dEz
 
-    // check that PC is being used by nonlinear solver
+    // Check that PC mass matrices are needed (by PC or by linear solver with use_pcmat)
     if (m_use_mass_matrices_pc) {
         const PreconditionerType pc_type = m_nlsolver->GetPreconditionerType();
-        if (pc_type == PreconditionerType::none) {
+        bool linsol_use_pcmat = true;
+        {
+            LinearSolverType linsol_type = LinearSolverType::amrex_gmres;
+            const ParmParse pp_newton("newton");
+            pp_newton.query("linear_solver", linsol_type);
+            if (linsol_type == LinearSolverType::weighted_jacobi) {
+                const ParmParse pp_l(getEnumNameString(linsol_type));
+                pp_l.query("use_pcmat", linsol_use_pcmat);
+            } else {
+                linsol_use_pcmat = false;
+            }
+        }
+        if (pc_type == PreconditionerType::none && !linsol_use_pcmat) {
             m_use_mass_matrices_pc = false;
         }
         if (pc_type == PreconditionerType::pc_curl_curl_mlmg) {
@@ -1004,6 +1018,18 @@ void ImplicitSolver::InitializeMassMatrices ()
     if (m_use_mass_matrices_pc) {
         for (int lev = 0; lev < m_num_amr_levels; ++lev) {
             m_mmpc_mfarrvec.push_back(m_WarpX->m_fields.get_alldirs(FieldType::MassMatrices_PC, lev));
+        }
+    }
+
+
+    // Set pointers to diagonal blocks (XX, YY, ZZ) of original mass matrices
+    if (m_use_mass_matrices_jacobian) {
+        for (int lev = 0; lev < m_num_amr_levels; ++lev) {
+            m_mm_diag_mfarrvec.push_back({
+                m_WarpX->m_fields.get(FieldType::MassMatrices_X, Direction{0}, lev),
+                m_WarpX->m_fields.get(FieldType::MassMatrices_Y, Direction{1}, lev),
+                m_WarpX->m_fields.get(FieldType::MassMatrices_Z, Direction{2}, lev)
+            });
         }
     }
 
@@ -1463,4 +1489,32 @@ void ImplicitSolver::PrintPCMatrix (const std::string& a_filename,
         "ImplicitSolver::PrintPCMatrix() called before AssemblePCMatrix()");
     const auto* dofs = WarpXSolverVec::getDOFsObject().get();
     m_sparse_jacobian->PrintMatrix(a_filename, a_header, *dofs);
+}
+
+const Vector<Array<MultiFab*,3>>* ImplicitSolver::GetCurlCurlDiag ()
+{
+    using warpx::fields::FieldType;
+
+    if (GetThetaForPC() <= 0.0_rt) { return nullptr; }
+
+    if (m_curlcurl_diag_mfarrvec.empty()) {
+        if (!m_pc_matrix_fields_initialized) {
+            InitializePCMatrixFields();
+            m_pc_matrix_fields_initialized = true;
+        }
+        m_curlcurl_diag.resize(m_num_amr_levels);
+        m_curlcurl_diag_mfarrvec.resize(m_num_amr_levels);
+        for (int lev = 0; lev < m_num_amr_levels; lev++) {
+            const ablastr::fields::VectorField E = m_WarpX->m_fields.get_alldirs(FieldType::Efield_fp, lev);
+            for (int dir = 0; dir < 3; dir++) {
+                m_curlcurl_diag[lev][dir] = std::make_unique<MultiFab>(
+                    E[dir]->boxArray(), E[dir]->DistributionMap(), 1, 0);
+                SparseMatrixUtils::FillCurlCurlDiag(
+                    *m_curlcurl_diag[lev][dir], dir, GetGeometry(lev), GetCurl2BCmask(lev, dir));
+                m_curlcurl_diag_mfarrvec[lev][dir] = m_curlcurl_diag[lev][dir].get();
+            }
+        }
+    }
+
+    return &m_curlcurl_diag_mfarrvec;
 }
