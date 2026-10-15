@@ -26,8 +26,8 @@ from input_file_parser import parse_input_file
 
 parser = argparse.ArgumentParser()
 parser.add_argument("plotfile")
-parser.add_argument("--gmres-iters-tol", type=float)
-parser.add_argument("--newton-iters-tol", type=float)
+parser.add_argument("--gmres-iters-tol", type=float, default=5.0)
+parser.add_argument("--newton-iters-tol", type=float, default=10.0)
 args = parser.parse_args()
 
 input_dict = parse_input_file("./warpx_used_inputs")
@@ -95,20 +95,12 @@ if use_mass_matrices_jacobian or use_mass_matrices_pc:
     # check that the number of gmres iterations per newton iteration is below
     # tolerance; this is sensitive to the quality of the mass-matrices-based
     # preconditioner
-    if args.gmres_iters_tol is not None:
-        gmres_iters_tol = args.gmres_iters_tol
-    else:
-        gmres_iters_tol = 5.0
     print(f"gmres iters per newton: {total_gmres_iters / total_newton_iters}")
-    print(f"gmres iters tolerance: {gmres_iters_tol}")
-    assert total_gmres_iters / total_newton_iters <= gmres_iters_tol
+    print(f"gmres iters tolerance: {args.gmres_iters_tol}")
+    assert total_gmres_iters / total_newton_iters <= args.gmres_iters_tol
 
     # check that the number of newton iterations per step is below tolerance;
     # this is sensitive to the quality of the mass-matrices-based Jacobian
-    if args.newton_iters_tol is not None:
-        newton_iters_tol = args.newton_iters_tol
-    else:
-        newton_iters_tol = 10.0
     print(f"newton iters per time step: {total_newton_iters / num_steps}")
-    print(f"newton iters tolerance: {newton_iters_tol}")
-    assert total_newton_iters / num_steps <= newton_iters_tol
+    print(f"newton iters tolerance: {args.newton_iters_tol}")
+    assert total_newton_iters / num_steps <= args.newton_iters_tol
