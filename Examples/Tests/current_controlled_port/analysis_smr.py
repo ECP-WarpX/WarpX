@@ -94,7 +94,8 @@ elif args.dims == "3":
     assert error < 2.0e-12
 
 if args.reference:
-    reference = yt.load(args.reference).all_data()
+    reference_dataset = yt.load(args.reference)
+    reference = reference_dataset.all_data()
     for name in (
         "Er" if args.dims == "RZ" else "Ex",
         "Et" if args.dims == "RZ" else "Ey",

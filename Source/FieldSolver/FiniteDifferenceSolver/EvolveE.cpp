@@ -596,7 +596,11 @@ FiniteDifferenceSolver::MacroscopicEvolveECylindrical (
             auto const b = magnetic[direction]->const_array(mfi);
             auto const mu = material->getmu_mf().const_array(mfi);
             auto const h = normalized[direction]->array(mfi);
-            auto const box = mfi.fabbox() & material->getmu_mf()[mfi].box();
+            auto const& material_box = material->getmu_mf()[mfi].box();
+            // Compare index ranges without extending the cell-centered material storage.
+            amrex::Box const covered(material_box.smallEnd(), material_box.bigEnd(),
+                                      magnetic[direction]->ixType());
+            auto const box = mfi.fabbox() & covered;
             amrex::ParallelFor(box, magnetic[direction]->nComp(),
                                [=] AMREX_GPU_DEVICE(int i, int j, int k, int n) {
                                    h(i, j, k, n) = PhysConst::mu0 * b(i, j, k, n) / mu(i, j, k);

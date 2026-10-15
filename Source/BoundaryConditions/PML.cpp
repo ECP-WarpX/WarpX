@@ -269,17 +269,42 @@ namespace
     }
 
 
+    amrex::BoxArray
+    clip_cylindrical_pml (amrex::BoxArray boxes, amrex::Geometry const& geometry)
+    {
+#ifdef WARPX_DIM_RZ
+        if (boxes.empty()) {
+            return boxes;
+        }
+        auto region = boxes.minimalBox();
+        if (geometry.ProbLo(0) == 0) {
+            region.setSmall(0, geometry.Domain().smallEnd(0));
+            return amrex::intersect(boxes, region);
+        }
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            geometry.ProbLo(0) + region.smallEnd(0) * geometry.CellSize(0) >= 0,
+            "An annular-domain PML must not extend through the cylindrical axis.");
+
+#else
+        amrex::ignore_unused(geometry);
+
+#endif
+        return boxes;
+    }
+
+
     BoxArray
     MakeBoxArray (bool is_single_box_domain, const amrex::Box& regular_domain,
                     const amrex::Geometry& geom, const amrex::BoxArray& grid_ba,
                     const amrex::IntVect& ncell, int do_pml_in_domain,
                     const amrex::IntVect& do_pml_Lo, const amrex::IntVect& do_pml_Hi)
     {
-        if (is_single_box_domain) {
-            return MakeBoxArray_single(regular_domain, grid_ba, ncell, do_pml_Lo, do_pml_Hi);
-        } else { // the union of the regular grids is *not* a single rectangular domain
-            return MakeBoxArray_multiple(geom, grid_ba, ncell, do_pml_in_domain, do_pml_Lo, do_pml_Hi);
-        }
+        return clip_cylindrical_pml(
+            is_single_box_domain
+                ? MakeBoxArray_single(regular_domain, grid_ba, ncell, do_pml_Lo, do_pml_Hi)
+                : MakeBoxArray_multiple(geom, grid_ba, ncell, do_pml_in_domain,
+                                        do_pml_Lo, do_pml_Hi),
+            geom);
     }
 
 
@@ -687,26 +712,6 @@ MultiSigmaBox::ComputePMLFactorsE (const Real* dx, Real dt)
     }
 }
 
-#ifdef WARPX_DIM_RZ
-namespace {
-amrex::BoxArray
-clip_cylindrical_pml (amrex::BoxArray boxes, amrex::Geometry const& geometry)
-{
-    if (boxes.empty()) {
-        return boxes;
-    }
-    auto region = boxes.minimalBox();
-    if (geometry.ProbLo(0) == 0) {
-        region.setSmall(0, geometry.Domain().smallEnd(0));
-        return amrex::intersect(boxes, region);
-    }
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        geometry.ProbLo(0) + region.smallEnd(0) * geometry.CellSize(0) >= 0,
-        "An annular-domain PML must not extend through the cylindrical axis.");
-    return boxes;
-}
-} // namespace
-#endif
 
 PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& grid_dm,
           const bool do_similar_dm_pml, const Geometry* geom, const Geometry* cgeom, int ncell,
@@ -768,12 +773,9 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
     }
     Box const domain0 = grid_ba_reduced.minimalBox();
     const bool is_single_box_domain = domain0.numPts() == grid_ba_reduced.numPts();
-    BoxArray ba = ::MakeBoxArray(is_single_box_domain, domain0, *geom, grid_ba_reduced,
+    BoxArray const ba = ::MakeBoxArray(is_single_box_domain, domain0, *geom, grid_ba_reduced,
                                  IntVect(ncell), do_pml_in_domain, do_pml_Lo, do_pml_Hi);
 
-#ifdef WARPX_DIM_RZ
-    ba = clip_cylindrical_pml(std::move(ba), *geom);
-#endif
     if (ba.empty()) {
         m_ok = false;
         return;
@@ -1008,11 +1010,8 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
         const IntVect cdelta = IntVect(delta)/ref_ratio;
 
         // Assuming that refinement ratio is equal in all dimensions
-        BoxArray cba = ::MakeBoxArray(is_single_box_domain, cdomain, *cgeom, grid_cba_reduced,
+        BoxArray const cba = ::MakeBoxArray(is_single_box_domain, cdomain, *cgeom, grid_cba_reduced,
                                       cncells, do_pml_in_domain, do_pml_Lo, do_pml_Hi);
-#ifdef WARPX_DIM_RZ
-        cba = clip_cylindrical_pml(std::move(cba), *cgeom);
-#endif
         DistributionMapping cdm;
         if (do_similar_dm_pml) {
             auto ng_sim = amrex::elemwiseMax(amrex::elemwiseMax(nge, ngb), ngf);

@@ -22,8 +22,10 @@ if not args.reference:
         assert relative.max() < 1.1
         assert relative[-1] < 0.01
 else:
-    actual = yt.load("diags/diag1000350").all_data()
-    reference = yt.load(str(Path(args.reference) / "diags/diag1000350")).all_data()
+    actual_dataset = yt.load("diags/diag1000350")
+    reference_dataset = yt.load(str(Path(args.reference) / "diags/diag1000350"))
+    actual = actual_dataset.all_data()
+    reference = reference_dataset.all_data()
     for name in ("Er", "Et", "Ez", "Br", "Bt", "Bz"):
         key = next(key for key in actual.ds.field_list if key[1] == name)
         expected = np.asarray(reference[key])
