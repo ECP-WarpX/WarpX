@@ -186,6 +186,16 @@ add_warpx_test(
 )
 
 add_warpx_test(
+    test_2d_theta_implicit_linsol_jacobi_mf_print_matrix  # name
+    2  # dims
+    2  # nprocs
+    inputs_test_2d_theta_implicit_linsol_jacobi_mf_print_matrix  # inputs
+    "analysis_pc_matrix.py diags/pc_matrices/weighted_jacobi_step00000_update0.info"  # analysis
+    OFF  # checksum
+    OFF  # dependency
+)
+
+add_warpx_test(
     test_2d_theta_implicit_jfnk_vandb  # name
     2  # dims
     2  # nprocs

@@ -8,7 +8,8 @@
 #
 # Checks a preconditioner matrix written with <prefix>.print_matrix = 1:
 # sizes and nonzero counts against the metadata, the DOF map, and the
-# row statistics recomputed from the entries.
+# row statistics recomputed from the entries. For a matrix-free operator
+# (.info file), checks the metadata and the DOF map.
 #
 # Usage: analysis_pc_matrix.py <matrix file>
 
@@ -28,6 +29,17 @@ from read_pc_matrix import read_dofmap, read_header  # noqa: E402
 
 filename = sys.argv[1]
 info = read_header(filename)
+
+if filename.endswith(".info"):
+    n = int(info["global_size"].split("x")[0])
+    print(f"matrix-free {info['name']}: global size {n}")
+    row_offsets = [int(x) for x in info["row_offsets"].split()]
+    assert row_offsets[0] == 0 and row_offsets[-1] == n
+    dofmap = read_dofmap(os.path.dirname(os.path.abspath(filename)))
+    assert dofmap["comp"].size == n
+    assert 0.0 < float(info["diagonal_min"]) <= float(info["diagonal_max"])
+    sys.exit(0)
+
 A = scipy.io.mmread(filename).tocoo()
 
 n = int(info["global_size"].split("x")[0])
