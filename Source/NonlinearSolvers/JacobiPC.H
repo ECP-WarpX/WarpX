@@ -9,6 +9,7 @@
 
 #include "Fields.H"
 #include "Utils/WarpXConst.H"
+#include "MatrixPrintControl.H"
 #include "Preconditioner.H"
 #include "WeightedJacobiImpl.H"
 
@@ -20,6 +21,7 @@
 #include <AMReX_Vector.H>
 
 #include <memory>
+#include <string>
 
 /**
  * \brief Point-Jacobi Preconditioner
@@ -73,6 +75,8 @@ class JacobiPC : public Preconditioner<T,Ops>
 
         WeightedJacobiImpl<T> m_solver;
 
+        MatrixPrintControl m_print;
+
     private:
 
 };
@@ -83,6 +87,7 @@ void JacobiPC<T,Ops>::printParameters() const
     using namespace amrex;
     auto pc_name = getEnumNameString(PreconditionerType::pc_jacobi);
     m_solver.printParameters(pc_name);
+    m_print.printParameters();
 }
 
 template <class T, class Ops>
@@ -111,6 +116,7 @@ void JacobiPC<T,Ops>::Define ( const T& a_U,
 
     m_solver.Define(m_matrix_ops.get(),
                     getEnumNameString(PreconditionerType::pc_jacobi));
+    m_print.Define(getEnumNameString(PreconditionerType::pc_jacobi));
 
     m_is_defined = true;
 }
@@ -126,6 +132,12 @@ void JacobiPC<T,Ops>::Update ()
         "JacobiPC::Update() called on undefined object" );
 
     m_solver.Update();
+
+    if (m_print.ShouldPrint(m_ops->GetCurrentStep())) {
+        auto header = m_print.HeaderLines();
+        header.emplace_back("omega: " + std::to_string(m_solver.getOmega()));
+        m_matrix_ops->PrintMatrix(m_print.FileName(), header);
+    }
 
     if (m_solver.isVerbose()) {
         amrex::Print() << "Updating " << amrex::getEnumNameString(PreconditionerType::pc_jacobi)
