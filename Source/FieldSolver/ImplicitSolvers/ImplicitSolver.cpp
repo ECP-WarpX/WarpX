@@ -1168,50 +1168,43 @@ void ImplicitSolver::SyncMassMatricesPCAndApplyBCs ()
         const amrex::MultiFab* MM_zz = m_WarpX->m_fields.get(FieldType::MassMatrices_Z, Direction{2}, lev);
         ablastr::fields::VectorField MM_PC = m_WarpX->m_fields.get_alldirs(FieldType::MassMatrices_PC, lev);
 
-        if (!m_use_mass_matrices_jacobian) {
-            // The PC-only mass matrices already have the same component layout as MM_PC.
-            amrex::MultiFab::Add(*MM_PC[0], *MM_xx, 0, 0, MM_xx->nComp(), MM_xx->nGrowVect());
-            amrex::MultiFab::Add(*MM_PC[1], *MM_yy, 0, 0, MM_yy->nComp(), MM_yy->nGrowVect());
-            amrex::MultiFab::Add(*MM_PC[2], *MM_zz, 0, 0, MM_zz->nComp(), MM_zz->nGrowVect());
-        } else {
-            const int diag_comp_pc_xx = (MM_PC[0]->nComp() - 1)/2;
-            for (int comp2 = 0; comp2 < MM_PC_ncomp_xx[2]; comp2++) {
-                const int kk0 = comp2 - MM_PC_width_xx[2];
-                for (int comp1 = 0; comp1 < MM_PC_ncomp_xx[1]; comp1++) {
-                    const int jj0 = comp1 - MM_PC_width_xx[1]; // -2 -1, 0, 1, 2
-                    const int mm_comp_start    = diag_comp_xx    - MM_PC_width_xx[0]
-                                               + MM_ncomp_xx[0]*(jj0 + MM_ncomp_xx[1]*kk0);
-                    const int mm_pc_comp_start = diag_comp_pc_xx - MM_PC_width_xx[0]
-                                               + MM_PC_ncomp_xx[0]*(jj0 + MM_PC_ncomp_xx[1]*kk0);
-                    amrex::MultiFab::Add(*MM_PC[0], *MM_xx, mm_comp_start, mm_pc_comp_start,
-                                         MM_PC_ncomp_xx[0], MM_xx->nGrowVect());
-                }
+        const int diag_comp_pc_xx = (MM_PC[0]->nComp() - 1)/2;
+        for (int comp2 = 0; comp2 < MM_PC_ncomp_xx[2]; comp2++) {
+            const int kk0 = comp2 - MM_PC_width_xx[2];
+            for (int comp1 = 0; comp1 < MM_PC_ncomp_xx[1]; comp1++) {
+                const int jj0 = comp1 - MM_PC_width_xx[1]; // -2 -1, 0, 1, 2
+                const int mm_comp_start    = diag_comp_xx    - MM_PC_width_xx[0]
+                                           + MM_ncomp_xx[0]*(jj0 + MM_ncomp_xx[1]*kk0);
+                const int mm_pc_comp_start = diag_comp_pc_xx - MM_PC_width_xx[0]
+                                           + MM_PC_ncomp_xx[0]*(jj0 + MM_PC_ncomp_xx[1]*kk0);
+                amrex::MultiFab::Add(*MM_PC[0], *MM_xx, mm_comp_start, mm_pc_comp_start,
+                                     MM_PC_ncomp_xx[0], MM_xx->nGrowVect());
             }
-            const int diag_comp_pc_yy = (MM_PC[1]->nComp() - 1)/2;
-            for (int comp2 = 0; comp2 < MM_PC_ncomp_yy[2]; comp2++) {
-                const int kk0 = comp2 - MM_PC_width_yy[2];
-                for (int comp1 = 0; comp1 < MM_PC_ncomp_yy[1]; comp1++) {
-                    const int jj0 = comp1 - MM_PC_width_yy[1]; // -2 -1, 0, 1, 2
-                    const int mm_comp_start    = diag_comp_yy    - MM_PC_width_yy[0]
-                                               + MM_ncomp_yy[0]*(jj0 + MM_ncomp_yy[1]*kk0);
-                    const int mm_pc_comp_start = diag_comp_pc_yy - MM_PC_width_yy[0]
-                                               + MM_PC_ncomp_yy[0]*(jj0 + MM_PC_ncomp_yy[1]*kk0);
-                    amrex::MultiFab::Add(*MM_PC[1], *MM_yy, mm_comp_start, mm_pc_comp_start,
-                                         MM_PC_ncomp_yy[0], MM_yy->nGrowVect());
-                }
+        }
+        const int diag_comp_pc_yy = (MM_PC[1]->nComp() - 1)/2;
+        for (int comp2 = 0; comp2 < MM_PC_ncomp_yy[2]; comp2++) {
+            const int kk0 = comp2 - MM_PC_width_yy[2];
+            for (int comp1 = 0; comp1 < MM_PC_ncomp_yy[1]; comp1++) {
+                const int jj0 = comp1 - MM_PC_width_yy[1]; // -2 -1, 0, 1, 2
+                const int mm_comp_start    = diag_comp_yy    - MM_PC_width_yy[0]
+                                           + MM_ncomp_yy[0]*(jj0 + MM_ncomp_yy[1]*kk0);
+                const int mm_pc_comp_start = diag_comp_pc_yy - MM_PC_width_yy[0]
+                                           + MM_PC_ncomp_yy[0]*(jj0 + MM_PC_ncomp_yy[1]*kk0);
+                amrex::MultiFab::Add(*MM_PC[1], *MM_yy, mm_comp_start, mm_pc_comp_start,
+                                     MM_PC_ncomp_yy[0], MM_yy->nGrowVect());
             }
-            const int diag_comp_pc_zz = (MM_PC[2]->nComp() - 1)/2;
-            for (int comp2 = 0; comp2 < MM_PC_ncomp_zz[2]; comp2++) {
-                const int kk0 = comp2 - MM_PC_width_zz[2];
-                for (int comp1 = 0; comp1 < MM_PC_ncomp_zz[1]; comp1++) {
-                    const int jj0 = comp1 - MM_PC_width_zz[1]; // -2 -1, 0, 1, 2
-                    const int mm_comp_start    = diag_comp_zz    - MM_PC_width_zz[0]
-                                               + MM_ncomp_zz[0]*(jj0 + MM_ncomp_zz[1]*kk0);
-                    const int mm_pc_comp_start = diag_comp_pc_zz - MM_PC_width_zz[0]
-                                               + MM_PC_ncomp_zz[0]*(jj0 + MM_PC_ncomp_zz[1]*kk0);
-                    amrex::MultiFab::Add(*MM_PC[2], *MM_zz, mm_comp_start, mm_pc_comp_start,
-                                         MM_PC_ncomp_zz[0], MM_zz->nGrowVect());
-                }
+        }
+        const int diag_comp_pc_zz = (MM_PC[2]->nComp() - 1)/2;
+        for (int comp2 = 0; comp2 < MM_PC_ncomp_zz[2]; comp2++) {
+            const int kk0 = comp2 - MM_PC_width_zz[2];
+            for (int comp1 = 0; comp1 < MM_PC_ncomp_zz[1]; comp1++) {
+                const int jj0 = comp1 - MM_PC_width_zz[1]; // -2 -1, 0, 1, 2
+                const int mm_comp_start    = diag_comp_zz    - MM_PC_width_zz[0]
+                                           + MM_ncomp_zz[0]*(jj0 + MM_ncomp_zz[1]*kk0);
+                const int mm_pc_comp_start = diag_comp_pc_zz - MM_PC_width_zz[0]
+                                           + MM_PC_ncomp_zz[0]*(jj0 + MM_PC_ncomp_zz[1]*kk0);
+                amrex::MultiFab::Add(*MM_PC[2], *MM_zz, mm_comp_start, mm_pc_comp_start,
+                                     MM_PC_ncomp_zz[0], MM_zz->nGrowVect());
             }
         }
 
