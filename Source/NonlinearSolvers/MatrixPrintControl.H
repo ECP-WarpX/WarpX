@@ -13,8 +13,8 @@
 #include <AMReX_Utility.H>
 
 #include <algorithm>
-#include <array>
-#include <cstdio>
+#include <iomanip>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -22,10 +22,10 @@
  * \brief When and where to write the matrix of a preconditioner or linear solver.
  *
  *  Inputs, with the name of the PC or linear solver as prefix:
- *  - <prefix>.print_matrix (bool, default false)
- *  - <prefix>.print_matrix_steps (ints, zero-based time steps; default: only the
+ *  - print_matrix (bool, default false)
+ *  - print_matrix_steps (ints, zero-based time steps; default: only the
  *    first matrix update of the run). Every update in these steps is written.
- *  - <prefix>.print_matrix_dir (string, default "diags/pc_matrices")
+ *  - print_matrix_dir (string, default "diags/pc_matrices")
  */
 class MatrixPrintControl
 {
@@ -67,9 +67,10 @@ public:
             amrex::ParallelDescriptor::Barrier();
         }
         ++m_num_printed;
-        std::array<char, 64> buf{};
-        std::snprintf(buf.data(), buf.size(), "_step%05d_update%d.mtx", a_step, m_update);
-        m_filename = m_dir + "/" + m_prefix + buf.data();
+        std::ostringstream name;
+        name << m_dir << "/" << m_prefix << "_step" << std::setw(5) << std::setfill('0')
+             << a_step << "_update" << m_update << ".mtx";
+        m_filename = name.str();
         amrex::Print() << m_prefix << ": writing matrix to " << m_filename << "\n";
         return true;
     }
