@@ -73,7 +73,7 @@ def download_with_headers(url, filename):
         try:
             os.remove(filename)
         except OSError:
-            pass
+            pass  # nothing to clean up
 
 
 # -- General configuration ------------------------------------------------
