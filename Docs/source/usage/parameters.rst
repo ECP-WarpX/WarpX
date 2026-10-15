@@ -3486,11 +3486,13 @@ Details about the collision models can be found in the :ref:`theory section <mul
 
     The parent species decay rate (only for ``pulsed_decay``).
 
-.. pp:param:: <collision_name>.fixed_product_weight
-    :type: `float`
+.. pp:param:: <collision_name>.weight_ratio
+    :type: ``int``
+    :default: 1
+    :optional:
 
-    Fixed particle weight of product species (only for ``pulsed_decay``).
-    Can be estimated as :math:`n_{\text{target}}dV/N_{ppc}`, where :math:`n_{\text{target}}` is the target density of the product species, :math:`dV` is the cell volume, and :math:`N_{ppc}` is the target number of particle per cell for each product species.
+    The ratio of the weight of the parent particle to the product particles (only for ``pulsed_decay``).
+    This can only be a positive integer, since this is the number of product particles of each species created from each parent particle.
 
 .. pp:param:: <collision_name>.productA_temperature_eV
     :type: `float array, size 3`
@@ -4369,6 +4371,8 @@ Grid types (collocated, staggered, hybrid)
     See equations (21)-(23) of :cite:t:`param-Godfrey2013` and associated references for details.
 
     Default: :pp:param:`interpolation.galerkin_scheme = 0` with collocated grids, or momentum-conserving field gathering, or when :pp:param:`algo.current_deposition = direct` ; :pp:param:`interpolation.galerkin_scheme = 1` otherwise.
+
+    With ``algo.evolve_scheme = semi_implicit_darwin``, the particle pushes of the Darwin solver do not use this parameter: the electrostatic field is always gathered with the Galerkin scheme (unless momentum-conserving field gathering is used), while the magnetic field and the inductive electric field are always gathered without it, consistent with the mass matrices.
 
     .. warning::
 
