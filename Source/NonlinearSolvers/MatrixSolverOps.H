@@ -15,7 +15,8 @@
 /**
  * \brief Abstract interface for matrix operations used by iterative solvers.
  *
- *  Implementations: MultiFabMatrixSolverOps (stencil), MFMatrixSolverOps (matrix-free).
+ *  Implementations: MultiFabMatrixSolverOps (stencil), SparseMatrixSolverOps (CSR),
+ *  MFMatrixSolverOps (matrix-free).
  */
 template <class T>
 class MatrixSolverOps
@@ -47,6 +48,12 @@ public:
     /** Gershgorin-based estimate: omega = 2 / (2 + max_i r_i) where
      *  r_i = sum_{j!=i} |A_ij| / |A_ii| is the off-diagonal row ratio. */
     [[nodiscard]] virtual RT EstimateOmega () const = 0;
+
+    /** y = A * x (matrix-vector product) */
+    virtual void Matvec ([[maybe_unused]] T& a_y, [[maybe_unused]] const T& a_x)
+    {
+        amrex::Abort("MatrixSolverOps::Matvec() not implemented");
+    }
 
     /** Write A in MatrixMarket format (global DOF indices), with a_header
      *  as metadata lines. Collective over all ranks. */

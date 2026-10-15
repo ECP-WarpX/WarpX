@@ -75,6 +75,7 @@ public:
     void InitialGuess (T& a_x, const T& a_b) override;
     void JacobiSweep (T& a_x, const T& a_b, RT a_omega) override;
     [[nodiscard]] RT ResidualNorm (const T& a_x, const T& a_b) override;
+    void Matvec (T& a_y, const T& a_x) override { m_matvec(a_y, a_x); }
 
     /** Writes the metadata and diagonal range only: the entries are not stored. */
     void PrintMatrix (const std::string& a_filename,

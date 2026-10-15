@@ -4,7 +4,7 @@ Preconditioner Matrices
 =======================
 
 The implicit solvers can write the matrix of a preconditioner to a file, for debugging and analysis.
-This is available for ``jacobian.pc_type = pc_jacobi``, ``pc_petsc``, and ``pc_algmg``, and for ``newton.linear_solver = weighted_jacobi``.
+This is available for ``jacobian.pc_type = pc_jacobi``, ``pc_chebyshev``, ``pc_petsc``, and ``pc_algmg``, and for ``newton.linear_solver = weighted_jacobi`` and ``chebyshev``.
 It is enabled with the parameters below, which use the name of the preconditioner as prefix (see :ref:`running-cpp-parameters`):
 
 * ``<prefix>.print_matrix`` (``bool``, default: false)
@@ -20,7 +20,7 @@ The file is in `MatrixMarket <https://math.nist.gov/MatrixMarket/formats.html>`_
 Rows and columns are the global indices (1-based) of the degrees of freedom of the electric field.
 Each rank writes its own rows; the matrix is never gathered on one rank.
 For ``pc_jacobi``, every entry of the mass-matrix stencil is written, including entries that are zero.
-For ``weighted_jacobi`` with ``use_pcmat = false``, the operator is matrix-free and its entries are not stored.
+For ``weighted_jacobi`` and ``chebyshev`` with ``use_pcmat = false``, the operator is matrix-free and its entries are not stored.
 The metadata, including the range of the diagonal, is then written to a ``.info`` file with the same name.
 
 The header holds metadata as ``% key: value`` comment lines, for example:
@@ -54,6 +54,7 @@ The row statistics are computed from the written entries:
 * ``max_offdiag_ratio`` is :math:`r = \max_i \sum_{j \neq i} |a_{ij}| / |a_{ii}|`.
 * ``gershgorin_bounds_DinvA`` bound the eigenvalues of :math:`D^{-1} A`, with :math:`D` the diagonal of :math:`A`, by :math:`[1 - r, 1 + r]`.
 * ``gershgorin_omega`` is :math:`2 / (2 + r)`, the relaxation factor that ``pc_jacobi`` starts from.
+* For ``pc_chebyshev`` and ``chebyshev``, ``chebyshev_lambda_DinvA`` gives the eigenvalue bounds of :math:`D^{-1} A` estimated by the power method.
 
 The file ``dofmap.txt`` in the same directory maps each row to its AMR level, field component (0: x, 1: y, 2: z), and cell indices ``i j k``.
 Its header gives the index type (cell-centered or nodal) of each field component.

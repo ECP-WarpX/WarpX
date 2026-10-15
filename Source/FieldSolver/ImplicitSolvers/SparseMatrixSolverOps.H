@@ -48,6 +48,7 @@ public:
     void InitialGuess (T& a_x, const T& a_b) override;
     void JacobiSweep (T& a_x, const T& a_b, RT a_omega) override;
     [[nodiscard]] RT ResidualNorm (const T& a_x, const T& a_b) override;
+    void Matvec (T& a_y, const T& a_x) override;
     [[nodiscard]] RT EstimateOmega () const override;
     void PrintMatrix (const std::string& a_filename,
                       const std::vector<std::string>& a_header) override;
@@ -69,6 +70,7 @@ private:
     amrex::Vector<amrex::Geometry> m_geom_vec;
 
     amrex::Gpu::DeviceVector<RT> m_x_flat;
+    amrex::Gpu::DeviceVector<RT> m_y_flat;
     amrex::Gpu::DeviceVector<RT> m_b_flat;
     amrex::Gpu::DeviceVector<RT> m_x_ext;
 };
@@ -148,6 +150,16 @@ void SparseMatrixSolverOps<T,Ops>::PrintMatrix (const std::string& a_filename,
     std::vector<std::string> header = a_header;
     header.emplace_back("matrix_ops: SparseMatrixSolverOps (CSR)");
     m_ops->GetSparseJacobian()->PrintMatrix(a_filename, header, *T::getDOFsObject());
+}
+
+template <class T, class Ops>
+void SparseMatrixSolverOps<T,Ops>::Matvec (T& a_y, const T& a_x)
+{
+    const auto* sp = m_ops->GetSparseJacobian();
+    buildExtended(a_x);
+    m_y_flat.resize(sp->nLocalRows());
+    sp->MatVecMult(m_y_flat.data(), m_x_ext.data());
+    SparseMatrixUtils::CopyFromLocalDOFVector(a_y, m_y_flat);
 }
 
 template <class T, class Ops>

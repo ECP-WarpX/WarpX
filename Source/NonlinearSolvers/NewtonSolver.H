@@ -179,6 +179,8 @@ void NewtonSolver<Vec,Ops>::Define ( const Vec&  a_U,
 #endif
     } else if (m_newton_params.linear_solver_type == LinearSolverType::weighted_jacobi) {
         m_linear_solver = std::make_unique<JacobiSolver<Vec,JacobianFunctionMF<Vec,Ops>>>();
+    } else if (m_newton_params.linear_solver_type == LinearSolverType::chebyshev) {
+        m_linear_solver = std::make_unique<ChebyshevSolver<Vec,JacobianFunctionMF<Vec,Ops>>>();
     } else {
         WARPX_ABORT_WITH_MESSAGE("NewtonSolver::Define(): invalid linear solver type");
     }

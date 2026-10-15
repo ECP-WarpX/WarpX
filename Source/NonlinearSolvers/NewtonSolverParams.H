@@ -49,7 +49,7 @@ struct NewtonSolverParams
     int linsol_verbose_int = 2;
     //! Restart iteration for the linear solver (amrex_gmres and petsc_ksp).
     int linsol_restart_length = 30;
-    //! Weighted Jacobi linear solver: iterate on the assembled PC matrix.
+    //! Weighted Jacobi and Chebyshev linear solvers: iterate on the assembled PC matrix.
     bool use_pcmat = true;
 
     //! Preconditioner type.
@@ -99,7 +99,7 @@ struct NewtonSolverParams
 
         const amrex::ParmParse pp_jac("jacobian");
         pp_jac.query("pc_type", pc_type);
-        // The weighted Jacobi linear solver does not apply a preconditioner
+        // The weighted Jacobi and Chebyshev linear solvers do not apply a preconditioner
         if (!IsKrylov() && pc_type != PreconditionerType::none) {
             ablastr::warn_manager::WMRecordWarning("NewtonSolver",
                 amrex::getEnumNameString(linear_solver_type) +
@@ -108,18 +108,20 @@ struct NewtonSolverParams
             pc_type = PreconditionerType::none;
         }
 
-        // Jacobi reads MassMatrices_PC directly. A scheduled PC update can clear these
-        // coefficients during residual evaluation and leave them unfinished if Newton
-        // converges before PreLinearSolve(). Restrict the Newton interval when lagging
+        // Jacobi and Chebyshev may read MassMatrices_PC directly. A scheduled PC update can
+        // clear these coefficients during residual evaluation and leave them unfinished if
+        // Newton converges before PreLinearSolve(). Restrict the Newton interval when lagging
         // across time steps, until the PC deposition is moved to PreLinearSolve().
         const bool reads_mass_matrices_pc =
-            pc_type == PreconditionerType::pc_jacobi || (!IsKrylov() && use_pcmat);
+            pc_type == PreconditionerType::pc_jacobi ||
+            pc_type == PreconditionerType::pc_chebyshev ||
+            (!IsKrylov() && use_pcmat);
         if (reads_mass_matrices_pc && pc_update_time_step_interval > 1) {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 pc_update_newton_interval == 0,
-                "newton.pc_update_newton_interval must be 0 when using pc_type = pc_jacobi, "
-                "or the weighted_jacobi linear solver with use_pcmat = true, "
-                "and pc_update_time_step_interval > 1.");
+                "newton.pc_update_newton_interval must be 0 when using pc_type = pc_jacobi "
+                "or pc_chebyshev, or the weighted_jacobi or chebyshev linear solver with "
+                "use_pcmat = true, and pc_update_time_step_interval > 1.");
         }
     }
 

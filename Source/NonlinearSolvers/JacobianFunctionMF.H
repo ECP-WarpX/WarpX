@@ -168,6 +168,8 @@ void JacobianFunctionMF<T,Ops>::define ( const T& a_U,
             m_preCond = std::make_unique<CurlCurlMLMGPC<T,Ops>>();
         } else if (m_pc_type == PreconditionerType::pc_jacobi) {
             m_preCond = std::make_unique<JacobiPC<T,Ops>>();
+        } else if (m_pc_type == PreconditionerType::pc_chebyshev) {
+            m_preCond = std::make_unique<ChebyshevPC<T,Ops>>();
         } else if (m_pc_type == PreconditionerType::pc_algmg) {
             m_preCond = std::make_unique<AlgMGPC<T,Ops>>();
         } else {

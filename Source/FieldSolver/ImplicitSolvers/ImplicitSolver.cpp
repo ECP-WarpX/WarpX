@@ -797,7 +797,8 @@ void ImplicitSolver::InitializeMassMatrices ()
             LinearSolverType linsol_type = LinearSolverType::amrex_gmres;
             const ParmParse pp_newton("newton");
             pp_newton.query("linear_solver", linsol_type);
-            if (linsol_type == LinearSolverType::weighted_jacobi) {
+            if (linsol_type == LinearSolverType::weighted_jacobi ||
+                linsol_type == LinearSolverType::chebyshev) {
                 const ParmParse pp_l(getEnumNameString(linsol_type));
                 pp_l.query("use_pcmat", linsol_use_pcmat);
             } else {
