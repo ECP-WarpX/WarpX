@@ -1462,5 +1462,5 @@ void ImplicitSolver::PrintPCMatrix (const std::string& a_filename,
         m_sparse_jacobian != nullptr,
         "ImplicitSolver::PrintPCMatrix() called before AssemblePCMatrix()");
     const auto* dofs = WarpXSolverVec::getDOFsObject().get();
-    m_sparse_jacobian->Print(a_filename, a_header, *dofs);
+    m_sparse_jacobian->PrintMatrix(a_filename, a_header, *dofs);
 }

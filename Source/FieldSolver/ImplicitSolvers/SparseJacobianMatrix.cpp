@@ -155,11 +155,11 @@ void SparseJacobianMatrix::GetMatrix (
     amrex::Gpu::streamSynchronize();
 }
 
-void SparseJacobianMatrix::Print (const std::string& a_filename,
-                                  const std::vector<std::string>& a_header,
-                                  const WarpXSolverDOF& a_dofs) const
+void SparseJacobianMatrix::PrintMatrix (const std::string& a_filename,
+                                        const std::vector<std::string>& a_header,
+                                        const WarpXSolverDOF& a_dofs) const
 {
-    BL_PROFILE("SparseJacobianMatrix::Print()");
+    BL_PROFILE("SparseJacobianMatrix::PrintMatrix()");
     using namespace amrex;
 
     const auto n = static_cast<std::size_t>(m_ndofs_l);
@@ -180,15 +180,18 @@ void SparseJacobianMatrix::Print (const std::string& a_filename,
     }
 
     const Real alpha = (m_theta_dt * PhysConst::c) * (m_theta_dt * PhysConst::c);
-    std::ostringstream ss;
-    ss.precision(10);
-    ss << "theta*dt: " << m_theta_dt << "  alpha: " << alpha;
+    std::ostringstream ss_theta_dt, ss_alpha;
+    ss_theta_dt.precision(10);
+    ss_alpha.precision(10);
+    ss_theta_dt << "theta_dt: " << m_theta_dt;
+    ss_alpha << "alpha: " << alpha;
     std::vector<std::string> header = a_header;
     header.emplace_back("matrix: SparseJacobianMatrix (CSR)");
     header.emplace_back(std::string("operator: A = I")
                         + (m_theta_dt > 0 ? " + curl(alpha curl)" : "")
                         + (m_include_mass_matrices ? " + M, M = PC mass matrices" : ""));
-    header.emplace_back(ss.str());
+    header.emplace_back(ss_theta_dt.str());
+    header.emplace_back(ss_alpha.str());
     header.emplace_back("nnz_max_per_row: " + std::to_string(m_pc_mat_nnz));
 
     MatrixMarketWriter::Write(a_filename, header, a_dofs, local);

@@ -13,7 +13,6 @@
 #include <AMReX_GpuDevice.H>
 #include <AMReX_INT.H>
 #include <AMReX_REAL.H>
-#include <AMReX_Vector.H>
 
 #include <string>
 #include <vector>
@@ -32,9 +31,9 @@ namespace MatrixMarketWriter
     /** \brief Matrix entries of the rows owned by this rank (0-based global indices). */
     struct Triplets
     {
-        amrex::Vector<amrex::Long> row;
-        amrex::Vector<amrex::Long> col;
-        amrex::Vector<amrex::Real> val;
+        std::vector<amrex::Long> row;
+        std::vector<amrex::Long> col;
+        std::vector<amrex::Real> val;
 
         void add (amrex::Long a_row, amrex::Long a_col, amrex::Real a_val)
         {

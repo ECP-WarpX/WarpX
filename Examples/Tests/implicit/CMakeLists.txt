@@ -146,6 +146,26 @@ add_warpx_test(
 )
 
 add_warpx_test(
+    test_2d_semi_implicit_pc_jacobi_print_matrix  # name
+    2  # dims
+    2  # nprocs
+    "inputs_test_2d_semi_implicit_pc_jacobi max_step=1 pc_jacobi.print_matrix=1"  # inputs
+    "analysis_pc_matrix.py diags/pc_matrices/pc_jacobi_step00000_update0.mtx"  # analysis
+    OFF  # checksum
+    OFF  # dependency
+)
+
+add_warpx_test(
+    test_2d_theta_implicit_planar_pinch_algmg_print_matrix  # name
+    2  # dims
+    2  # nprocs
+    "inputs_test_2d_theta_implicit_planar_pinch_algmg max_step=1 pc_algmg.print_matrix=1"  # inputs
+    "analysis_pc_matrix.py diags/pc_matrices/pc_algmg_step00000_update0.mtx"  # analysis
+    OFF  # checksum
+    OFF  # dependency
+)
+
+add_warpx_test(
     test_2d_theta_implicit_jfnk_vandb  # name
     2  # dims
     2  # nprocs

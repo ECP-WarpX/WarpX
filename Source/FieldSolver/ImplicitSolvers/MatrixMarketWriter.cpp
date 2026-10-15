@@ -13,6 +13,7 @@
 #include <AMReX_Loop.H>
 #include <AMReX_MFIter.H>
 #include <AMReX_ParallelDescriptor.H>
+#include <AMReX_Vector.H>
 
 #include <algorithm>
 #include <array>
@@ -57,7 +58,7 @@ namespace
     std::string Join (const amrex::Vector<amrex::Long>& a_v)
     {
         std::ostringstream ss;
-        for (std::size_t i = 0; i < a_v.size(); ++i) { ss << (i > 0 ? " " : "") << a_v[i]; }
+        for (amrex::Long i = 0; i < a_v.size(); ++i) { ss << (i > 0 ? " " : "") << a_v[i]; }
         return ss.str();
     }
 
@@ -100,8 +101,7 @@ namespace
             "diagonal_min: " + Format(diag_min),
             "diagonal_max: " + Format(diag_max),
             "zero_diagonal_rows: " + std::to_string(zero_diag),
-            "max_offdiag_ratio: " + Format(ratio_max)
-                + "  (max over rows of sum_{j != i} |a_ij| / |a_ii|)",
+            "max_offdiag_ratio: " + Format(ratio_max),
             "inf_norm: " + Format(inf_norm),
             "gershgorin_bounds_DinvA: " + Format(1 - ratio_max) + " " + Format(1 + ratio_max),
             "gershgorin_omega: " + Format(2 / (2 + ratio_max)),

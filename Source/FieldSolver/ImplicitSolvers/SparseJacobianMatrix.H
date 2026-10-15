@@ -129,7 +129,7 @@ public:
      * \brief Write the matrix in MatrixMarket format (global DOF indices),
      *        with a_header as metadata lines. Collective over all ranks.
      */
-    void Print (const std::string& a_filename,
+    void PrintMatrix (const std::string& a_filename,
                 const std::vector<std::string>& a_header,
                 const WarpXSolverDOF& a_dofs) const;
 
