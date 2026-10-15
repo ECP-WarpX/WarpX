@@ -146,7 +146,6 @@ namespace SparseJacobianMatrixUtil
  *  - m_c_indices_g: column indices in global DOF space (size n_local_rows * nnz_max)
  *  - m_a_ij:        matrix values  (size n_local_rows * nnz_max)
  *
- *
  *  After RemapColumns(), an additional array is available:
  *  - m_c_indices_ext: column indices in local-extended space (owned + ghost DOFs)
  *
