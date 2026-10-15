@@ -1340,7 +1340,7 @@ class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid, WarpXGridBase):
     # 2D geometry is the x-z plane; there is no second (y) axis.
     potential_ymin = _potential_not_in_geometry("potential_ymin", "2D")
     potential_ymax = _potential_not_in_geometry("potential_ymax", "2D")
-    
+
     def model_post_init(self, context) -> None:
         super().model_post_init(context)
         # Geometry
@@ -1484,7 +1484,6 @@ class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid, WarpXGridBase):
         alias="warpx_boundary_u_th",
         description="If a thermal boundary is used for particles, this dictionary should specify the thermal speed for each species in the form {`<species>`: u_th}. Note: u_th = sqrt(T*q_e/mass)/clight with T in eV.",
     )
-
 
     def model_post_init(self, context) -> None:
         super().model_post_init(context)
