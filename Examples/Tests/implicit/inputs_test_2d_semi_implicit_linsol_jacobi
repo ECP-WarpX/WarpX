@@ -64,7 +64,7 @@ implicit_evolve.particle_suborbits = true
 
 implicit_evolve.nonlinear_solver = "newton"
 newton.verbose = true
-newton.max_iterations = 10
+newton.max_iterations = 20
 newton.relative_tolerance = 1.0e-8
 newton.absolute_tolerance = 0.0
 newton.require_convergence = false
