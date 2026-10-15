@@ -14,6 +14,7 @@
 
 #include <AMReX_GpuBuffer.H>
 #include <AMReX_GpuLaunch.H>
+#include <AMReX_iMultiFab.H>
 #include <AMReX_ParmParse.H>
 #include <AMReX_ParallelDescriptor.H>
 #include <AMReX_Print.H>
