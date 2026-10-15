@@ -357,21 +357,86 @@ if(2 IN_LIST WarpX_DIMS AND WarpX_PYTHON)
     )
 endif()
 
-if(RZ IN_LIST WarpX_DIMS AND WarpX_PYTHON)
-    foreach(source IN ITEMS antenna port)
+foreach(source IN ITEMS antenna port material)
+    add_warpx_test(
+        test_rz_current_${source}_smr_picmi
+        RZ
+        1
+        "inputs_test_smr_picmi.py --dims RZ --source ${source}"
+        "analysis_smr.py --dims RZ --source ${source}"
+        OFF
+        OFF
+    )
+endforeach()
+
+add_warpx_test(
+    test_rz_current_port_smr_picmi_restart
+    RZ
+    1
+    "inputs_test_smr_picmi.py --dims RZ --source port --restart ../test_rz_current_port_smr_picmi/diags/chk000001"
+    "analysis_smr.py --dims RZ --source port --reference ../test_rz_current_port_smr_picmi/diags/diag1000002"
+    OFF
+    test_rz_current_port_smr_picmi
+)
+
+foreach(source IN ITEMS antenna)
+    add_warpx_test(
+        test_rz_current_${source}_smr_picmi_restart
+        RZ
+        1
+        "inputs_test_smr_picmi.py --dims RZ --source ${source} --restart ../test_rz_current_${source}_smr_picmi/diags/chk000001"
+        "analysis_smr.py --dims RZ --source ${source} --reference ../test_rz_current_${source}_smr_picmi/diags/diag1000002"
+        OFF
+        test_rz_current_${source}_smr_picmi
+    )
+endforeach()
+
+add_warpx_test(
+    test_rz_current_material_smr_laxwendroff_picmi
+    RZ
+    1
+    "inputs_test_smr_picmi.py --dims RZ --source material --method laxwendroff"
+    "analysis_smr.py --dims RZ --source material --method laxwendroff"
+    OFF
+    OFF
+)
+
+add_warpx_test(
+    test_rz_current_port_smr_annular_picmi
+    RZ
+    1
+    "inputs_test_smr_picmi.py --dims RZ --source port --annular"
+    "analysis_smr.py --dims RZ --source port"
+    OFF
+    OFF
+)
+
+if(WarpX_EB)
+    foreach(source IN ITEMS port material)
         add_warpx_test(
-            test_rz_current_${source}_smr_rejected_picmi
+            test_rz_current_${source}_smr_eb_picmi
             RZ
             1
-            "inputs_test_smr_picmi.py --dims RZ --source ${source}"
+            "inputs_test_smr_picmi.py --dims RZ --source ${source} --eb"
+            "analysis_smr.py --dims RZ --source ${source} --eb"
             OFF
             OFF
-            OFF
-        )
-        set_tests_properties(
-            test_rz_current_${source}_smr_rejected_picmi.run
-            PROPERTIES
-                PASS_REGULAR_EXPRESSION "require cylindrical PML"
         )
     endforeach()
+endif()
+
+if(RZ IN_LIST WarpX_DIMS AND WarpX_PYTHON)
+    add_warpx_test(
+        test_rz_current_port_smr_implicit_rejected_picmi
+        RZ
+        1
+        "inputs_test_smr_picmi.py --dims RZ --source port --implicit"
+        OFF
+        OFF
+        OFF
+    )
+    set_tests_properties(
+        test_rz_current_port_smr_implicit_rejected_picmi.run
+        PROPERTIES PASS_REGULAR_EXPRESSION "Cylindrical QCPML requires static explicit"
+    )
 endif()

@@ -54,7 +54,13 @@ FiniteDifferenceSolver::EvolveEPML (
 
     // Select algorithm (The choice of algorithm is a runtime option,
     // but we compile code for each algorithm, using templates)
-#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
+#ifdef WARPX_DIM_RZ
+    amrex::ignore_unused(eb_update_E);
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        !pml_has_particles && output[0] == nullptr,
+        "Cylindrical QCPML currently supports explicit exterior vacuum layers.");
+    EvolvePMLCylindrical(fields, patch_type, level, sigba, dt, false);
+#elif defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
     amrex::ignore_unused(fields, patch_type, level, eb_update_E, sigba, dt, pml_has_particles,
                          output);
     WARPX_ABORT_WITH_MESSAGE(

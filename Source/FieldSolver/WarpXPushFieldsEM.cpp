@@ -1223,14 +1223,11 @@ WarpX::MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real a_dt, amre
     auto* const solver = fine_patch ? m_fdtd_solver_fp[lev].get() : m_fdtd_solver_cp[lev].get();
     solver->MacroscopicEvolveE(
         m_macroscopic_solver_algo,
-        m_fields.get_alldirs(
-            fine_patch ? FieldType::Efield_fp : FieldType::Efield_cp, lev),
-        m_fields.get_alldirs(
-            fine_patch ? FieldType::Bfield_fp : FieldType::Bfield_cp, lev),
-        m_fields.get_alldirs(
-            fine_patch ? FieldType::current_fp : FieldType::current_cp, lev),
-        GetEBUpdateEFlag(patch_type)[lev], a_dt,
-        m_macroscopic_properties[lev][fine_patch ? 0 : 1]);
+        m_fields.get_alldirs(fine_patch ? FieldType::Efield_fp : FieldType::Efield_cp, lev),
+        m_fields.get_alldirs(fine_patch ? FieldType::Bfield_fp : FieldType::Bfield_cp, lev),
+        m_fields.get_alldirs(fine_patch ? FieldType::current_fp : FieldType::current_cp, lev),
+        GetEBUpdateEFlag(patch_type)[lev], a_dt, m_macroscopic_properties[lev][fine_patch ? 0 : 1],
+        lev);
 
     if (do_pml && pml[lev]->ok()) {
         if (patch_type == PatchType::fine) {

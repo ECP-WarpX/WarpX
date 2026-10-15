@@ -466,26 +466,34 @@ namespace
                 Array4<Real const> const& fy_c = dF[1]->const_array(mfi);
                 Array4<Real const> const& fz_c = dF[2]->const_array(mfi);
 
-                amrex::ParallelFor(Box(fx_aux), Box(fy_aux), Box(fz_aux),
-                [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
-                {
-                    // Add the coarse correction after refining the native fine data onto the aux grid.
-                    warpx_interp(j, k, l, fx_aux, fx_fp, fx_c, Fx_stag, refinement_ratio);
-                },
-                [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
-                {
-                    warpx_interp(j, k, l, fy_aux, fy_fp, fy_c, Fy_stag, refinement_ratio);
-                },
-                [=] AMREX_GPU_DEVICE (int j, int k, int l) noexcept
-                {
-                    warpx_interp(j, k, l, fz_aux, fz_fp, fz_c, Fz_stag, refinement_ratio);
-                });
+                int const components = field_aux[lev][0]->nComp();
+                amrex::ParallelFor(
+                    Box(fx_aux), Box(fy_aux), Box(fz_aux),
+                    [=] AMREX_GPU_DEVICE(int j, int k, int l) noexcept {
+                        // Add the coarse correction after refining the native fine data onto the
+                        // aux grid.
+                        for (int component = 0; component < components; ++component) {
+                            warpx_interp(j, k, l, fx_aux, fx_fp, fx_c, Fx_stag, refinement_ratio,
+                                         component);
+                        }
+                    },
+                    [=] AMREX_GPU_DEVICE(int j, int k, int l) noexcept {
+                        for (int component = 0; component < components; ++component) {
+                            warpx_interp(j, k, l, fy_aux, fy_fp, fy_c, Fy_stag, refinement_ratio,
+                                         component);
+                        }
+                    },
+                    [=] AMREX_GPU_DEVICE(int j, int k, int l) noexcept {
+                        for (int component = 0; component < components; ++component) {
+                            warpx_interp(j, k, l, fz_aux, fz_fp, fz_c, Fz_stag, refinement_ratio,
+                                         component);
+                        }
+                    });
             }
 
 #if defined(WARPX_DIM_3D) || defined(WARPX_DIM_XZ)
             if (field_cp_type == FieldType::Bfield_cp &&
-                (EB::enabled() ||
-                 WarpX::GetInstance().HasCurrentControlledPorts()) &&
+                (EB::enabled() || WarpX::GetInstance().HasCurrentControlledPorts()) &&
                 electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee &&
                 WarpX::grid_type == GridType::Staggered) {
                 // Interpolating face components independently introduces

@@ -395,7 +395,7 @@ WarpX::ImplicitComputeRHSE (int lev, PatchType patch_type, amrex::Real a_dt, War
         // With zero E, the existing material curl gives dt*(curl(H)-J)/(epsilon+dt*sigma).
         // Undo that denominator and include the conductivity of the trial E^{n+theta}.
         solver->MacroscopicEvolveE(MacroscopicSolverAlgo::BackwardEuler, rhs, magnetic, current,
-                                   GetEBUpdateEFlag(patch_type)[lev], a_dt, material);
+                                   GetEBUpdateEFlag(patch_type)[lev], a_dt, material, lev);
         for (int n = 0; n < 3; ++n) {
             auto const staggering = n == 0   ? material->Ex_IndexType
                                     : n == 1 ? material->Ey_IndexType

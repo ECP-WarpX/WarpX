@@ -224,11 +224,6 @@ PrescribedCurrentParticleContainer::InitData () {
     WARPX_ABORT_WITH_MESSAGE(
         "Prescribed current injection is not implemented in 1D_Z geometry.");
 #else
-#ifdef WARPX_DIM_RZ
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        maxLevel() == 0,
-        "RZ current antennas with SMR require cylindrical PML support and are not supported yet.");
-#endif
     // Bound particle excursions using the finest spacing before assigning weights.
     compute_velocity_scale();
     WarpX const& warpx = WarpX::GetInstance();

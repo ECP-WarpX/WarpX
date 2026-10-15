@@ -283,11 +283,6 @@ void
 CurrentControlledPort::ValidateGeometry (
     ablastr::fields::VectorField const& Bfield) const {
     WarpX const& warpx = WarpX::GetInstance();
-#ifdef WARPX_DIM_RZ
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(warpx.maxLevel() == 0,
-                                     "RZ current-controlled ports with SMR require cylindrical PML "
-                                     "support and are not supported yet.");
-#endif
     bool subcycling = false;
     amrex::ParmParse("warpx").query("do_subcycling", subcycling);
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -1006,16 +1001,16 @@ CurrentControlledPort::CorrectXZContoursBatched (
 
 #ifdef WARPX_DIM_RZ
 std::array<amrex::Real, 3>
-CurrentControlledPort::MeasureRZContourLocal (
-    amrex::MultiFab const& btheta, amrex::iMultiFab const& owner_mask,
-    amrex::iMultiFab const* const eb_flag, int const plane_index) const {
+CurrentControlledPort::MeasureRZContourLocal (amrex::MultiFab const& btheta,
+                                              amrex::iMultiFab const& owner_mask,
+                                              amrex::iMultiFab const* const eb_flag,
+                                              int const plane_index) const
+{
     bool const axial = m_direction == 2;
     int const transverse_mesh_direction = axial ? 0 : 1;
     int const transverse_physical_direction = axial ? 0 : 2;
-    amrex::Real const lower_coordinate =
-        m_terminal_0.lo[transverse_physical_direction];
-    amrex::Real const upper_coordinate =
-        m_terminal_0.hi[transverse_physical_direction];
+    amrex::Real const lower_coordinate = m_terminal_0.lo[transverse_physical_direction];
+    amrex::Real const upper_coordinate = m_terminal_0.hi[transverse_physical_direction];
     bool const omit_lower = axial && lower_coordinate <= Geometry().ProbLo(0);
     int const lower_index =
         omit_lower ? 0
@@ -1034,6 +1029,7 @@ CurrentControlledPort::MeasureRZContourLocal (
     amrex::Real active_points = 0.0_rt;
     for (amrex::MFIter mfi(btheta); mfi.isValid(); ++mfi) {
         auto const values = btheta.const_array(mfi);
+        auto const permeability = Permeability(mfi);
         auto const owners = owner_mask.const_array(mfi);
         amrex::Array4<int const> flags;
         if (eb_flag != nullptr) {
@@ -1045,36 +1041,28 @@ CurrentControlledPort::MeasureRZContourLocal (
             }
             int const transverse_index = side == 0 ? lower_index : upper_index;
             amrex::IntVect const point =
-                axial ? amrex::IntVect(
-                            AMREX_D_DECL(transverse_index, plane_index, 0))
-                      : amrex::IntVect(
-                            AMREX_D_DECL(plane_index, transverse_index, 0));
+                axial ? amrex::IntVect(AMREX_D_DECL(transverse_index, plane_index, 0))
+                      : amrex::IntVect(AMREX_D_DECL(plane_index, transverse_index, 0));
             if (!mfi.validbox().contains(point)) {
                 continue;
             }
             amrex::Real const radius =
-                axial ? (side == 0 ? lower_radius : upper_radius)
-                      : plane_radius;
+                axial ? (side == 0 ? lower_radius : upper_radius) : plane_radius;
             amrex::Real const orientation =
-                axial ? (side == 0 ? -1.0_rt : 1.0_rt)
-                      : (side == 0 ? 1.0_rt : -1.0_rt);
-            amrex::Real const weight =
-                orientation * 2.0_rt * MathConst::pi * radius;
-            amrex::ReduceOps<amrex::ReduceOpSum, amrex::ReduceOpSum,
-                             amrex::ReduceOpSum>
-                reduce_ops;
-            amrex::ReduceData<amrex::Real, amrex::Real, amrex::Real>
-                reduce_data(reduce_ops);
+                axial ? (side == 0 ? -1.0_rt : 1.0_rt) : (side == 0 ? 1.0_rt : -1.0_rt);
+            amrex::Real const weight = orientation * 2.0_rt * MathConst::pi * radius;
+            amrex::ReduceOps<amrex::ReduceOpSum, amrex::ReduceOpSum, amrex::ReduceOpSum> reduce_ops;
+            amrex::ReduceData<amrex::Real, amrex::Real, amrex::Real> reduce_data(reduce_ops);
             using ReduceTuple = decltype(reduce_data)::Type;
             amrex::Box const point_box(point, point, btheta.ixType());
             reduce_ops.eval(
-                point_box, reduce_data,
-                [=] AMREX_GPU_DEVICE(int i, int j, int k) -> ReduceTuple {
-                    if (owners(i, j, k) == 0 ||
-                        (flags && flags(i, j, k) == 0)) {
+                point_box, reduce_data, [=] AMREX_GPU_DEVICE(int i, int j, int k) -> ReduceTuple {
+                    if (owners(i, j, k) == 0 || (flags && flags(i, j, k) == 0)) {
                         return {0.0_rt, 0.0_rt, 0.0_rt};
                     }
-                    return {weight * values(i, j, k), weight * weight, 1.0_rt};
+                    amrex::Real const h_weight =
+                        weight * (permeability ? PhysConst::mu0 / permeability(i, j, k) : 1.0_rt);
+                    return {h_weight * values(i, j, k), h_weight * h_weight, 1.0_rt};
                 });
             auto const reduced = reduce_data.value();
             circulation += amrex::get<0>(reduced);
@@ -1082,24 +1070,23 @@ CurrentControlledPort::MeasureRZContourLocal (
             active_points += amrex::get<2>(reduced);
         }
     }
-    std::array<amrex::Real, 3> result{
-        {circulation, response_norm, active_points}};
+    std::array<amrex::Real, 3> result{{circulation, response_norm, active_points}};
     return result;
 }
 
 std::vector<amrex::Real>
-CurrentControlledPort::MeasureRZContoursLocalBatched (
-    amrex::MultiFab const& btheta, amrex::iMultiFab const& owner_mask,
-    amrex::iMultiFab const* const eb_flag, int const first_plane,
-    int const last_plane) const {
+CurrentControlledPort::MeasureRZContoursLocalBatched (amrex::MultiFab const& btheta,
+                                                      amrex::iMultiFab const& owner_mask,
+                                                      amrex::iMultiFab const* const eb_flag,
+                                                      int const first_plane,
+                                                      int const last_plane) const
+{
     bool const axial = m_direction == 2;
     int const plane_mesh_direction = axial ? 1 : 0;
     int const transverse_mesh_direction = axial ? 0 : 1;
     int const transverse_physical_direction = axial ? 0 : 2;
-    amrex::Real const lower_coordinate =
-        m_terminal_0.lo[transverse_physical_direction];
-    amrex::Real const upper_coordinate =
-        m_terminal_0.hi[transverse_physical_direction];
+    amrex::Real const lower_coordinate = m_terminal_0.lo[transverse_physical_direction];
+    amrex::Real const upper_coordinate = m_terminal_0.hi[transverse_physical_direction];
     bool const omit_lower = axial && lower_coordinate <= Geometry().ProbLo(0);
     int const lower_index =
         omit_lower ? 0
@@ -1115,20 +1102,16 @@ CurrentControlledPort::MeasureRZContoursLocalBatched (
     for (int offset = 0; offset < number_of_planes; ++offset) {
         amrex::Real const plane_radius =
             axial ? 0.0_rt : index_coordinate(Geometry(), btheta, 0, first_plane + offset);
-        weights[2 * offset] = omit_lower
-                                  ? 0.0_rt
-                                  : -2.0_rt * MathConst::pi *
-                                        (axial ? lower_radius : -plane_radius);
-        weights[2 * offset + 1] =
-            2.0_rt * MathConst::pi * (axial ? upper_radius : -plane_radius);
+        weights[2 * offset] =
+            omit_lower ? 0.0_rt : -2.0_rt * MathConst::pi * (axial ? lower_radius : -plane_radius);
+        weights[2 * offset + 1] = 2.0_rt * MathConst::pi * (axial ? upper_radius : -plane_radius);
     }
 
     amrex::Gpu::DeviceVector<amrex::Real> device_weights(weights.size());
     amrex::Gpu::copy(amrex::Gpu::hostToDevice, weights.begin(), weights.end(),
                      device_weights.begin());
     amrex::Real const* const weight_values = device_weights.data();
-    amrex::Gpu::DeviceVector<amrex::Real> device_contours(3 * number_of_planes,
-                                                          0.0_rt);
+    amrex::Gpu::DeviceVector<amrex::Real> device_contours(3 * number_of_planes, 0.0_rt);
     amrex::Real* const contours = device_contours.data();
     amrex::Geometry const& geometry = Geometry();
 
@@ -1149,6 +1132,7 @@ CurrentControlledPort::MeasureRZContoursLocalBatched (
                 continue;
             }
             auto const values = btheta.const_array(mfi);
+            auto const permeability = Permeability(mfi);
             auto const owners = owner_mask.const_array(mfi);
             amrex::Array4<int const> flags;
             if (eb_flag != nullptr) {
@@ -1160,34 +1144,34 @@ CurrentControlledPort::MeasureRZContoursLocalBatched (
                 }
                 int const index[3] = {i, j, k};
                 int const offset = index[plane_mesh_direction] - first_plane;
-                amrex::Real const weight = weight_values[2 * offset + side];
-                amrex::Gpu::Atomic::AddNoRet(&contours[3 * offset],
-                                             weight * values(i, j, k));
-                amrex::Gpu::Atomic::AddNoRet(&contours[3 * offset + 1],
-                                             weight * weight);
+                amrex::Real const weight =
+                    weight_values[2 * offset + side] *
+                    (permeability ? PhysConst::mu0 / permeability(i, j, k) : 1.0_rt);
+                amrex::Gpu::Atomic::AddNoRet(&contours[3 * offset], weight * values(i, j, k));
+                amrex::Gpu::Atomic::AddNoRet(&contours[3 * offset + 1], weight * weight);
                 amrex::Gpu::Atomic::AddNoRet(&contours[3 * offset + 2], 1.0_rt);
             });
         }
     }
 
     std::vector<amrex::Real> host_contours(3 * number_of_planes);
-    amrex::Gpu::copy(amrex::Gpu::deviceToHost, device_contours.begin(),
-                     device_contours.end(), host_contours.begin());
+    amrex::Gpu::copy(amrex::Gpu::deviceToHost, device_contours.begin(), device_contours.end(),
+                     host_contours.begin());
     return host_contours;
 }
 
 void
-CurrentControlledPort::CorrectRZContoursBatched (
-    amrex::MultiFab& btheta, amrex::iMultiFab const* const eb_flag,
-    int const first_plane, std::vector<amrex::Real> const& scales) const {
+CurrentControlledPort::CorrectRZContoursBatched (amrex::MultiFab& btheta,
+                                                 amrex::iMultiFab const* const eb_flag,
+                                                 int const first_plane,
+                                                 std::vector<amrex::Real> const& scales) const
+{
     bool const axial = m_direction == 2;
     int const plane_mesh_direction = axial ? 1 : 0;
     int const transverse_mesh_direction = axial ? 0 : 1;
     int const transverse_physical_direction = axial ? 0 : 2;
-    amrex::Real const lower_coordinate =
-        m_terminal_0.lo[transverse_physical_direction];
-    amrex::Real const upper_coordinate =
-        m_terminal_0.hi[transverse_physical_direction];
+    amrex::Real const lower_coordinate = m_terminal_0.lo[transverse_physical_direction];
+    amrex::Real const upper_coordinate = m_terminal_0.hi[transverse_physical_direction];
     bool const omit_lower = axial && lower_coordinate <= Geometry().ProbLo(0);
     int const lower_index =
         omit_lower ? 0
@@ -1204,12 +1188,9 @@ CurrentControlledPort::CorrectRZContoursBatched (
     for (int offset = 0; offset < number_of_planes; ++offset) {
         amrex::Real const plane_radius =
             axial ? 0.0_rt : index_coordinate(Geometry(), btheta, 0, first_plane + offset);
-        weights[2 * offset] = omit_lower
-                                  ? 0.0_rt
-                                  : -2.0_rt * MathConst::pi *
-                                        (axial ? lower_radius : -plane_radius);
-        weights[2 * offset + 1] =
-            2.0_rt * MathConst::pi * (axial ? upper_radius : -plane_radius);
+        weights[2 * offset] =
+            omit_lower ? 0.0_rt : -2.0_rt * MathConst::pi * (axial ? lower_radius : -plane_radius);
+        weights[2 * offset + 1] = 2.0_rt * MathConst::pi * (axial ? upper_radius : -plane_radius);
     }
 
     amrex::Gpu::DeviceVector<amrex::Real> device_weights(weights.size());
@@ -1217,8 +1198,7 @@ CurrentControlledPort::CorrectRZContoursBatched (
                      device_weights.begin());
     amrex::Real const* const weight_values = device_weights.data();
     amrex::Gpu::DeviceVector<amrex::Real> device_scales(scales.size());
-    amrex::Gpu::copy(amrex::Gpu::hostToDevice, scales.begin(), scales.end(),
-                     device_scales.begin());
+    amrex::Gpu::copy(amrex::Gpu::hostToDevice, scales.begin(), scales.end(), device_scales.begin());
     amrex::Real const* const scale_values = device_scales.data();
     amrex::Geometry const& geometry = Geometry();
 
@@ -1242,19 +1222,19 @@ CurrentControlledPort::CorrectRZContoursBatched (
                 continue;
             }
             auto const values = btheta.array(mfi);
+            auto const permeability = Permeability(mfi);
             amrex::Array4<int const> flags;
             if (eb_flag != nullptr) {
                 flags = eb_flag->const_array(mfi);
             }
-            amrex::ParallelFor(section, [=] AMREX_GPU_DEVICE(int i, int j,
-                                                             int k) {
+            amrex::ParallelFor(section, [=] AMREX_GPU_DEVICE(int i, int j, int k) {
                 if (flags && flags(i, j, k) == 0) {
                     return;
                 }
                 int const index[3] = {i, j, k};
                 int const offset = index[plane_mesh_direction] - first_plane;
-                values(i, j, k) +=
-                    scale_values[offset] * weight_values[2 * offset + side];
+                values(i, j, k) += scale_values[offset] * weight_values[2 * offset + side] *
+                                   (permeability ? PhysConst::mu0 / permeability(i, j, k) : 1.0_rt);
             });
         }
     }

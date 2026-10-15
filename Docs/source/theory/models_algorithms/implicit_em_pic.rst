@@ -4,7 +4,7 @@ Implicit electromagnetic PIC
 ============================
 
 Theta-implicit refined grids and exterior PML
---------------------------------------------
+---------------------------------------------
 
 For Cartesian staggered Yee grids, the theta-implicit nonlinear state contains
 all fine-patch, coarse-patch, and exterior-PML electric fields. Each residual

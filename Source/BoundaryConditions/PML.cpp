@@ -687,6 +687,27 @@ MultiSigmaBox::ComputePMLFactorsE (const Real* dx, Real dt)
     }
 }
 
+#ifdef WARPX_DIM_RZ
+namespace {
+amrex::BoxArray
+clip_cylindrical_pml (amrex::BoxArray boxes, amrex::Geometry const& geometry)
+{
+    if (boxes.empty()) {
+        return boxes;
+    }
+    auto region = boxes.minimalBox();
+    if (geometry.ProbLo(0) == 0) {
+        region.setSmall(0, geometry.Domain().smallEnd(0));
+        return amrex::intersect(boxes, region);
+    }
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        geometry.ProbLo(0) + region.smallEnd(0) * geometry.CellSize(0) >= 0,
+        "An annular-domain PML must not extend through the cylindrical axis.");
+    return boxes;
+}
+} // namespace
+#endif
+
 PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& grid_dm,
           const bool do_similar_dm_pml, const Geometry* geom, const Geometry* cgeom, int ncell,
           int delta, amrex::IntVect ref_ratio, Real dt, int nox_fft, int noy_fft, int noz_fft,
@@ -747,10 +768,12 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
     }
     Box const domain0 = grid_ba_reduced.minimalBox();
     const bool is_single_box_domain = domain0.numPts() == grid_ba_reduced.numPts();
-    const BoxArray& ba = ::MakeBoxArray(is_single_box_domain, domain0, *geom, grid_ba_reduced,
-                                      IntVect(ncell), do_pml_in_domain, do_pml_Lo, do_pml_Hi);
+    BoxArray ba = ::MakeBoxArray(is_single_box_domain, domain0, *geom, grid_ba_reduced,
+                                 IntVect(ncell), do_pml_in_domain, do_pml_Lo, do_pml_Hi);
 
-
+#ifdef WARPX_DIM_RZ
+    ba = clip_cylindrical_pml(std::move(ba), *geom);
+#endif
     if (ba.empty()) {
         m_ok = false;
         return;
@@ -837,8 +860,14 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
     }
 
     // Allocate diagonal components (xx,yy,zz) only with divergence cleaning
+#ifdef WARPX_DIM_RZ
+    // Each mode has its physical field plus two convolution-memory components.
+    int const ncompe = 3 * WarpX::ncomps;
+    int const ncompb = 3 * WarpX::ncomps;
+#else
     const int ncompe = (m_dive_cleaning) ? 3 : 2;
     const int ncompb = (m_divb_cleaning) ? 3 : 2;
+#endif
 
     using ablastr::fields::Direction;
 
@@ -859,9 +888,12 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
     const amrex::BoxArray ba_jx = amrex::convert(ba, fields.get(FieldType::current_fp, Direction{0}, 0)->ixType().toIntVect());
     const amrex::BoxArray ba_jy = amrex::convert(ba, fields.get(FieldType::current_fp, Direction{1}, 0)->ixType().toIntVect());
     const amrex::BoxArray ba_jz = amrex::convert(ba, fields.get(FieldType::current_fp, Direction{2}, 0)->ixType().toIntVect());
-    fields.alloc_init(FieldType::pml_j_fp, Direction{0}, lev, ba_jx, dm, 1, ngb, 0.0_rt, false, false);
-    fields.alloc_init(FieldType::pml_j_fp, Direction{1}, lev, ba_jy, dm, 1, ngb, 0.0_rt, false, false);
-    fields.alloc_init(FieldType::pml_j_fp, Direction{2}, lev, ba_jz, dm, 1, ngb, 0.0_rt, false, false);
+    fields.alloc_init(FieldType::pml_j_fp, Direction{0}, lev, ba_jx, dm, WarpX::ncomps, ngb, 0.0_rt,
+                      false, false);
+    fields.alloc_init(FieldType::pml_j_fp, Direction{1}, lev, ba_jy, dm, WarpX::ncomps, ngb, 0.0_rt,
+                      false, false);
+    fields.alloc_init(FieldType::pml_j_fp, Direction{2}, lev, ba_jz, dm, WarpX::ncomps, ngb, 0.0_rt,
+                      false, false);
 
 #ifdef AMREX_USE_EB
     if (eb_enabled) {
@@ -976,8 +1008,11 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
         const IntVect cdelta = IntVect(delta)/ref_ratio;
 
         // Assuming that refinement ratio is equal in all dimensions
-        const BoxArray& cba = ::MakeBoxArray(is_single_box_domain, cdomain, *cgeom, grid_cba_reduced,
-                                           cncells, do_pml_in_domain, do_pml_Lo, do_pml_Hi);
+        BoxArray cba = ::MakeBoxArray(is_single_box_domain, cdomain, *cgeom, grid_cba_reduced,
+                                      cncells, do_pml_in_domain, do_pml_Lo, do_pml_Hi);
+#ifdef WARPX_DIM_RZ
+        cba = clip_cylindrical_pml(std::move(cba), *cgeom);
+#endif
         DistributionMapping cdm;
         if (do_similar_dm_pml) {
             auto ng_sim = amrex::elemwiseMax(amrex::elemwiseMax(nge, ngb), ngf);
@@ -1044,9 +1079,12 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
         const amrex::BoxArray cba_jx = amrex::convert(cba, fields.get(FieldType::current_cp, Direction{0}, 1)->ixType().toIntVect());
         const amrex::BoxArray cba_jy = amrex::convert(cba, fields.get(FieldType::current_cp, Direction{1}, 1)->ixType().toIntVect());
         const amrex::BoxArray cba_jz = amrex::convert(cba, fields.get(FieldType::current_cp, Direction{2}, 1)->ixType().toIntVect());
-        fields.alloc_init(FieldType::pml_j_cp, Direction{0}, lev, cba_jx, cdm, 1, ngb, 0.0_rt, false, false);
-        fields.alloc_init(FieldType::pml_j_cp, Direction{1}, lev, cba_jy, cdm, 1, ngb, 0.0_rt, false, false);
-        fields.alloc_init(FieldType::pml_j_cp, Direction{2}, lev, cba_jz, cdm, 1, ngb, 0.0_rt, false, false);
+        fields.alloc_init(FieldType::pml_j_cp, Direction{0}, lev, cba_jx, cdm, WarpX::ncomps, ngb,
+                          0.0_rt, false, false);
+        fields.alloc_init(FieldType::pml_j_cp, Direction{1}, lev, cba_jy, cdm, WarpX::ncomps, ngb,
+                          0.0_rt, false, false);
+        fields.alloc_init(FieldType::pml_j_cp, Direction{2}, lev, cba_jz, cdm, WarpX::ncomps, ngb,
+                          0.0_rt, false, false);
 
         single_domain_box = is_single_box_domain ? cdomain : Box();
         sigba_cp = std::make_unique<MultiSigmaBox>(cba, cdm, &grid_cba_reduced, cgeom->CellSize(),
@@ -1157,6 +1195,10 @@ void
 PML::ApplyImplicitSigma (ablastr::fields::VectorField dst, ablastr::fields::VectorField src,
                          amrex::Real dt, bool inverse, PatchType patch_type) const
 {
+#if !defined(WARPX_DIM_XZ) && !defined(WARPX_DIM_3D)
+    amrex::ignore_unused(dst, src, dt, inverse, patch_type);
+    WARPX_ABORT_WITH_MESSAGE("Implicit PML requires 2D or 3D Cartesian geometry.");
+#else
     auto const& sigma_boxes = patch_type == PatchType::fine ? *sigba_fp : *sigba_cp;
     // Component 0 is xy/yz/zx, component 1 is xz/yx/zy.
     for (int n = 0; n < 3; ++n) {
@@ -1171,10 +1213,6 @@ PML::ApplyImplicitSigma (ablastr::fields::VectorField dst, ablastr::fields::Vect
             int const dir = physical_direction == 2 ? 1 : physical_direction;
 #else
             int const dir = physical_direction;
-#endif
-#if !defined(WARPX_DIM_XZ) && !defined(WARPX_DIM_3D)
-            WARPX_ABORT_WITH_MESSAGE("Implicit PML requires 2D or 3D Cartesian geometry.");
-            return;
 #endif
             const bool nodal = src[n]->ixType().nodeCentered(dir);
 #ifdef AMREX_USE_OMP
@@ -1199,12 +1237,40 @@ PML::ApplyImplicitSigma (ablastr::fields::VectorField dst, ablastr::fields::Vect
             }
         }
     }
+#endif
 }
 
 void
 PML::Exchange (MultiFab& pml, MultiFab& reg, const Geometry& geom,
                 int do_pml_in_domain)
 {
+#ifdef WARPX_DIM_RZ
+    ABLASTR_PROFILE("PML::Exchange");
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!do_pml_in_domain, "Cylindrical QCPML must be exterior.");
+    int const components = reg.nComp();
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(pml.nComp() == 3 * components,
+                                     "Unexpected cylindrical PML mode layout.");
+    auto const guards = reg.nGrowVect();
+    MultiFab temporary(reg.boxArray(), reg.DistributionMap(), components, guards);
+    MultiFab::Copy(temporary, reg, 0, 0, components, guards);
+    // Only the physical field participates in exchange; memories stay local.
+    ablastr::utils::communication::ParallelCopy(temporary, pml, 0, 0, components, IntVect(0),
+                                                guards, WarpX::do_single_precision_comms,
+                                                geom.periodicity());
+    for (MFIter mfi(reg); mfi.isValid(); ++mfi) {
+        auto const source = temporary.const_array(mfi);
+        auto const destination = reg.array(mfi);
+        for (auto const& box : amrex::boxDiff(mfi.fabbox(), mfi.validbox())) {
+            amrex::ParallelFor(box, components, [=] AMREX_GPU_DEVICE(int i, int j, int k, int n) {
+                destination(i, j, k, n) = source(i, j, k, n);
+            });
+        }
+    }
+    ablastr::utils::communication::ParallelCopy(pml, reg, 0, 0, components, IntVect(0),
+                                                pml.nGrowVect(), WarpX::do_single_precision_comms,
+                                                geom.periodicity());
+#else
+
     ABLASTR_PROFILE("PML::Exchange");
 
     const IntVect& ngr = reg.nGrowVect();
@@ -1278,6 +1344,7 @@ PML::Exchange (MultiFab& pml, MultiFab& reg, const Geometry& geom,
     }
     ablastr::utils::communication::ParallelCopy(pml, tmpregmf, 0, 0, ncp, IntVect(0), ngp,
                                                 WarpX::do_single_precision_comms, period);
+#endif
 }
 
 
@@ -1287,8 +1354,8 @@ PML::CopyToPML (MultiFab& pml, MultiFab& reg, const Geometry& geom)
   const IntVect& ngp = pml.nGrowVect();
   const auto& period = geom.periodicity();
 
-    ablastr::utils::communication::ParallelCopy(pml, reg, 0, 0, 1, IntVect(0), ngp,
-                                                WarpX::do_single_precision_comms, period);
+  ablastr::utils::communication::ParallelCopy(pml, reg, 0, 0, reg.nComp(), IntVect(0), ngp,
+                                              WarpX::do_single_precision_comms, period);
 }
 
 void
@@ -1301,6 +1368,31 @@ PML::FillBoundary (ablastr::fields::VectorField mf_pml, PatchType patch_type, st
 
     const Vector<MultiFab*> mf{mf_pml[0], mf_pml[1], mf_pml[2]};
     ablastr::utils::communication::FillBoundary(mf, WarpX::do_single_precision_comms, period, nodal_sync);
+#ifdef WARPX_DIM_RZ
+    auto const& geometry = patch_type == PatchType::fine ? *m_geom : *m_cgeom;
+    if (geometry.ProbLo(0) == 0) {
+        int const components = WarpX::ncomps;
+        for (int direction = 0; direction < 3; ++direction) {
+            auto& field = *mf_pml[direction];
+            bool const nodal = field.ixType().nodeCentered(0);
+            for (MFIter mfi(field); mfi.isValid(); ++mfi) {
+                auto box = mfi.fabbox();
+                box.setBig(0, std::min(box.bigEnd(0), -1));
+                if (!box.ok()) {
+                    continue;
+                }
+                auto const values = field.array(mfi);
+                amrex::ParallelFor(
+                    box, field.nComp(), [=] AMREX_GPU_DEVICE(int i, int j, int k, int n) {
+                        int const mode = (n % components + 1) / 2;
+                        amrex::Real const sign =
+                            (mode + (direction < 2)) % 2 == 0 ? 1.0_rt : -1.0_rt;
+                        values(i, j, k, n) = sign * values(-i - (nodal ? 0 : 1), j, k, n);
+                    });
+            }
+        }
+    }
+#endif
 }
 
 void

@@ -4030,7 +4030,8 @@ PML and divergence-cleaning fields so resumed fields agree with uninterrupted ev
 The existing vacuum treatment of
 PML cells remains in use; place material interfaces and current sources away from patch
 PMLs. Yee SMR supports staircase embedded boundaries on every fine and coarse patch.
-Macroscopic evolution in RZ remains unsupported.
+RZ supports explicit Yee macroscopic evolution, including static refinement.
+Material expressions use ``x=r`` and even scalar parity across the axis.
 
 Theta-implicit SMR uses native AMReX GMRES,
 ``implicit_evolve.nonlinear_solver = newton`` and
@@ -4123,8 +4124,9 @@ field evolution and no moving window. Antenna regions may span refinement bounda
 Particles are seeded on the finest available cells, with weights set by each cell's
 physical volume; covered coarse cells do not duplicate the source. The displacement
 limit uses the finest cell spacing. On restart, all levels are reconstructed from the
-waveform integral at the checkpoint time. RZ remains limited to one level pending
-cylindrical PML support, and 1D Z remains unsupported.
+waveform integral at the checkpoint time. RZ supports explicit Yee SMR; its
+cylindrical absorbing layers require exterior vacuum without divergence cleaning.
+1D Z remains unsupported.
 For implicit evolution, waveform integration uses the physical step endpoints,
 independently of the theta evaluation time or nonlinear iteration.
 
@@ -4214,13 +4216,14 @@ be combined with analytic external current or split external fields because thos
 make the plasma-current target ambiguous.
 
 Current-controlled ports support the Yee and Hybrid-PIC field solvers on a single level,
-and Cartesian SMR with explicit or theta-implicit Yee evolution and synchronized timesteps. They support
+Cartesian SMR with explicit or theta-implicit Yee evolution, and RZ SMR with explicit
+Yee evolution and synchronized timesteps. They support
 3D, in-plane x or z current in 2D XZ, and radial or axial current in
 axisymmetric RZ with one azimuthal mode.  Terminal surfaces must currently be
 matching rectangles, disks or annuli for axial RZ current, or cylindrical surfaces for
 radial RZ current.  Coordinates are represented on the nearest compatible field plane.
 Multiple ports are supported when their correction regions are separated by more than one
-grid cell, as in separate coil gaps. SMR supports staircase embedded boundaries and
+grid cell, as in separate coil gaps. Cartesian SMR supports staircase embedded boundaries and
 ports crossing transverse or axial refinement boundaries.
 Ports with two coarse cells of clearance use independent fine- and coarse-patch contours.
 Crossing ports use a fixed physical contour, interpolating :math:`H=B/\mu` from the
@@ -4228,7 +4231,8 @@ finest available grid at each quadrature point. A coupled discrete-curl correcti
 enforces the requested circulation at the terminals and at the finest axial cell planes
 between them. The contour must remain outside covered EB cells, and crossing ports
 must stay at least one coarse cell inside the global domain boundaries.
-RZ SMR, general curved terminal masks, moving windows,
+RZ SMR ports require two coarse cells of clearance from refinement boundaries;
+RZ crossing ports and RZ implicit SMR remain unsupported. General curved terminal masks, moving windows,
 dynamic load balancing, and hybrid-staggered grids remain unsupported.
 
 * ``warpx.current_controlled_port`` (`bool`, optional, default: ``0``)

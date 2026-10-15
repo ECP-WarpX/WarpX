@@ -2774,7 +2774,8 @@ class PrescribedCurrentInjection(picmistandard.PICMI_Extension):
 
     Cartesian static refined grids support explicit and theta-implicit evolution; antenna regions
     may span refinement boundaries. Covered coarse cells do not duplicate the
-    source. RZ SMR and a moving window are unsupported; 1D Z is unsupported.
+    source. RZ supports explicit Yee SMR without divergence cleaning. A moving
+    window and 1D Z are unsupported.
 
     Opposite-weight particle pairs deposit both the current and the
     polarization charge required by continuity. This is a local antenna
@@ -2872,8 +2873,9 @@ class CurrentControlledPort(picmistandard.PICMI_Extension):
     timesteps. Staircase embedded boundaries and contours crossing transverse or
     axial refinement boundaries are supported. Crossing ports use a physical
     contour sampled from the finest available grid and must stay one coarse cell
-    inside the domain. Contours must remain outside covered EB cells. RZ SMR
-    is unsupported. Theta-implicit SMR uses Newton with no preconditioner or mass
+    inside the domain. Contours must remain outside covered EB cells. RZ supports
+    explicit Yee SMR with two coarse cells of clearance from refinement boundaries.
+    Theta-implicit SMR uses Newton with no preconditioner or mass
     matrices, filtering, or divergence cleaning.
 
     Parameters

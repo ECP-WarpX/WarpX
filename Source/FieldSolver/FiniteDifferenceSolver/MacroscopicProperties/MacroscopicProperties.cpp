@@ -19,6 +19,7 @@
 
 #include <AMReX_BaseFwd.H>
 
+#include <cmath>
 #include <memory>
 #include <sstream>
 
@@ -238,7 +239,13 @@ MacroscopicProperties::InitializeMacroMultiFabUsingParser (
                 const amrex::Real z = i * dx_lev[0] + prob_domain_lev.lo(0) + fac_z;
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
                 const amrex::Real fac_x = (1._rt - iv[0]) * dx_lev[0] * 0.5_rt;
-                const amrex::Real x = i * dx_lev[0] + prob_domain_lev.lo(0) + fac_x;
+                const amrex::Real coordinate = i * dx_lev[0] + prob_domain_lev.lo(0) + fac_x;
+#ifdef WARPX_DIM_RZ
+                // Scalar material coefficients have even parity at the cylindrical axis.
+                const amrex::Real x = std::abs(coordinate);
+#else
+                const amrex::Real x = coordinate;
+#endif
                 const amrex::Real y = 0._rt;
                 const amrex::Real fac_z = (1._rt - iv[1]) * dx_lev[1] * 0.5_rt;
                 const amrex::Real z = j * dx_lev[1] + prob_domain_lev.lo(1) + fac_z;

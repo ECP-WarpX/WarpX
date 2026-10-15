@@ -109,15 +109,14 @@ class FiniteDifferenceSolver
           * \param[in] eb_update_E indicate in which cell E should be updated (related to embedded boundaries)
           * \param[in] dt       timestep of the simulation
           * \param[in] macroscopic_properties contains user-defined properties of the medium.
+          * \param[in] level refinement level used for field-update costs.
           */
         void MacroscopicEvolveE (
-                      MacroscopicSolverAlgo macroscopic_solver_algo,
-                      ablastr::fields::VectorField const& Efield,
-                      ablastr::fields::VectorField const& Bfield,
-                      ablastr::fields::VectorField const& Jfield,
-                      std::array< std::unique_ptr<amrex::iMultiFab>,3 > const& eb_update_E,
-                      amrex::Real dt,
-                      std::unique_ptr<MacroscopicProperties> const& macroscopic_properties);
+            MacroscopicSolverAlgo macroscopic_solver_algo,
+            ablastr::fields::VectorField const& Efield, ablastr::fields::VectorField const& Bfield,
+            ablastr::fields::VectorField const& Jfield,
+            std::array<std::unique_ptr<amrex::iMultiFab>, 3> const& eb_update_E, amrex::Real dt,
+            std::unique_ptr<MacroscopicProperties> const& macroscopic_properties, int level = 0);
 
         void EvolveBPML (
             ablastr::fields::MultiFabRegister& fields,
@@ -126,6 +125,18 @@ class FiniteDifferenceSolver
             amrex::Real dt,
             bool dive_cleaning
         );
+
+#ifdef WARPX_DIM_RZ
+        void EvolvePMLCylindrical (ablastr::fields::MultiFabRegister& fields, PatchType patch_type,
+                                   int level, MultiSigmaBox const& sigma_boxes, amrex::Real dt,
+                                   bool magnetic);
+        void MacroscopicEvolveECylindrical (
+            MacroscopicSolverAlgo algorithm, ablastr::fields::VectorField const& electric,
+            ablastr::fields::VectorField const& magnetic,
+            ablastr::fields::VectorField const& current,
+            std::array<std::unique_ptr<amrex::iMultiFab>, 3> const& flags, amrex::Real dt,
+            std::unique_ptr<MacroscopicProperties> const& material, int level);
+#endif
 
         void EvolveEPML (ablastr::fields::MultiFabRegister& fields, PatchType patch_type, int level,
                          std::array<std::unique_ptr<amrex::iMultiFab>, 3> const& eb_update_E,

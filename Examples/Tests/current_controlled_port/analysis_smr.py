@@ -31,16 +31,15 @@ def field(name):
     return np.asarray(data[next(item for item in ds.field_list if item[1] == name)])
 
 
-if args.dims != "RZ":
-    x = np.asarray(data["index", "x"])
-    z = np.asarray(data["index", "z" if args.dims == "3" else "y"])
-    for name, expected in (
-        ("sigma", epsilon_0 * 1.0e10 * (2 + x)),
-        ("epsilon", epsilon_0 * (2 + x)),
-        ("mu", mu_0 * (2 + 0.5 * z)),
-    ):
-        np.testing.assert_allclose(field(name), expected, rtol=5.0e-6, atol=0)
-        print(f"{name}: correct parser coordinates on both levels")
+x = np.asarray(data["index", "x"])
+z = np.asarray(data["index", "z" if args.dims == "3" else "y"])
+for name, expected in (
+    ("sigma", epsilon_0 * 1.0e10 * (2 + x)),
+    ("epsilon", epsilon_0 * (2 + x)),
+    ("mu", mu_0 * (2 + 0.5 * z)),
+):
+    np.testing.assert_allclose(field(name), expected, rtol=5.0e-6, atol=0)
+    print(f"{name}: correct parser coordinates on both levels")
 
 if args.source == "antenna":
     # Fine current diagnostics contain patch-local sources. The synchronized
@@ -73,7 +72,9 @@ elif args.source == "material":
     decay = 1 / 1.01 if args.method == "backwardeuler" else (1 - 0.005) / (1 + 0.005)
     if args.implicit:
         decay = (1 - (1 - args.theta) * 0.01) / (1 + args.theta * 0.01)
-    mask = (np.abs(x) < 0.2) & (np.abs(z) < 0.2)
+    mask = ((x > 0.125) & (x < 0.3) if args.dims == "RZ" else np.abs(x) < 0.2) & (
+        np.abs(z) < 0.2
+    )
     if args.dims == "3":
         mask &= np.abs(np.asarray(data["index", "y"])) < 0.2
     if args.eb:
@@ -81,7 +82,9 @@ elif args.source == "material":
         if args.dims == "3":
             radius_squared += np.asarray(data["index", "y"]) ** 2
         mask &= radius_squared > 0.125**2
-    np.testing.assert_allclose(field("Ey")[mask], decay**2, rtol=2.0e-12, atol=0)
+    np.testing.assert_allclose(
+        field("Ez" if args.dims == "RZ" else "Ey")[mask], decay**2, rtol=2.0e-12, atol=0
+    )
     print(f"refined material damping agrees with {args.method}: {decay**2}")
 elif args.dims == "3":
     scale = max(np.max(np.abs(field(name))) for name in ("Bx", "By", "Bz"))
@@ -93,11 +96,11 @@ elif args.dims == "3":
 if args.reference:
     reference = yt.load(args.reference).all_data()
     for name in (
-        "Ex",
-        "Ey",
+        "Er" if args.dims == "RZ" else "Ex",
+        "Et" if args.dims == "RZ" else "Ey",
         "Ez",
-        "Bx",
-        "By",
+        "Br" if args.dims == "RZ" else "Bx",
+        "Bt" if args.dims == "RZ" else "By",
         "Bz",
         "rho",
         "jz",

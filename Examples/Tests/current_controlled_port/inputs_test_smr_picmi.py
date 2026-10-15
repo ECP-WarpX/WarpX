@@ -7,7 +7,7 @@ from pathlib import Path
 
 import numpy as np
 
-from pywarpx import amr, libwarpx, picmi
+from pywarpx import amr, libwarpx, picmi, warpx
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--dims", choices=("2", "3", "RZ"), required=True)
@@ -20,6 +20,7 @@ parser.add_argument(
 )
 parser.add_argument("--restart")
 parser.add_argument("--eb", action="store_true")
+parser.add_argument("--annular", action="store_true")
 parser.add_argument("--implicit", action="store_true")
 parser.add_argument("--theta", type=float, default=0.5)
 parser.add_argument("--plasma", action="store_true")
@@ -31,8 +32,10 @@ ndim = 3 if args.dims == "3" else 2
 is_rz = args.dims == "RZ"
 lower = [0.0, -0.5] if is_rz else [-0.5] * ndim
 upper = [0.5, 0.5] if is_rz else [0.5] * ndim
-refined_lower = [0.0625, -0.375] if is_rz else [-0.375] * ndim
+refined_lower = [0.0, -0.375] if is_rz else [-0.375] * ndim
 refined_upper = [0.4375, 0.375] if is_rz else [0.375] * ndim
+if args.annular:
+    refined_lower[0] = 0.0625
 if args.placement == "outside":
     refined_upper[0] = 0.125 if is_rz else -0.25
 elif args.placement == "crossing" or args.source == "antenna":
@@ -71,7 +74,7 @@ simulation = picmi.Simulation(
     solver=picmi.ElectromagneticSolver(
         grid=grid,
         method="Yee",
-        divE_cleaning=args.source == "antenna" and not args.implicit,
+        divE_cleaning=args.source == "antenna" and not args.implicit and not is_rz,
     ),
     max_steps=2,
     time_step_size=dt,
@@ -109,20 +112,19 @@ simulation = picmi.Simulation(
         else None
     ),
 )
-if not is_rz:
-    # Parser fields distinguish fine/coarse coordinates and exercise non-vacuum mu.
-    for name, expression in (
-        ("epsilon", f"{picmi.constants.ep0}*(2+x)"),
-        ("sigma", f"{picmi.constants.ep0}*1.e10*(2+x)"),
-        ("mu", f"{picmi.constants.mu0}*(2+0.5*z)"),
-    ):
-        simulation.add_macroscopic_property(
-            picmi.MacroscopicProperty(
-                name=name,
-                implicit_function=expression,
-                method=args.method if name == "sigma" else None,
-            )
+# Parser fields distinguish fine/coarse coordinates and exercise non-vacuum mu.
+for name, expression in (
+    ("epsilon", f"{picmi.constants.ep0}*(2+x)"),
+    ("sigma", f"{picmi.constants.ep0}*1.e10*(2+x)"),
+    ("mu", f"{picmi.constants.mu0}*(2+0.5*z)"),
+):
+    simulation.add_macroscopic_property(
+        picmi.MacroscopicProperty(
+            name=name,
+            implicit_function=expression,
+            method=args.method if name == "sigma" else None,
         )
+    )
 
 if args.plasma:
     for particle_type in ("electron", "proton"):
@@ -163,12 +165,15 @@ elif args.source == "antenna":
             ],
         )
     )
-else:
-    assert not is_rz
-if args.source == "material" or args.eb or args.plasma:
+if is_rz and (args.source == "material" or args.eb):
+    warpx.E_ext_grid_init_style = "constant"
+    warpx.E_external_grid = [0, 0, 1]
+elif args.source == "material" or args.eb or args.plasma:
     simulation.add_applied_field(
         picmi.AnalyticInitialField(
-            Ex_expression="0", Ey_expression="1.0", Ez_expression="0"
+            Ex_expression="0",
+            Ey_expression="0" if is_rz else "1.0",
+            Ez_expression="1.0" if is_rz else "0",
         )
     )
 elif args.placement in ("crossing", "axial"):
@@ -183,8 +188,7 @@ elif args.placement in ("crossing", "axial"):
     )
 
 diagnostic_fields = ["E", "B", "J", "divB", "rho"]
-if not is_rz:
-    diagnostic_fields += ["sigma", "epsilon", "mu"]
+diagnostic_fields += ["sigma", "epsilon", "mu"]
 simulation.add_diagnostic(
     picmi.FieldDiagnostic(
         name="diag1",
@@ -199,6 +203,17 @@ simulation.add_diagnostic(
     picmi.Checkpoint(name="chk", period=1, write_dir="diags", warpx_file_prefix="chk")
 )
 independent_rho_before = None
+if is_rz and args.eb and not args.restart:
+    simulation.initialize_inputs()
+    simulation.initialize_warpx()
+    for level, patch in ((0, "fp"), (1, "fp"), (1, "cp")):
+        field = simulation.fields.get(f"Efield_{patch}", dir="z", level=level)
+        values = np.asarray(field[...])
+        origin = np.array(field.box_array().minimal_box().small_end)
+        dr = 0.5 / (32 * (2 if level == 1 and patch == "fp" else 1))
+        radius = (np.arange(values.shape[0]) + origin[0]) * dr
+        values[radius < 0.0625] = 0
+        field[...] = values
 if args.plasma:
     simulation.step(1)
     for name in ("electron", "proton"):
@@ -222,8 +237,12 @@ if args.plasma:
                 err_msg=f"{name}: trial electric field gathered on level {level}",
             )
     simulation.step(1)
-elif args.implicit and args.source == "antenna" and not args.restart:
-    simulation.step(1)
+elif (args.implicit or is_rz) and args.source == "antenna":
+    if args.restart:
+        simulation.initialize_inputs()
+        simulation.initialize_warpx()
+    else:
+        simulation.step(1)
     independent_rho_before = [
         np.squeeze(
             np.asarray(simulation.particles.get_charge_density(level, False)[...])
@@ -235,12 +254,13 @@ else:
     simulation.step(1 if args.restart else 2)
 
 if args.eb:
-    assert not is_rz
     for level, patch in ((0, "fp"), (1, "fp"), (1, "cp")):
-        ey_field = simulation.fields.get(f"Efield_{patch}", dir="y", level=level)
+        ey_field = simulation.fields.get(
+            f"Efield_{patch}", dir="z" if is_rz else "y", level=level
+        )
         ey = np.squeeze(np.asarray(ey_field[...]))
         origin = np.array(ey_field.box_array().minimal_box().small_end)
-        dx = 1 / (32 * (2 if level == 1 and patch != "cp" else 1))
+        dx = (upper[0] - lower[0]) / (32 * (2 if level == 1 and patch != "cp" else 1))
         x = lower[0] + (np.arange(ey.shape[0]) + origin[0]) * dx
         if ndim == 3:
             y = lower[1] + (np.arange(ey.shape[1]) + origin[1] + 0.5) * dx
@@ -275,8 +295,9 @@ if args.source == "antenna":
         if independent_rho_before is not None and level == 0:
             # Parent J includes restricted fine current. Independently deposited
             # parent particles describe leaf cells outside the interface stencil.
-            x = lower[0] + (np.arange(rate.shape[0]) + 1) / 32
-            uncovered = x > refined_upper[0] + 2 / 32
+            dr = (upper[0] - lower[0]) / 32
+            x = lower[0] + (np.arange(rate.shape[0]) + 1) * dr
+            uncovered = x > refined_upper[0] + 2 * dr
             rate, divergence = rate[uncovered], divergence[uncovered]
         scale = max(np.max(np.abs(rate)), np.max(np.abs(divergence)))
         assert scale > 0
@@ -333,7 +354,10 @@ if args.source == "port":
             )
 
         def index(coordinate, axis, offset=0):
-            return round((coordinate - lower[axis]) / dx[axis] - offset) - origin[axis]
+            return (
+                int(np.floor((coordinate - lower[axis]) / dx[axis] - offset + 0.5))
+                - origin[axis]
+            )
 
         planes = [index(z, ndim - 1) for z in (-0.125, 0, 0.125)]
         if args.dims == "3":
@@ -354,12 +378,13 @@ if args.source == "port":
             )
         elif is_rz:
             bt = field("theta")
-            lo, hi = index(transverse_lo, 0), index(transverse_hi, 0)
+            lo, hi = index(transverse_lo, 0, 0.5), index(transverse_hi, 0, 0.5)
+            planes = [index(z, ndim - 1, 0.5) for z in (-0.125, 0, 0.125)]
+            radii = lower[0] + (np.array([lo, hi]) + origin[0] + 0.5) * dx[0]
+            z = lower[1] + (np.array(planes) + origin[1] + 0.5) * dx[1]
+            mu = picmi.constants.mu0 * (2 + 0.5 * z)
             currents = (
-                2
-                * np.pi
-                * (transverse_hi * bt[hi, planes] - transverse_lo * bt[lo, planes])
-                / picmi.constants.mu0
+                2 * np.pi * (radii[1] * bt[hi, planes] - radii[0] * bt[lo, planes]) / mu
             )
         else:
             by = field("y")

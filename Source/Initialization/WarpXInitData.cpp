@@ -1076,7 +1076,19 @@ WarpX::InitPML ()
             do_pml_Hi[0][idim] = 1; // on level 0
         }
     }
-    if (max_level > 0) { do_pml = 1; }
+    if (max_level > 0) {
+        do_pml = 1;
+    }
+#ifdef WARPX_DIM_RZ
+    if (do_pml && electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee) {
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            evolve_scheme == EvolveScheme::Explicit && grid_type == GridType::Staggered &&
+                !do_moving_window && !load_balance_intervals.isActivated() && !do_pml_in_domain &&
+                !pml_has_particles && !do_dive_cleaning && !do_divb_cleaning,
+            "Cylindrical QCPML requires static explicit staggered Yee grids and exterior "
+            "vacuum layers without divergence cleaning.");
+    }
+#endif
     if (do_pml && evolve_scheme == EvolveScheme::Theta_Implicit_EM) {
 #if !defined(WARPX_DIM_XZ) && !defined(WARPX_DIM_3D)
         WARPX_ABORT_WITH_MESSAGE("Theta-implicit PML requires Cartesian 2D or 3D geometry.");
@@ -1097,26 +1109,26 @@ WarpX::InitPML ()
     {
         bool const eb_enabled = EB::enabled();
 #if (defined WARPX_DIM_RZ) && (defined WARPX_USE_FFT)
-        do_pml_Lo[0][0] = 0; // no PML at r=0, in cylindrical geometry
-        pml_rz[0] = std::make_unique<PML_RZ>(0, boxArray(0), DistributionMap(0), &Geom(0), m_fields, pml_ncell, do_pml_in_domain);
-#else
-        // Note: fill_guards_fields and fill_guards_current are both set to
-        // zero (amrex::IntVect(0)) (what we do with damping BCs does not apply
-        // to the PML, for example in the presence of mesh refinement patches)
-        pml[0] = std::make_unique<PML>(
-            0, boxArray(0), DistributionMap(0), do_similar_dm_pml, &Geom(0), nullptr,
-            pml_ncell, pml_delta, amrex::IntVect::TheZeroVector(),
-            dt[0], nox_fft, noy_fft, noz_fft, grid_type,
-            do_moving_window, pml_has_particles, do_pml_in_domain,
-            m_psatd_solution_type, time_dependency_J, time_dependency_rho,
-            do_pml_dive_cleaning, do_pml_divb_cleaning,
-            amrex::IntVect(0), amrex::IntVect(0),
-            eb_enabled,
-            guard_cells.ng_FieldSolver.max(),
-            v_particle_pml,
-            m_fields,
-            do_pml_Lo[0], do_pml_Hi[0]);
+        if (electromagnetic_solver_id == ElectromagneticSolverAlgo::PSATD) {
+            do_pml_Lo[0][0] = 0;
+            pml_rz[0] = std::make_unique<PML_RZ>(0, boxArray(0), DistributionMap(0), &Geom(0),
+                                                 m_fields, pml_ncell, do_pml_in_domain);
+        } else
 #endif
+        {
+
+            // Note: fill_guards_fields and fill_guards_current are both set to
+            // zero (amrex::IntVect(0)) (what we do with damping BCs does not apply
+            // to the PML, for example in the presence of mesh refinement patches)
+            pml[0] = std::make_unique<PML>(
+                0, boxArray(0), DistributionMap(0), do_similar_dm_pml, &Geom(0), nullptr, pml_ncell,
+                pml_delta, amrex::IntVect::TheZeroVector(), dt[0], nox_fft, noy_fft, noz_fft,
+                grid_type, do_moving_window, pml_has_particles, do_pml_in_domain,
+                m_psatd_solution_type, time_dependency_J, time_dependency_rho, do_pml_dive_cleaning,
+                do_pml_divb_cleaning, amrex::IntVect(0), amrex::IntVect(0), eb_enabled,
+                guard_cells.ng_FieldSolver.max(), v_particle_pml, m_fields, do_pml_Lo[0],
+                do_pml_Hi[0]);
+        }
 
         for (int lev = 1; lev <= max_level; ++lev)
         {
