@@ -82,6 +82,7 @@ public:
 
     /** No spectral information available from matrix-free product. */
     [[nodiscard]] RT EstimateOmega () const override { return RT(1.0); }
+    [[nodiscard]] bool HasOmegaEstimate () const override { return false; }
 
     /** The curl-curl term always contributes off-diagonal entries. */
     [[nodiscard]] bool HasOffDiag () const override { return true; }

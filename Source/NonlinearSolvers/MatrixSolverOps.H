@@ -48,6 +48,9 @@ public:
      *  r_i = sum_{j!=i} |A_ij| / |A_ii| is the off-diagonal row ratio. */
     [[nodiscard]] virtual RT EstimateOmega () const = 0;
 
+    /** False when EstimateOmega() has no spectral information */
+    [[nodiscard]] virtual bool HasOmegaEstimate () const { return true; }
+
     /** Write A in MatrixMarket format (global DOF indices), with a_header
      *  as metadata lines. Collective over all ranks. */
     virtual void PrintMatrix (const std::string& a_filename,
