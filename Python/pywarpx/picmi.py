@@ -1865,6 +1865,7 @@ class WeightedJacobiLinearSolver(LinearSolverBase):
         weighted_jacobi.print_matrix_steps = self.print_matrix_steps
         weighted_jacobi.print_matrix_dir = self.print_matrix_dir
 
+
 class CurlCurlMLMGPreconditioner(PreconditionerBase):
     """
     Sets up the curl-curl multigrid preconditioner used during the nonlinear solver
