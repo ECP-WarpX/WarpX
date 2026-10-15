@@ -88,13 +88,26 @@ struct NewtonSolverParams
         else { pp_l.query("use_pcmat", use_pcmat); }
 
         /* backward compatibility */
+        const amrex::ParmParse pp_gmres("gmres");
         if (IsKrylov()) {
-            const amrex::ParmParse pp_gmres("gmres");
             pp_gmres.query("verbose_int",         linsol_verbose_int);
             pp_gmres.query("restart_length",      linsol_restart_length);
             pp_gmres.query("absolute_tolerance",  linsol_atol);
             pp_gmres.query("relative_tolerance",  linsol_rtol);
             pp_gmres.query("max_iterations",      linsol_maxits);
+        } else {
+            // Read and ignore the gmres inputs, so that an input file can switch linear solvers
+            bool gmres_inputs = false;
+            for (const auto* key : {"verbose_int", "restart_length", "absolute_tolerance",
+                                    "relative_tolerance", "max_iterations"}) {
+                std::string value;
+                gmres_inputs = pp_gmres.query(key, value) || gmres_inputs;
+            }
+            if (gmres_inputs) {
+                ablastr::warn_manager::WMRecordWarning("NewtonSolver",
+                    "gmres.* inputs are ignored by the " +
+                    amrex::getEnumNameString(linear_solver_type) + " linear solver");
+            }
         }
 
         const amrex::ParmParse pp_jac("jacobian");

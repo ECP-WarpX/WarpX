@@ -307,7 +307,7 @@ Overall simulation parameters
 
           - ``newton.linear_solver = weighted_jacobi`` or ``chebyshev``: Use weighted Jacobi or Chebyshev iterations instead of GMRES to solve the linear system at each nonlinear iteration.
             These solvers do not use a preconditioner: ``jacobian.pc_type`` is ignored, with a warning.
-            The parameters below use the name of the linear solver as their prefix; the ``gmres`` parameters do not apply:
+            The parameters below use the name of the linear solver as their prefix; the ``gmres`` parameters do not apply and are ignored, with a warning:
 
           - ``<linear_solver>.verbose_int`` (``int``, default: 2)
           - ``<linear_solver>.max_iterations`` (``int``, default: 1000)
