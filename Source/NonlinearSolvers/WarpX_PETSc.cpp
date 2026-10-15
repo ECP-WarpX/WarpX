@@ -17,6 +17,7 @@
 #include <AMReX_Config.H>
 #include <AMReX_REAL.H>
 #include <AMReX_ParallelContext.H>
+#include <AMReX_ParallelDescriptor.H>
 
 #ifdef AMREX_USE_PETSC
 
@@ -407,8 +408,11 @@ void PETScSolver_impl::setOptions()
 
             // some sanity checks
 #ifdef AMREX_USE_GPU
-            if (pctype == "lu") {
-                WARPX_ABORT_WITH_MESSAGE("PETScSolver_impl::setOptions() - PC type LU not available on GPUs");
+            // On GPUs, the LU factorization is available on a single MPI rank only
+            if (pctype == "lu" && amrex::ParallelDescriptor::NProcs() > 1) {
+                WARPX_ABORT_WITH_MESSAGE("PETScSolver_impl::setOptions() - PC type LU on GPUs "
+                                         "requires a single MPI rank. On several GPUs, use "
+                                         "pc_petsc.type = asm with pc_petsc.sub_type = lu.");
             }
 #endif
         }
