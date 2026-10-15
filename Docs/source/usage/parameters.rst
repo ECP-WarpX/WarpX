@@ -317,9 +317,11 @@ Overall simulation parameters
             When ``true``, the solver iterates on the assembled matrix that is also used by ``jacobian.pc_type = pc_jacobi`` (see below), with the plasma response included if ``implicit_evolve.use_mass_matrices_pc = true``.
             This matrix approximates the Jacobian, so more nonlinear iterations may be needed.
             It is updated on the preconditioner update schedule (``newton.pc_update_newton_interval`` and ``newton.pc_update_time_step_interval``).
-            When ``false``, the solver uses matrix-free evaluations of the Jacobian.
-            Its diagonal is then taken as the identity, plus the diagonal of the curl curl operator for ``theta_implicit_em``, plus the diagonal of the mass matrices if ``implicit_evolve.use_mass_matrices_jacobian = true``.
-            Nothing is lagged in this case: the diagonal is updated at every Newton iteration.
+            When ``false``, the solver uses matrix-free evaluations of the Jacobian, which include the plasma response.
+            The Jacobi iteration also needs the diagonal :math:`D` of the Jacobian, which these evaluations do not give.
+            It is approximated as :math:`D = 1 + (\theta \Delta t c)^2 \mathrm{diag}(\nabla \times \nabla \times) + c^2 \mu_0 \theta \Delta t \, \mathrm{diag}(M)`, with :math:`M` the mass matrices of the Jacobian.
+            The curl curl term is present for ``theta_implicit_em`` only, and the mass-matrix term with ``implicit_evolve.use_mass_matrices_jacobian = true`` only.
+            Nothing is lagged in this case: :math:`D` is updated at every Newton iteration.
           - ``weighted_jacobi.omega`` (``float``, default: Gershgorin estimate from the assembled matrix, or 1.0 if ``use_pcmat = false``) Relaxation factor.
             Setting it turns off ``weighted_jacobi.adaptive_omega``.
           - ``weighted_jacobi.adaptive_omega`` (``bool``, default: true)
