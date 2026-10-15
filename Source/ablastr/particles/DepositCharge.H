@@ -46,6 +46,9 @@ namespace ablastr::particles
  * \param np_to_deposit number of particles to deposit (default: pti.numParticles())
  * \param icomp component in MultiFab to start depositing to
  * \param nc number of components to deposit
+ * \param reduced_shape_mask optional pointer to an amrex::iMultiFab marking cells that should use a reduced (order-1)
+ *                           particle shape for deposition (used for embedded boundary / Esirkepov reduced-shape deposition).
+ *                           If nullptr, reduced-shape deposition is not used.
  */
 template< typename T_PC >
 void
