@@ -379,6 +379,7 @@ Overall simulation parameters
           - ``jacobian.pc_type = pc_petsc``: Use the PETSc solver.
 
             - ``pc_petsc.type`` (``string``, default: "asm")
+              On GPUs, ``lu`` requires a single MPI rank; on several GPUs, use ``asm`` with ``pc_petsc.sub_type = lu``.
             - ``pc_petsc.asm_overlap`` (``int``, default: 0)
             - ``pc_petsc.sub_type`` (``string``, default: "ilu")
             - ``pc_petsc.ilu_factor_levels`` (``int``, default: 2)
