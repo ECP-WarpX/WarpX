@@ -886,7 +886,8 @@ PhysicalParticleContainer::Evolve (ablastr::fields::MultiFabRegister& fields,
 
 void
 PhysicalParticleContainer::DepositMassMatrices (ablastr::fields::MultiFabRegister& fields,
-                                                int lev, Real dt, int particle_shape)
+                                                int lev, Real dt,
+                                                ImplicitOptions const& implicit_options)
 {
     using ablastr::fields::Direction;
     using warpx::fields::FieldType;
@@ -939,7 +940,7 @@ PhysicalParticleContainer::DepositMassMatrices (ablastr::fields::MultiFabRegiste
             WarpXParticleContainer::DepositMassMatrices(pti, wp, uxp, uyp, uzp,
                               Sxx, Sxy, Sxz, Syx, Syy, Syz, Szx, Szy, Szz,
                               bxfab, byfab, bzfab, 0, np_to_deposit, thread_num, lev, lev, dt,
-                              particle_shape);
+                              implicit_options);
 
             amrex::Gpu::synchronize();
         }

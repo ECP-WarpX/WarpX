@@ -128,10 +128,12 @@ public:
      *                reset before the deposition
      * \param[in] lev mesh refinement level for the deposition
      * \param[in] dt time step for the particle level
-     * \param[in] particle_shape order of the particle shape factors used for the deposition
+     * \param[in] implicit_options implicit solver options, including the mass matrices
+     *            stencil and the order of the particle shape factors used for the deposition
     */
     void DepositMassMatrices (ablastr::fields::MultiFabRegister& fields,
-                              int lev, amrex::Real dt, int particle_shape);
+                              int lev, amrex::Real dt,
+                              ImplicitOptions const& implicit_options);
 
     /**
     * \brief This pushes the particle positions by one time step for all the species in the

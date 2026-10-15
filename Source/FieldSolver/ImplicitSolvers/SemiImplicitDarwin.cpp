@@ -107,6 +107,7 @@ void SemiImplicitDarwin::Define ( WarpX*  a_WarpX, bool from_restart)
     // Initialize the mass matrices for plasma response (their stencil width
     // is set by the magnetostatic particle shape)
     InitializeMassMatrices(m_ms_particle_shape);
+    InitializeImplicitOptions();
 
     // The predictor velocity push gathers the electrostatic E-field with the
     // Galerkin scheme. Skip that, and warn, if the user has explicitly selected
@@ -361,8 +362,8 @@ void SemiImplicitDarwin::AccumulateCurrentAndMassMatrices ()
     // zero-then-deposit machinery with the electromagnetic implicit solvers
     // (see ImplicitSolver::PreLinearSolve), which drive the same
     // WarpX::DepositMassMatrices() -> MultiParticleContainer::DepositMassMatrices(),
-    // here with the magnetostatic particle shape.
-    m_WarpX->DepositMassMatrices(m_dt, m_ms_particle_shape);
+    // here with the magnetostatic particle shape (set in m_implicit_options).
+    m_WarpX->DepositMassMatrices(m_dt, m_implicit_options);
 
     // The deposit routine only fills half of each diagonal mass matrix's
     // band (exploiting symmetry); mirror the other half to complete

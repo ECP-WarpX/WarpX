@@ -203,11 +203,15 @@ void init_WarpX (py::module& m)
         )
         .def("deposit_mass_matrices",
             [](WarpX& wx, amrex::Real a_dt, std::optional<int> particle_shape){
-                wx.DepositMassMatrices(a_dt, particle_shape.value_or(WarpX::nox));
+                auto const* solver = wx.get_pointer_ImplicitSolver();
+                if (!solver) { throw py::value_error("deposit_mass_matrices requires an implicit solver"); }
+                ImplicitOptions options = solver->GetImplicitOptions();
+                if (particle_shape) { options.particle_shape = *particle_shape; }
+                wx.DepositMassMatrices(a_dt, options);
             },
             py::arg("dt"), py::arg("particle_shape") = py::none(),
             R"pbdoc(Zero and deposit the mass matrices from all species, with shape factors
-            of order particle_shape (defaults to algo.particle_shape))pbdoc"
+            of order particle_shape (defaults to the shape the mass matrices were sized for))pbdoc"
         )
         .def("sync_mass_matrices",
             [](WarpX& wx){ wx.SyncMassMatrices(); },

@@ -137,7 +137,7 @@ public:
     void DepositMassMatrices (ablastr::fields::MultiFabRegister& /*fields*/,
                               int /*lev*/,
                               amrex::Real /*dt*/,
-                              int /*particle_shape*/) override {}
+                              ImplicitOptions const& /*implicit_options*/) override {}
 };
 
 #endif // #ifndef WARPX_PhotonParticleContainer_H_

@@ -70,6 +70,8 @@ public:
 
     virtual void FinishStep(amrex::Real /* a_start_time */, int /* a_step */) {}
 
+    [[nodiscard]] ImplicitOptions const& GetImplicitOptions () const { return m_implicit_options; }
+
     /**
      * \brief Advance fields and particles by one time step using the specified implicit algorithm
      */
@@ -258,6 +260,9 @@ protected:
      */
     bool m_print_unconverged_particle_details = false;
 
+    // Stable particle options. PreRHSOp copies this before setting per-call values.
+    ImplicitOptions m_implicit_options;
+
     /**
      * \brief whether to skip the full Picard update of particles on the initial newton step
      */
@@ -282,6 +287,11 @@ protected:
      * \brief Width for mass matrices in the preconditioner
      */
     int m_mass_matrices_pc_width = -1;
+
+    /**
+     * \brief Order of the particle shape factors that the mass matrices stencil is sized for
+     */
+    int m_mass_matrices_particle_shape = 1;
 
     /**
      * \brief Direction-dependent component number of mass matrices elements
@@ -325,6 +335,8 @@ protected:
      *            current and the mass matrices; this sets the width of the mass matrices stencil
      */
     void InitializeMassMatrices (int particle_shape);
+
+    void InitializeImplicitOptions ();
 
     void PrintBaseImplicitSolverParameters () const;
 
