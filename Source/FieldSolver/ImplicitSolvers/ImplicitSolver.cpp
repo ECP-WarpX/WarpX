@@ -737,6 +737,9 @@ void ImplicitSolver::parseNonlinearSolverParams ( const amrex::ParmParse&  pp )
         if (m_use_mass_matrices_pc) {
             m_mass_matrices_pc_width = 0;
             pp.query("mass_matrices_pc_width", m_mass_matrices_pc_width);
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                m_mass_matrices_pc_width >= 0,
+                "ImplicitSolver: mass_matrices_pc_width must be a non-negative integer");
         }
         if ( (WarpX::current_deposition_algo == CurrentDepositionAlgo::Villasenor ||
               WarpX::current_deposition_algo == CurrentDepositionAlgo::Esirkepov) &&
