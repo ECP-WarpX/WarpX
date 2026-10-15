@@ -285,6 +285,8 @@ Overall simulation parameters
             The first required linear solve always initializes the PC, including
             after restart. During adaptive implicit substepping, PC updates are forced
             on every Newton iteration, overriding both intervals.
+            With ``jacobian.pc_type = pc_jacobi``, or ``newton.linear_solver = weighted_jacobi`` with ``use_pcmat = true``,
+            an interval greater than 1 requires ``newton.pc_update_newton_interval = 0``.
           - ``newton.relative_tolerance`` (``float``, default: 1.0e-6)
             Must be in [0, 1). Other values are replaced by the default, with a warning.
           - ``newton.absolute_tolerance`` (``float``, default: 0.0)
@@ -316,7 +318,10 @@ Overall simulation parameters
           - ``weighted_jacobi.use_pcmat`` (``bool``, default: true)
             When ``true``, the solver iterates on the assembled matrix that is also used by ``jacobian.pc_type = pc_jacobi`` (see below), with the plasma response included if ``implicit_evolve.use_mass_matrices_pc = true``.
             This matrix approximates the Jacobian, so more nonlinear iterations may be needed.
-            It is updated on the preconditioner update schedule (``newton.pc_update_newton_interval`` and ``newton.pc_update_time_step_interval``).
+            It is assembled on the preconditioner update schedule (``newton.pc_update_newton_interval`` and ``newton.pc_update_time_step_interval``).
+            When these updates are lagged, the Newton step uses the matrix assembled at an earlier Newton iteration or time step.
+            The residual is still evaluated at every Newton iteration, so a converged solve meets the same tolerances; lagging can slow the nonlinear convergence.
+            A solve that stops at ``newton.max_iterations`` without converging (``newton.require_convergence = false``) can give a different result than without lagging.
             When ``false``, the solver uses matrix-free evaluations of the Jacobian, which include the plasma response.
             The Jacobi iteration also needs the diagonal :math:`D` of the Jacobian, which these evaluations do not give.
             It is approximated as :math:`D = 1 + (\theta \Delta t c)^2 \mathrm{diag}(\nabla \times \nabla \times) + c^2 \mu_0 \theta \Delta t \, \mathrm{diag}(M)`, with :math:`M` the mass matrices of the Jacobian.
@@ -419,7 +424,7 @@ Overall simulation parameters
             - ``pc_petsc.euclid_factor_levels`` (``int``, default: 2)
 
           - ``jacobian.pc_type = pc_algmg``: Use AMReX's algebraic multigrid solver (AlgMG) on the sparse matrix that ``pc_petsc`` uses.
-            It runs on CPUs and GPUs, does not require PETSc, and works with both ``newton.linear_solver`` values.
+            It runs on CPUs and GPUs, does not require PETSc, and works with ``newton.linear_solver = amrex_gmres`` and ``petsc_ksp``.
 
             - ``pc_algmg.verbose`` (``bool``, default: true)
             - ``pc_algmg.algmg_verbose`` (``int``, default: 0) Verbosity of the multigrid solver.
