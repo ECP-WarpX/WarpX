@@ -361,12 +361,19 @@ Overall simulation parameters
             - ``pc_curl_curl_mlmg.relative_tolerance`` (``float``, default: 1.0e-4)
             - ``pc_curl_curl_mlmg.absolute_tolerance`` (``float``, default: 1.0e-16)
 
-          - ``jacobian.pc_type = pc_jacobi``: Use the Point-Jacobi method. This preconditioner only captures the plasma response via the diagonal mass matrices.
+          - ``jacobian.pc_type = pc_jacobi``: Use weighted Jacobi iterations on :math:`A = \mathbb{I} + M`, where :math:`M` is the plasma response from the mass matrices (``implicit_evolve.use_mass_matrices_pc = true``).
+            The curl curl operator is not included.
+            With diagonal mass matrices (``implicit_evolve.mass_matrices_pc_width = 0``), the solve is exact in one step.
 
-            - ``pc_jacobi.verbose`` (``bool``, default: true)
-            - ``pc_jacobi.max_iter`` (``int``, default: 10)
+            - ``pc_jacobi.verbose`` (``bool``, default: false)
+            - ``pc_jacobi.verbose_int`` (``int``) If given, overrides ``pc_jacobi.verbose``: a positive value turns on the output.
+            - ``pc_jacobi.max_iter`` (``int``, default: 200)
             - ``pc_jacobi.relative_tolerance`` (``float``, default: 1.0e-4)
             - ``pc_jacobi.absolute_tolerance`` (``float``, default: 1.0e-16)
+            - ``pc_jacobi.omega`` (``float``, default: Gershgorin estimate from the matrix) Relaxation factor.
+              Setting it turns off ``pc_jacobi.adaptive_omega``.
+            - ``pc_jacobi.adaptive_omega`` (``bool``, default: true)
+              When ``true``, the relaxation factor is reduced by a factor of 0.9 whenever the residual increases.
 
           - ``jacobian.pc_type = pc_petsc``: Use the PETSc solver.
 
