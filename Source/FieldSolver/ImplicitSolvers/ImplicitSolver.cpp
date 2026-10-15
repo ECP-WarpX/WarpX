@@ -922,6 +922,10 @@ void ImplicitSolver::InitializeMassMatrices ()
             m_ncomp_zx[1] = 0 + 2*shape + 2*max_grid_crossings;
             m_ncomp_zy[1] = 0 + 2*shape + 2*max_grid_crossings;
             m_ncomp_zz[1] = 1 + 2*(shape-1) + 2*max_grid_crossings;
+#elif defined(WARPX_DIM_3D)
+            m_ncomp_xx = amrex::IntVect{1};
+            m_ncomp_yy = amrex::IntVect{1};
+            m_ncomp_zz = amrex::IntVect{1};
 #endif
             for (int dir=0; dir<AMREX_SPACEDIM; dir++) {
                 Nc_tot_xx *= m_ncomp_xx[dir];
