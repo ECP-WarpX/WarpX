@@ -1866,7 +1866,6 @@ class WeightedJacobiLinearSolver(LinearSolverBase):
         weighted_jacobi.print_matrix_dir = self.print_matrix_dir
 
 
-
 class ChebyshevLinearSolver(LinearSolverBase):
     """
     Sets up the Chebyshev linear solver for the implicit Newton nonlinear solver
@@ -1936,6 +1935,7 @@ class ChebyshevLinearSolver(LinearSolverBase):
         chebyshev.print_matrix = self.print_matrix
         chebyshev.print_matrix_steps = self.print_matrix_steps
         chebyshev.print_matrix_dir = self.print_matrix_dir
+
 
 class CurlCurlMLMGPreconditioner(PreconditionerBase):
     """
@@ -2042,7 +2042,6 @@ class JacobiPreconditioner(AssembledMatrixPreconditionerBase):
     )
 
 
-
 class ChebyshevPreconditioner(AssembledMatrixPreconditionerBase):
     """
     Sets up the Chebyshev preconditioner used during the nonlinear solver
@@ -2074,6 +2073,7 @@ class ChebyshevPreconditioner(AssembledMatrixPreconditionerBase):
         default=None,
         description="Upper bound of the eigenvalues. Estimated with the power method if not set.",
     )
+
 
 class PETScPreconditioner(AssembledMatrixPreconditionerBase):
     """
