@@ -220,9 +220,9 @@ PrescribedCurrentParticleContainer::InitData () {
         return;
     }
 
-#ifdef WARPX_DIM_1D_Z
+#if !defined(WARPX_DIM_3D) && !defined(WARPX_DIM_XZ) && !defined(WARPX_DIM_RZ)
     WARPX_ABORT_WITH_MESSAGE(
-        "Prescribed current injection is not implemented in 1D_Z geometry.");
+        "Prescribed current injection requires 2D XZ, 3D, or RZ geometry.");
 #else
     // Bound particle excursions using the finest spacing before assigning weights.
     compute_velocity_scale();
