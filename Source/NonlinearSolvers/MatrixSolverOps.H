@@ -49,6 +49,9 @@ public:
      *  r_i = sum_{j!=i} |A_ij| / |A_ii| is the off-diagonal row ratio. */
     [[nodiscard]] virtual RT EstimateOmega () const = 0;
 
+    /** False when EstimateOmega() has no spectral information */
+    [[nodiscard]] virtual bool HasOmegaEstimate () const { return true; }
+
     /** y = A * x (matrix-vector product) */
     virtual void Matvec ([[maybe_unused]] T& a_y, [[maybe_unused]] const T& a_x)
     {

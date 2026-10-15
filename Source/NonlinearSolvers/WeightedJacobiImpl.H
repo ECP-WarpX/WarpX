@@ -9,11 +9,14 @@
 
 #include "MatrixSolverOps.H"
 
+#include <ablastr/warn_manager/WarnManager.H>
+
 #include <AMReX.H>
 #include <AMReX_ParmParse.H>
 #include <AMReX_Print.H>
 
 #include <algorithm>
+#include <sstream>
 #include <string>
 
 /**
@@ -88,6 +91,8 @@ private:
     int m_max_iter = 200;
     RT m_omega = RT(1.0);
     bool m_adaptive_omega = true;
+    bool m_user_omega = false;     /**< omega set in the inputs */
+    bool m_omega_warned = false;
     RT m_atol = RT(1.0e-16);
     RT m_rtol = RT(1.0e-4);
 
@@ -116,6 +121,7 @@ void WeightedJacobiImpl<T>::Define (MatrixSolverOps<T>* a_ops,
     pp.query("max_iter", m_max_iter);
     if (pp.query("omega", m_omega)) {
         m_adaptive_omega = false;
+        m_user_omega = true;
     }
     pp.query("adaptive_omega", m_adaptive_omega);
     pp.query("absolute_tolerance", m_atol);
@@ -131,6 +137,18 @@ void WeightedJacobiImpl<T>::Update ()
 
     if (m_adaptive_omega) {
         m_omega = m_matrix_ops->EstimateOmega();
+    } else if (m_user_omega && !m_omega_warned && m_matrix_ops->HasOmegaEstimate()) {
+        // Above the Gershgorin estimate, convergence of the iteration is not guaranteed
+        const RT omega_est = m_matrix_ops->EstimateOmega();
+        if (m_omega > omega_est) {
+            std::stringstream ss;
+            ss << m_name << ".omega = " << m_omega << " exceeds the Gershgorin estimate "
+               << omega_est << " of the matrix; the iteration may diverge. Remove "
+               << m_name << ".omega to use the estimate, or set " << m_name
+               << ".adaptive_omega = true.";
+            ablastr::warn_manager::WMRecordWarning("WeightedJacobi", ss.str());
+            m_omega_warned = true;
+        }
     }
 }
 
