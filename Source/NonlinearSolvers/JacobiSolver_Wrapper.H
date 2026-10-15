@@ -10,6 +10,7 @@
 #include "LinearSolver.H"
 #include "MatrixPrintControl.H"
 #include "WeightedJacobiImpl.H"
+#include "Utils/TextMsg.H"
 #include "FieldSolver/ImplicitSolvers/MFMatrixSolverOps.H"
 #include "FieldSolver/ImplicitSolvers/MultiFabMatrixSolverOps.H"
 
@@ -50,6 +51,11 @@ public:
         pp.query("use_pcmat", m_use_pcmat);
 
         if (m_use_pcmat) {
+            // The stencil matrix I + M has no curl curl term
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                ops->GetThetaForPC() <= amrex::Real(0.0),
+                "weighted_jacobi.use_pcmat = true requires algo.evolve_scheme = semi_implicit_em; "
+                "use weighted_jacobi.use_pcmat = false");
             // Stencil ops on the PC mass matrices, as in JacobiPC
             using OpsType = std::remove_pointer_t<decltype(ops)>;
             auto mf_ops = std::make_unique<MultiFabMatrixSolverOps<Vec, OpsType>>();

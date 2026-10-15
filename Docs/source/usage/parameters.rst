@@ -315,6 +315,7 @@ Overall simulation parameters
           - ``weighted_jacobi.absolute_tolerance`` (``float``, default: 0.0)
           - ``weighted_jacobi.use_pcmat`` (``bool``, default: true)
             When ``true``, the solver iterates on the matrix :math:`A = \mathbb{I} + M` that ``jacobian.pc_type = pc_jacobi`` uses, with :math:`M` the plasma response from the mass matrices (``implicit_evolve.use_mass_matrices_pc = true``).
+            This option requires ``algo.evolve_scheme = semi_implicit_em``.
             This matrix approximates the Jacobian, so more nonlinear iterations may be needed.
             It is updated on the preconditioner update schedule (``newton.pc_update_newton_interval`` and ``newton.pc_update_time_step_interval``).
             When ``false``, the solver uses matrix-free evaluations of the Jacobian.
