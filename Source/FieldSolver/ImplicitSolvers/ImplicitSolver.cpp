@@ -853,9 +853,16 @@ void ImplicitSolver::InitializeMassMatrices ()
         }
         else if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Villasenor) {
 #ifdef WARPX_DIM_3D
-            WARPX_ABORT_WITH_MESSAGE(
-                "Mass matrices for Jacobian with Villasenor deposition are not yet implemented "
-                "in 3D. Use algo.current_deposition = direct.");
+            if (m_use_mass_matrices_jacobian) {
+                WARPX_ABORT_WITH_MESSAGE(
+                    "ImplicitSolver: Mass matrices for Jacobian with Villasenor deposition "
+                    "is not yet implemented in 3D. Use algo.current_deposition = direct.");
+            }
+            else if (m_use_mass_matrices_pc && m_mass_matrices_pc_width > 0) {
+                WARPX_ABORT_WITH_MESSAGE(
+                    "ImplicitSolver: Mass matrices pc width > 0 with the "
+                    "Villasenor deposition in 3D is not yet supported.");
+            }
 #else
             const int max_grid_crossings = ngJ[0] - shape / 2;
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(max_grid_crossings > 0,
