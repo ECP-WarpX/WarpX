@@ -59,18 +59,22 @@ WarpX::SetElectricFieldAndApplyBCs ( const WarpXSolverVec& a_E, amrex::Real a_ti
         for (int n = 0; n < 3; ++n) {
             amrex::MultiFab::Copy(*Efield_fp[lev][n], *Evec[lev][n], 0, 0, ncomps, 0);
         }
-        ApplyEfieldBoundary(lev, PatchType::fine, a_time);
     }
     for (auto const& block : a_E.getExtraFields()) {
         auto const field = m_fields.get_alldirs(block.type, block.level);
         for (int n = 0; n < 3; ++n) {
             amrex::MultiFab::Copy(*field[n], *block.values[n], 0, 0, field[n]->nComp(), 0);
         }
-        if (block.type == FieldType::Efield_cp) {
-            ApplyEfieldBoundary(block.level, PatchType::coarse, a_time);
-        }
     }
     FillBoundaryE(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
+    // Physical-boundary reflections can read neighboring grids' guard cells.
+    // Refresh those cells from the trial field before applying the reflections.
+    for (int lev = 0; lev <= finest_level; ++lev) {
+        ApplyEfieldBoundary(lev, PatchType::fine, a_time);
+        if (lev > 0) {
+            ApplyEfieldBoundary(lev, PatchType::coarse, a_time);
+        }
+    }
 }
 
 void
