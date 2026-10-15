@@ -282,6 +282,8 @@ CurrentControlledPort::PatchContainsPort (ablastr::fields::VectorField const& Bf
 void
 CurrentControlledPort::ValidateGeometry (
     ablastr::fields::VectorField const& Bfield) const {
+    // Patch contours share a physical time, and their geometry is cached at initialization.
+    // Subcycling, moving windows, and load balancing would invalidate those assumptions.
     WarpX const& warpx = WarpX::GetInstance();
     bool subcycling = false;
     amrex::ParmParse("warpx").query("do_subcycling", subcycling);
@@ -317,6 +319,8 @@ CurrentControlledPort::ValidateGeometry (
     }
 
 #if defined(WARPX_DIM_3D) || defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+    // Translate each geometry's mesh coordinates to the physical x/y/z terminal bounds.
+    // In RZ the physical x coordinate is radius, and the azimuthal bounds are omitted.
     amrex::Geometry const& geometry = Geometry();
     std::array<amrex::Real, 3> domain_lo{{0.0_rt, 0.0_rt, 0.0_rt}};
     std::array<amrex::Real, 3> domain_hi{{0.0_rt, 0.0_rt, 0.0_rt}};
@@ -379,6 +383,8 @@ CurrentControlledPort::ValidateGeometry (
     amrex::MultiFab const& terminal_field = *Bfield[1];
     int const terminal_mesh_direction = m_direction == 0 ? 0 : 1;
 #endif
+    // Distinct physical positions can round onto the same native field plane.
+    // Reject that degenerate contour before constructing its response.
     int const terminal_plane_0 = nearest_index(Geometry(), terminal_field, terminal_mesh_direction,
                                                m_terminal_0.lo[m_direction]);
     int const terminal_plane_1 = nearest_index(Geometry(), terminal_field, terminal_mesh_direction,

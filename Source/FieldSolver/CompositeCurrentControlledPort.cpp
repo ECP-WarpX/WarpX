@@ -26,6 +26,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
 #include <limits>
 #include <numeric>
 #include <utility>
@@ -339,7 +340,7 @@ CompositeCurrentControlledPort::Measure ()
                         }
                         int const i = index[0], j = index[1], k = index[2];
                         weight *= permeability ? PhysConst::mu0 / permeability(i, j, k) : 1.0_rt;
-                        int const row = point.row * channels;
+                        std::size_t const row = static_cast<std::size_t>(point.row) * channels;
                         amrex::Real const contribution = weight * values(i, j, k);
                         amrex::Gpu::Atomic::AddNoRet(sums + row, contribution);
                         amrex::Gpu::Atomic::AddNoRet(sums + row + channels - 2,
@@ -370,15 +371,17 @@ CompositeCurrentControlledPort::Measure ()
         m_response.resize(m_planes.size() * (channels - 3));
     }
     for (int row = 0; row < static_cast<int>(m_planes.size()); ++row) {
-        result.circulation[row] = data[row * channels];
-        result.absolute_circulation[row] = data[row * channels + channels - 2];
+        std::size_t const row_offset = static_cast<std::size_t>(row) * channels;
+        std::size_t const response_offset = static_cast<std::size_t>(row) * (channels - 3);
+        result.circulation[row] = data[row_offset];
+        result.absolute_circulation[row] = data[row_offset + channels - 2];
         if (build_response) {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                data[row * channels + channels - 1] == 0.0_rt,
+                data[row_offset + channels - 1] == 0.0_rt,
                 "A composite current-port contour must remain outside covered "
                 "EB cells.");
             for (int slot = 0; slot < channels - 3; ++slot) {
-                m_response[row * (channels - 3) + slot] = data[row * channels + 1 + slot];
+                m_response[response_offset + slot] = data[row_offset + 1 + slot];
             }
         }
     }
@@ -395,9 +398,10 @@ CompositeCurrentControlledPort::Solve (Measurement const& measured,
     std::vector<double> residual(rows), normalization(rows);
     double threshold = 0;
     for (int row = 0; row < rows; ++row) {
+        std::size_t const row_offset = static_cast<std::size_t>(row) * slots;
         double norm = 0;
         for (int slot = 0; slot < slots; ++slot) {
-            double const value = response[row * slots + slot];
+            double const value = response[row_offset + slot];
             norm += value * value;
         }
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(norm > 0,
@@ -411,16 +415,17 @@ CompositeCurrentControlledPort::Solve (Measurement const& measured,
                                 std::max(scale, 1.e-30) / normalization[row];
         threshold += roundoff * roundoff;
         for (int slot = 0; slot < slots; ++slot) {
-            response[row * slots + slot] /= normalization[row];
+            response[row_offset + slot] /= normalization[row];
         }
     }
     auto const transpose = [&] (std::vector<double> const& input) {
         std::vector<double> result(m_unknowns, 0);
         for (int row = 0; row < rows; ++row) {
+            std::size_t const row_offset = static_cast<std::size_t>(row) * slots;
             for (int slot = 0; slot < slots; ++slot) {
-                int const column = m_columns[row * slots + slot];
+                int const column = m_columns[row_offset + slot];
                 if (column >= 0) {
-                    result[column] += response[row * slots + slot] * input[row];
+                    result[column] += response[row_offset + slot] * input[row];
                 }
             }
         }
@@ -429,10 +434,11 @@ CompositeCurrentControlledPort::Solve (Measurement const& measured,
     auto const multiply = [&] (std::vector<double> const& input) {
         std::vector<double> result(rows, 0);
         for (int row = 0; row < rows; ++row) {
+            std::size_t const row_offset = static_cast<std::size_t>(row) * slots;
             for (int slot = 0; slot < slots; ++slot) {
-                int const column = m_columns[row * slots + slot];
+                int const column = m_columns[row_offset + slot];
                 if (column >= 0) {
-                    result[row] += response[row * slots + slot] * input[column];
+                    result[row] += response[row_offset + slot] * input[column];
                 }
             }
         }
@@ -446,7 +452,8 @@ CompositeCurrentControlledPort::Solve (Measurement const& measured,
     // constraints on coarse-only contour segments do not require an inverse.
     std::vector<double> solution(rows, 0), direction = residual;
     double squared = dot(residual, residual);
-    int const iterations = std::min(2 * rows + 32, 2000);
+    int const iterations =
+        static_cast<int>(std::min(std::size_t{2} * m_planes.size() + 32, std::size_t{2000}));
     for (int iteration = 0; iteration < iterations && squared > threshold; ++iteration) {
         auto const applied = multiply(transpose(direction));
         double const denominator = dot(direction, applied);
