@@ -31,8 +31,9 @@ struct WarpXSolverDOF
 
     amrex::Long m_nDoFs_l = 0; /*!< Local nDOF */
     amrex::Long m_nDoFs_g = 0; /*!< Global nDOF */
+    amrex::Vector<amrex::Long> m_row_offsets; /*!< First global DOF of each process, and total */
 
-    void Define ( WarpX* const, int, const std::string&, const std::string&);
+    void Define ( WarpX* , int, const std::string&, const std::string&);
 
     void fill_local_dof (amrex::iMultiFab& dof, amrex::iMultiFab const& mask);
     void fill_global_dof ();

@@ -8,8 +8,10 @@
  */
 AMREX_ENUM(PreconditionerType,
     pc_curl_curl_mlmg,
+    pc_darwin_mlmg,
     pc_jacobi,
     pc_petsc,
+    pc_algmg,
     none
 );
 

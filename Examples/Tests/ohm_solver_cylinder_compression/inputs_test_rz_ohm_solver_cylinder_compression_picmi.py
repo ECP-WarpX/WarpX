@@ -58,7 +58,7 @@ class PlasmaCylinderCompression(object):
     NPPC = 100
 
     # Number of substeps used to update B
-    substeps = 30
+    substeps = 60
 
     def Bz(self, r):
         return np.sqrt(
@@ -286,7 +286,7 @@ class PlasmaCylinderCompression(object):
         # Add field loader callback
         B_ext = picmi.LoadInitialFieldFromPython(
             load_from_python=self.load_fields,
-            warpx_do_divb_cleaning_external=True,
+            warpx_do_initial_div_cleaning=True,
             load_B=True,
             load_E=False,
         )

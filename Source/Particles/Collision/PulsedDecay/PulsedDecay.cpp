@@ -1,0 +1,316 @@
+/* Copyright 2026 The WarpX Community
+ *
+ * This file is part of WarpX.
+ *
+ * Author: Justin Angus (LLNL)
+ *
+ * License: BSD-3-Clause-LBNL
+ */
+#include "PulsedDecay.H"
+
+#include "Particles/Collision/BinaryCollision/BinaryCollisionUtils.H"
+#include "Particles/ParticleCreation/SmartCopy.H"
+#include "Particles/Pusher/GetAndSetPosition.H"
+#include "Utils/Parser/ParserUtils.H"
+#include "Utils/TextMsg.H"
+#include "Utils/ParticleUtils.H"
+#include "WarpX.H"
+
+#include <ablastr/profiler/ProfilerWrapper.H>
+
+#include <AMReX_Math.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_REAL.H>
+#include <AMReX_Vector.H>
+#include <AMReX_ParticleTile.H>
+
+#include <cmath>
+#include <string>
+
+PulsedDecay::PulsedDecay (std::string const& collision_name, MultiParticleContainer const * mypc)
+    : CollisionBase(collision_name)
+{
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(m_species_names.size() == 1,
+        "PulsedDecay: pulsed_decay must have exactly one species.");
+
+    using namespace amrex::literals;
+
+    const amrex::ParmParse pp_collision_name(collision_name);
+
+    // Get the product species
+    pp_collision_name.queryarr("product_species", m_product_species);
+
+    m_weight_ratio = 1;
+    pp_collision_name.query("weight_ratio", m_weight_ratio);
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        m_weight_ratio >= 1,
+        "PulsedDecay: weight_ratio must be greater than or equal to one");
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( m_product_species.size() == 2,
+        "PulsedDecay: product_species size must be equal to two");
+
+    auto& parent_species = mypc->GetParticleContainerFromName(m_species_names[0]);
+    auto& productA = mypc->GetParticleContainerFromName(m_product_species[0]);
+    auto& productB = mypc->GetParticleContainerFromName(m_product_species[1]);
+
+    // Verify that the total charge of the product species matches the charge of the parent species
+    const int Z_P = static_cast<int>(amrex::Math::round(parent_species.getCharge() / PhysConst::q_e));
+    const int Z_A = static_cast<int>(amrex::Math::round(productA.getCharge() / PhysConst::q_e));
+    const int Z_B = static_cast<int>(amrex::Math::round(productB.getCharge() / PhysConst::q_e));
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( Z_P == Z_A + Z_B,
+        "PulsedDecay: total charge of product species must match the parent species charge");
+
+    // Verify that the total mass of the product species matches the mass of the parent species
+    const amrex::ParticleReal Mass_P = parent_species.getMass();
+    const amrex::ParticleReal Mass_A = productA.getMass();
+    const amrex::ParticleReal Mass_B = productB.getMass();
+
+    const amrex::ParticleReal mass_ratio = (Mass_A + Mass_B) / Mass_P;
+    const amrex::ParticleReal mass_error = amrex::Math::abs(mass_ratio - 1.0_prt);
+
+    const amrex::ParticleReal eps = std::numeric_limits<amrex::ParticleReal>::epsilon();
+    const amrex::ParticleReal rtol = 100.0_prt * eps;
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( mass_error <= rtol,
+        "PulsedDecay: total mass of product species must match the parent species mass");
+
+    // Parse the direction-dependent temperature for product species A
+    amrex::Vector<amrex::ParticleReal> TA_tmp;
+    pp_collision_name.getarr("productA_temperature_eV", TA_tmp);
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( TA_tmp.size() == 3,
+        "PulsedDecay: productA_temperature_eV must have exactly 3 values");
+
+    for (int i = 0; i < 3; ++i) {
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE( TA_tmp[i] >= 0.0,
+            "PulsedDecay: productA_temperature_eV must be greater than or equal to zero");
+    }
+
+    // Set the direction-dependent thermal speed for product species A
+    const amrex::ParticleReal VtAx = std::sqrt(PhysConst::q_e*TA_tmp[0] / productA.getMass());
+    const amrex::ParticleReal VtAy = std::sqrt(PhysConst::q_e*TA_tmp[1] / productA.getMass());
+    const amrex::ParticleReal VtAz = std::sqrt(PhysConst::q_e*TA_tmp[2] / productA.getMass());
+    m_productA_thermal_speed = {VtAx, VtAy, VtAz};
+
+    // Parse the direction-dependent temperature for product species B
+    amrex::Vector<amrex::ParticleReal> TB_tmp;
+    pp_collision_name.getarr("productB_temperature_eV", TB_tmp);
+
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE( TB_tmp.size() == 3,
+        "PulsedDecay: productB_temperature_eV must have exactly 3 values");
+
+    for (int i = 0; i < 3; ++i) {
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE( TB_tmp[i] >= 0.0,
+            "PulsedDecay: productB_temperature_eV must be greater than or equal to zero");
+    }
+
+    // Set the direction-dependent thermal speed for product species B
+    const amrex::ParticleReal VtBx = std::sqrt(PhysConst::q_e*TB_tmp[0] / productB.getMass());
+    const amrex::ParticleReal VtBy = std::sqrt(PhysConst::q_e*TB_tmp[1] / productB.getMass());
+    const amrex::ParticleReal VtBz = std::sqrt(PhysConst::q_e*TB_tmp[2] / productB.getMass());
+    m_productB_thermal_speed = {VtBx, VtBy, VtBz};
+
+    // Parse the decay rate
+    std::string decay_rate_str;
+    utils::parser::Store_parserString(pp_collision_name, "decay_rate(x,y,z,t)", decay_rate_str);
+    m_decay_rate_parser = utils::parser::makeParser(decay_rate_str, {"x", "y", "z", "t"});
+
+    // Compile the decay rate parser
+    m_decay_rate_func = m_decay_rate_parser.compile<4>();
+
+}
+
+void
+PulsedDecay::doCollisions (amrex::Real cur_time, amrex::Real dt, MultiParticleContainer* mypc)
+{
+    ABLASTR_PROFILE("PulsedDecay::doCollisions()");
+
+    using namespace amrex::literals;
+
+    using ParticleTileType = WarpXParticleContainer::ParticleTileType;
+    using ParticleTileDataType = ParticleTileType::ParticleTileDataType;
+    using ParticleBins = amrex::DenseBins<ParticleTileDataType>;
+    using index_type = ParticleBins::index_type;
+    using SoaData_type = typename WarpXParticleContainer::ParticleTileType::ParticleTileDataType;
+
+    // Get handles to species particle containters
+    auto& species1 = mypc->GetParticleContainerFromName(m_species_names[0]);
+    auto& productA = mypc->GetParticleContainerFromName(m_product_species[0]);
+    auto& productB = mypc->GetParticleContainerFromName(m_product_species[1]);
+
+    const SmartCopyFactory copy_factory_A(species1, productA);
+    const SmartCopyFactory copy_factory_B(species1, productB);
+    const SmartCopy CopyA = copy_factory_A.getSmartCopy();
+    const SmartCopy CopyB = copy_factory_B.getSmartCopy();
+
+#ifdef AMREX_USE_GPU
+    amrex::Gpu::DeviceScalar<SmartCopy> d_CopyA(CopyA);
+    amrex::Gpu::DeviceScalar<SmartCopy> d_CopyB(CopyB);
+
+    SmartCopy const* AMREX_RESTRICT CopyAPtr = d_CopyA.dataPtr();
+    SmartCopy const* AMREX_RESTRICT CopyBPtr = d_CopyB.dataPtr();
+#else
+    SmartCopy const* AMREX_RESTRICT CopyAPtr = &CopyA;
+    SmartCopy const* AMREX_RESTRICT CopyBPtr = &CopyB;
+#endif
+
+    const int weight_ratio = m_weight_ratio;
+
+    // get parsers for the decay rate
+    auto nu_func = m_decay_rate_func;
+
+    const amrex::ParticleReal VtA_x = m_productA_thermal_speed[0];
+    const amrex::ParticleReal VtA_y = m_productA_thermal_speed[1];
+    const amrex::ParticleReal VtA_z = m_productA_thermal_speed[2];
+    const amrex::ParticleReal VtB_x = m_productB_thermal_speed[0];
+    const amrex::ParticleReal VtB_y = m_productB_thermal_speed[1];
+    const amrex::ParticleReal VtB_z = m_productB_thermal_speed[2];
+
+    // Loop over refinement levels
+    const int flvl = species1.finestLevel();
+    for (int lev = 0; lev <= flvl; ++lev) {
+
+        // Enable tiling
+        amrex::MFItInfo info;
+        if (amrex::Gpu::notInLaunchRegion()) { info.EnableTiling(WarpXParticleContainer::tile_size); }
+
+#ifdef AMREX_USE_OMP
+        info.SetDynamic(true);
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#endif
+        for (amrex::MFIter mfi = species1.MakeMFIter(lev, info); mfi.isValid(); ++mfi){
+
+            // Extract species 1 particles in the grid tile that `mfi` points to
+            ParticleTileType& ptile_1 = species1.ParticlesAt(lev, mfi);
+
+            const auto getPosition1 = GetParticlePosition<PIdx>(ptile_1);
+
+            const auto np1 = ptile_1.numParticles();
+            auto soa_1 = ptile_1.getParticleTileData();
+            amrex::ParticleReal* AMREX_RESTRICT w1 = soa_1.m_rdata[PIdx::w];
+            uint64_t* AMREX_RESTRICT idcpu1 = soa_1.m_idcpu;
+
+            // The number of new particle pairs to add for each species 1 particle
+            amrex::Gpu::DeviceVector<int> new_particles(np1, 0);
+            int * new_particles_ptr = new_particles.dataPtr();
+
+            amrex::ParallelForRNG(np1,
+                [=] AMREX_GPU_DEVICE (int ip, amrex::RandomEngine const& engine) noexcept
+                {
+                    if (idcpu1[ip] == amrex::ParticleIdCpus::Invalid) { return; }
+
+                    amrex::ParticleReal xp, yp, zp;
+                    getPosition1(ip, xp, yp, zp);
+
+                    const amrex::ParticleReal nu = nu_func(xp, yp, zp, cur_time);
+                    const amrex::ParticleReal probability = (-std::expm1(-nu*dt));
+
+                    if (probability >= amrex::Random(engine)) {
+                        new_particles_ptr[ip] = weight_ratio;
+                    }
+                }
+            );
+
+            // Compute number of particles to add and the offset array
+            amrex::Gpu::DeviceVector<index_type> offsets(np1);
+            const index_type total_new = amrex::Scan::ExclusiveSum(np1, new_particles.dataPtr(), offsets.dataPtr());
+
+            // Resize product species arrays to make space for new particles
+            ParticleTileType& ptileA = productA.ParticlesAt(lev, mfi);
+            ParticleTileType& ptileB = productB.ParticlesAt(lev, mfi);
+            const index_type old_npA = ptileA.numParticles();
+            const index_type old_npB = ptileB.numParticles();
+            ptileA.resize(old_npA + total_new);
+            ptileB.resize(old_npB + total_new);
+
+            // Host-side SoA handles for the product species
+            SoaData_type soa_productA = ptileA.getParticleTileData();
+            SoaData_type soa_productB = ptileB.getParticleTileData();
+
+#ifdef AMREX_USE_GPU
+            // Make device copies so the kernel sees device-resident handles
+            amrex::Gpu::DeviceScalar<SoaData_type> d_soaA(soa_productA);
+            amrex::Gpu::DeviceScalar<SoaData_type> d_soaB(soa_productB);
+
+            SoaData_type const* AMREX_RESTRICT soaA_ptr = d_soaA.dataPtr();
+            SoaData_type const* AMREX_RESTRICT soaB_ptr = d_soaB.dataPtr();
+#else
+            SoaData_type const* AMREX_RESTRICT soaA_ptr = &soa_productA;
+            SoaData_type const* AMREX_RESTRICT soaB_ptr = &soa_productB;
+#endif
+
+            const index_type* AMREX_RESTRICT offsets_ptr = offsets.dataPtr();
+
+            amrex::ParticleReal* AMREX_RESTRICT wA  = soa_productA.m_rdata[PIdx::w];
+            amrex::ParticleReal* AMREX_RESTRICT uAx = soa_productA.m_rdata[PIdx::ux];
+            amrex::ParticleReal* AMREX_RESTRICT uAy = soa_productA.m_rdata[PIdx::uy];
+            amrex::ParticleReal* AMREX_RESTRICT uAz = soa_productA.m_rdata[PIdx::uz];
+
+            amrex::ParticleReal* AMREX_RESTRICT wB  = soa_productB.m_rdata[PIdx::w];
+            amrex::ParticleReal* AMREX_RESTRICT uBx = soa_productB.m_rdata[PIdx::ux];
+            amrex::ParticleReal* AMREX_RESTRICT uBy = soa_productB.m_rdata[PIdx::uy];
+            amrex::ParticleReal* AMREX_RESTRICT uBz = soa_productB.m_rdata[PIdx::uz];
+
+            amrex::ParallelForRNG(np1,
+                [=] AMREX_GPU_DEVICE (int ip, amrex::RandomEngine const& engine) noexcept
+                {
+                    auto const& CopyAF = *CopyAPtr;
+                    auto const& CopyBF = *CopyBPtr;
+
+                    if (new_particles_ptr[ip] > 0) {
+                        for (int j = 0 ; j < new_particles_ptr[ip] ; j++) {
+
+                            const index_type ip_A = old_npA + offsets_ptr[ip] + j;
+                            const index_type ip_B = old_npB + offsets_ptr[ip] + j;
+
+                            // Create product particles at position of particle from species 1
+                            CopyAF(*soaA_ptr, soa_1, ip, static_cast<int>(ip_A), engine);
+                            CopyBF(*soaB_ptr, soa_1, ip, static_cast<int>(ip_B), engine);
+
+                            // Set product species A particle velocity to parent particle velocity plus thermal
+                            uAx[ip_A] += VtA_x*RandomNormal(0_prt, 1.0_prt, engine);
+                            uAy[ip_A] += VtA_y*RandomNormal(0_prt, 1.0_prt, engine);
+                            uAz[ip_A] += VtA_z*RandomNormal(0_prt, 1.0_prt, engine);
+
+                            // Set product species B velocity to parent particle velocity plus thermal
+                            uBx[ip_B] += VtB_x*RandomNormal(0_prt, 1.0_prt, engine);
+                            uBy[ip_B] += VtB_y*RandomNormal(0_prt, 1.0_prt, engine);
+                            uBz[ip_B] += VtB_z*RandomNormal(0_prt, 1.0_prt, engine);
+
+                            // Set the weight of the product particles
+                            wA[ip_A] = w1[ip]/weight_ratio;
+                            wB[ip_B] = w1[ip]/weight_ratio;
+                        }
+
+                        w1[ip] = 0.;
+                        idcpu1[ip] = amrex::ParticleIdCpus::Invalid;
+                    }
+                }
+            );
+
+            // Initialize the user runtime components
+            if (total_new > 0) {
+                const auto start_indexA = int(old_npA);
+                const auto stop_indexA  = int(old_npA + total_new);
+                ParticleCreation::DefaultInitializeRuntimeAttributes(ptileA,
+                                                     productA, start_indexA, stop_indexA);
+
+                const auto start_indexB = int(old_npB);
+                const auto stop_indexB  = int(old_npB + total_new);
+                ParticleCreation::DefaultInitializeRuntimeAttributes(ptileB,
+                                                     productB, start_indexB, stop_indexB);
+            }
+
+            amrex::Gpu::synchronize();
+
+            // Set new particle IDs
+            setNewParticleIDs(ptileA, old_npA, total_new);
+            setNewParticleIDs(ptileB, old_npB, total_new);
+
+        }
+
+    }
+
+}
