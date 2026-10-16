@@ -187,7 +187,7 @@ WarpX::ComputeDistanceToEB ([[maybe_unused]] const std::string& field_name)
         auto* distance_mf = m_fields.get(field_name, lev);
 
         // 6 Arguments: level, geom, boxarray, dmap, ngrow vector, support
-        amrex::EBFArrayBoxFactory sink_eb_fact(
+        const amrex::EBFArrayBoxFactory sink_eb_fact(
             eb_level,
             Geom(lev),
             distance_mf->boxArray(),
