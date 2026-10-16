@@ -32,8 +32,8 @@ add_warpx_test(
 )
 
 add_warpx_test(
-    test_3d_initial_distribution  # name
-    RSPHER  # dims
+    test_rsphere_initial_distribution  # name
+    RSPHERE  # dims
     1  # nprocs
     inputs_test_rsphere_initial_distribution  # inputs
     "analysis_rsphere.py"  # analysis
