@@ -1598,7 +1598,7 @@ void WarpX::CheckGuardCells()
 void WarpX::InitializeEBGridData (int lev)
 {
 #ifdef AMREX_USE_EB
-    auto const eb_fact = fieldEBFactory(lev);
+    auto const& eb_fact = fieldEBFactory(lev);
 
     if (WarpX::electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD )
     {
