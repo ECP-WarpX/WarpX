@@ -43,7 +43,7 @@ namespace
 
         std::stringstream ss_out;
 
-        std::ranges::for_each (wrapped_text,
+        std::ranges::for_each(wrapped_text,
             [&,ln=0](const auto& line) mutable {
                 ss_out << ((ln++ == 0) ? msg_prefix : msg_line_prefix);
                 ss_out << line << "\n";
