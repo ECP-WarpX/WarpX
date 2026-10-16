@@ -13,7 +13,7 @@ same shape there, otherwise eps0 div(E) - rho is nonzero on regular nodes next
 to the EB while particles are present (shapes > 1).
 
 div(E) is evaluated here from Efield_fp with the cylindrical Yee divergence and
-rho is deposited into a local MultiFab, so the check is independent of the
+rho is a fresh deposit (get_charge_density), so the check is independent of the
 diagnostic interpolation (the divE diagnostic is cell-centered, and WarpX's
 nodal ComputeDivE has no Python binding). Nodes near the injection radius are
 excluded: ring creation adds charge without a current there by construction.
@@ -69,7 +69,6 @@ sim.initialize_inputs()
 sim.initialize_warpx()
 
 warpx = sim.extension.warpx
-amr = sim.extension.amr
 particles = sim.particles.get("electrons")
 dr, dz = R_WALL / NR, LENGTH / NZ
 r_node = np.arange(NR + 1) * dr
@@ -77,22 +76,14 @@ r_half = (np.arange(NR) + 0.5) * dr
 ring_volume = 2.0 * np.pi * r_node * dr * dz
 z_birth = (np.arange(NZ) + 0.5) * dz
 inject_steps = STEPS // 3
-# Scratch rho: pywarpx's deposit_charge_density() needs rho_fp, which a Yee run
-# without div(E) cleaning does not allocate.
-rho = amr.MultiFab(
-    warpx.boxArray(0).surroundingNodes(), warpx.DistributionMap(0), 1, amr.IntVect(8)
-)
 # regular nodes between the EB surface region and the injection region
 checked = (r_node > R_ROD + dr) & (r_node < R_BIRTH - 2.5 * dr)
 history = []
 
 
 def deposited_rho():
-    rho.set_val(0.0)
-    particles.deposit_charge(rho, 0)
-    warpx.apply_inverse_volume_scaling_to_charge_density(rho, 0)
-    rho.sum_boundary(warpx.Geom(0).periodicity())
-    return rho[...][:, :NZ]
+    """Freshly deposited charge density (RZ volume scaling and guard sum included)."""
+    return particles.get_charge_density(0, False)[...][:, :NZ]
 
 
 def divergence():
@@ -140,7 +131,7 @@ print(
 
 callbacks.uninstallcallback("beforestep", inject)
 callbacks.uninstallcallback("afterstep", record)
-rho = particles = None
+particles = None
 gc.collect()
 sim.finalize()
 
