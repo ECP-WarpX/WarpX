@@ -67,6 +67,7 @@ void SemiImplicitDarwin::Define ( WarpX*  a_WarpX, bool from_restart)
     // the linear operator is defined below, since the operator sizes its scratch
     // space from the mass matrix stencil.
     InitializeMassMatrices();
+    InitializeImplicitOptions();
 
     // Get the linear solver input parameters
     const amrex::ParmParse pp_l(amrex::getEnumNameString(m_linear_solver_type));
@@ -348,7 +349,7 @@ void SemiImplicitDarwin::AccumulateCurrentAndMassMatrices ()
     // zero-then-deposit machinery with the electromagnetic implicit solvers
     // (see ImplicitSolver::PreLinearSolve), which drive the same
     // WarpX::DepositMassMatrices() -> MultiParticleContainer::DepositMassMatrices().
-    m_WarpX->DepositMassMatrices(m_dt);
+    m_WarpX->DepositMassMatrices(m_dt, m_implicit_options);
 
     // The deposit routine only fills half of each diagonal mass matrix's
     // band (exploiting symmetry); mirror the other half to complete
