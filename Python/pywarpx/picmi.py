@@ -1299,6 +1299,11 @@ class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid, WarpXGridBase):
         default=None,
         description="Blocking factor (which controls the block size) in the z direction (the second axis of the grid, y in PICMI)",
     )
+    particle_boundary_eb: str | None = Field(
+        default=None,
+        alias="warpx_boundary_particle_eb",
+        description="The boundary condition applied to the particles when they reach the surface of the embedded boundary. Absorbing, Reflecting, or Transparent",
+    )
     # option names (warpx_potential_lo/hi_x/z) differ from the field names:
     potential_xmin: float | str | None = Field(
         default=None,
@@ -1361,6 +1366,7 @@ class Cartesian2DGrid(picmistandard.PICMI_Cartesian2DGrid, WarpXGridBase):
         pywarpx.amr.blocking_factor_y = self.blocking_factor_y
 
         # Boundary conditions
+        pywarpx.boundary.particle_eb = self.particle_boundary_eb
         pywarpx.boundary.field_lo = [
             BC_map[bc] for bc in self.lower_boundary_conditions
         ]
@@ -1430,6 +1436,11 @@ class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid, WarpXGridBase):
     blocking_factor_z: int | None = Field(
         default=None,
         description="Blocking factor (which controls the block size) in the z direction",
+    )
+    particle_boundary_eb: str | None = Field(
+        default=None,
+        alias="warpx_boundary_particle_eb",
+        description="The boundary condition applied to the particles when they reach the surface of the embedded boundary. Absorbing, Reflecting, or Transparent",
     )
     potential_xmin: float | str | None = Field(
         default=None,
@@ -1501,6 +1512,7 @@ class Cartesian3DGrid(picmistandard.PICMI_Cartesian3DGrid, WarpXGridBase):
         pywarpx.amr.blocking_factor_z = self.blocking_factor_z
 
         # Boundary conditions
+        pywarpx.boundary.particle_eb = self.particle_boundary_eb
         pywarpx.boundary.field_lo = [
             BC_map[bc] for bc in self.lower_boundary_conditions
         ]
@@ -3592,6 +3604,96 @@ class MacroscopicProperty(
             )
 
 
+class ParticleSink(picmistandard.PICMI_Interaction):
+    """Custom class to handle set up of particle sinks specific to WarpX."""
+
+    # Allow arbitrary extra keyword arguments for implicit function variables
+    model_config = ConfigDict(extra="allow")
+
+    name: str = Field(description="The particle sink name to set.")
+    implicit_function: str | None = Field(
+        default=None,
+        description="Analytic expression describing the embedded boundary",
+    )
+    stl_file: str | None = Field(
+        default=None,
+        description="STL file path (string), file contains the embedded boundary geometry",
+    )
+    stl_scale: float | None = Field(
+        default=None,
+        description="Factor by which the STL geometry is scaled",
+    )
+    stl_center: list[float] | None = Field(
+        default=None,
+        description="Vector by which the STL geometry is translated (in meters)",
+    )
+    stl_reverse_normal: bool = Field(
+        default=False,
+        description="If True inverts the orientation of the STL geometry",
+    )
+    type: str = Field(
+        default="Absorbing",
+        description="The boundary condition applied to the particles when they reach the surface of the embedded boundary. Absorbing, Reflecting, Thermal, or None",
+    )
+    user_defined_kw: dict[str, Any] = Field(
+        default_factory=dict,
+        exclude=True,
+        description="Extra expression parameters parsed from keyword arguments",
+    )
+
+    @model_validator(mode="after")
+    def _validate_and_parse_kw(self) -> "ParticleSink":
+        # 1. Post-instantiation assertions
+        assert self.stl_file is None or self.implicit_function is None, (
+            "Only one between implicit_function and stl_file can be specified"
+        )
+
+        if self.stl_file is None:
+            assert self.stl_scale is None, (
+                "EB can only be scaled when using an stl file"
+            )
+            assert self.stl_center is None, (
+                "EB can only be translated when using an stl file"
+            )
+            assert self.stl_reverse_normal is False, (
+                "EB can only be reversed when using an stl file"
+            )
+
+        available_types = ["Absorbing", "Reflecting", "Thermal", "None"]
+        assert self.type in available_types, (
+            "boundaries must be Absorbing, Reflecting, Thermal, or None"
+        )
+
+        # 2. Extract extra expression variables from extra kwargs
+        if self.implicit_function and self.__pydantic_extra__:
+            for k, v in list(self.__pydantic_extra__.items()):
+                if re.search(r"\b%s\b" % k, self.implicit_function):
+                    self.user_defined_kw[k] = v
+
+        return self
+
+    def particle_sink_initialize_inputs(self):
+        # Add the user defined keywords to my_constants
+        self.mangle_dict = pywarpx.my_constants.add_keywords(self.user_defined_kw)
+
+        # Register inputs with pywarpx for this sink
+        self.particle_sink = pywarpx.Particles.new_particle_sink(self.name)
+        if self.implicit_function is not None:
+            expression = pywarpx.my_constants.mangle_expression(
+                self.implicit_function, self.mangle_dict
+            )
+            self.particle_sink.geom_type = "implicit_function"
+            self.particle_sink.implicit_function = expression
+
+        elif self.stl_file is not None:
+            self.particle_sink.geom_type = "stl"
+            self.particle_sink.stl_file = self.stl_file
+            self.particle_sink.stl_scale = self.stl_scale
+            self.particle_sink.stl_center = self.stl_center
+            self.particle_sink.stl_reverse_normal = self.stl_reverse_normal
+        self.particle_sink.type = self.type
+
+
 class PlasmaLens(picmistandard.PICMI_AppliedField):
     """
     Custom class to setup a plasma lens lattice.
@@ -4115,6 +4217,14 @@ class Simulation(picmistandard.PICMI_Simulation):
         easy fetching of the WarpXParticleContainer instances.
         """
         return self.extension.warpx.multi_particle_container()
+
+    def add_particle_sink(self, particle_sink):
+        if isinstance(particle_sink, ParticleSink):
+            particle_sink.particle_sink_initialize_inputs()
+        else:
+            raise TypeError(
+                "Expected a ParticleSink instance, got f{type(particle_sink)}"
+            )
 
 
 # ----------------------------
