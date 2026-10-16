@@ -38,10 +38,10 @@
  *     3D   : [x, y, z]         -> AMReX positions 0, 1, 2
  *
  *   User attributes (always present, 3D semantic regardless of field dim):
- *     x_node, y_node, z_node : home position (cell center at start of QDSMC step)
+ *     x_node, y_node, z_node : home position (grid node at start of QDSMC step)
  *     vx, vy, vz             : electron-fluid velocity gathered at home (3 components)
  *     entropy                : weighted entropy K_e * N_e carried by this particle
- *     np_real                : weight N_e (electrons in this cell)
+ *     np_real                : extensive electron count N_e represented by this marker
  *
  * The home positions and velocities are always stored as 3 components even when
  * the field dimension is lower. In 2D the y-home is set to 0 at init; in 1D
@@ -61,7 +61,7 @@ struct QdsmcPIdx
         y,
 #endif
         z,
-        // Home position (3D, used for cell-centered gather at start of step).
+        // Home position (3D, used for the nodal gather at start of step).
         x_node, y_node, z_node,
         // Electron-fluid velocity gathered at home (3 components, always).
         vx, vy, vz,
@@ -75,7 +75,7 @@ struct QdsmcPIdx
 /**
  * @brief Container for QDSMC fictitious electron-energy-equation particles.
  *
- * One particle is initialized per cell at its center; the particle's velocity
+ * One particle is initialized per grid node; the particle's velocity
  * is set to V_e (gathered at home), its entropy slot to K_e * N_e, its weight
  * slot to N_e, and the particle is then pushed by one PIC step. After the
  * push, entropy and weight are scattered back to the grid; the new K_e is
@@ -107,7 +107,7 @@ public:
     using const_iterator = amrex::ParConstIterSoA<QdsmcPIdx::nattribs, 0>;
 
     /**
-     * @brief Initialize one particle per cell at the cell center.
+     * @brief Initialize one particle per grid node, at the node.
      *
      * For dim D < 3 the missing position components of the home are set to 0.
      * Particle velocity, entropy and np_real are all set to 0; subsequent
@@ -153,8 +153,8 @@ public:
     void DepositK (int lev, amrex::MultiFab & Kfield);
 
     /**
-     * @brief Scatter the per-particle weight np_real/V_cell (= n_e) onto
-     *        Field via linear shape-factor weighted atomic add.
+     * @brief Scatter the per-particle extensive electron count N_e onto Field
+     *        via linear shape-factor weighted atomic add.
      *        Field is zeroed at the start of this call.
      */
     void DepositField (int lev, amrex::MultiFab & Field);
