@@ -13,7 +13,6 @@
 
 #include <algorithm>
 #include <iterator>
-#include <ranges>
 #include <sstream>
 #include <vector>
 
