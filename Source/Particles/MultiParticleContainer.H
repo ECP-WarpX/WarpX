@@ -211,8 +211,7 @@ public:
      *                     scaling to return physical charge density; requires local=false.
      *                     If false, leave boundary handling and radial scaling to the caller.
      */
-    std::unique_ptr<amrex::MultiFab> GetChargeDensity(
-        int lev, bool local, bool finalize);
+    std::unique_ptr<amrex::MultiFab> GetChargeDensityOnLevel (int lev, bool local, bool finalize);
 
     std::unique_ptr<amrex::MultiFab> GetGlobalPlasmaFrequency (int lev);
     void GenerateGlobalDebyeLength ();
