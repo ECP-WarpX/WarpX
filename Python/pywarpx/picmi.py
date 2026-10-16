@@ -1889,6 +1889,42 @@ class PETScPreconditioner(PreconditionerBase):
     )
 
 
+class AlgMGPreconditioner(PreconditionerBase):
+    """
+    Sets up the AMReX algebraic multigrid (AlgMG) preconditioner used during the nonlinear solver
+    """
+
+    name: ClassVar[str | None] = "pc_algmg"
+
+    verbose: bool | None = Field(
+        default=None,
+        description="Whether there is verbose output from the preconditioner",
+    )
+    algmg_verbose: int | None = Field(
+        default=None, description="Verbosity of the multigrid solver"
+    )
+    max_iter: int | None = Field(
+        default=None, description="Number of V-cycles per application (default 1)"
+    )
+    smoother: str | None = Field(
+        default=None,
+        description='One of "chebyshev", "l1_jacobi", "jacobi", or "l1_gauss_seidel" (CPU only) (default "chebyshev")',
+    )
+    chebyshev_degree: int | None = Field(
+        default=None, description="Degree of the Chebyshev smoother (default 4)"
+    )
+    strong_threshold: float | None = Field(
+        default=None, description="Strength threshold for coarsening (default 0.25)"
+    )
+    aggressive_levels: int | None = Field(
+        default=None,
+        description="Number of levels with aggressive coarsening (default 0)",
+    )
+    max_levels: int | None = Field(
+        default=None, description="Maximum number of multigrid levels (default 25)"
+    )
+
+
 class NonlinearSolverBase(picmistandard.PICMI_Extension):
     """Base class of the nonlinear solvers"""
 
@@ -1921,6 +1957,10 @@ class NewtonNonlinearSolver(NonlinearSolverBase):
     )
     absolute_tolerance: float | None = Field(
         default=None, description="Absolute tolerance of the convergence (default 0.)"
+    )
+    divergence_tolerance: float | None = Field(
+        default=None,
+        description="The solve has diverged when the residual norm exceeds this factor times the initial residual norm (default 1.e4)",
     )
     diagnostic_file: str | None = Field(
         default=None, description="File name where solver diagnostics are written"
@@ -1961,7 +2001,7 @@ class NewtonNonlinearSolver(NonlinearSolverBase):
     )
     pc_type: PreconditionerBase | None = Field(
         default=None,
-        description="The preconditioner type, An instance of either CurlCurlMLMGPreconditioner, JacobiPreconditioner, or PETScPreconditioner",
+        description="The preconditioner type, An instance of either CurlCurlMLMGPreconditioner, JacobiPreconditioner, PETScPreconditioner, or AlgMGPreconditioner",
     )
 
     def nonlinear_solver_initialize_inputs(self):
@@ -1982,6 +2022,7 @@ class NewtonNonlinearSolver(NonlinearSolverBase):
         newton.verbose = self.verbose
         newton.absolute_tolerance = self.absolute_tolerance
         newton.relative_tolerance = self.relative_tolerance
+        newton.divergence_tolerance = self.divergence_tolerance
         newton.max_iterations = self.max_iterations
         newton.require_convergence = self.require_convergence
         newton.diagnostic_file = self.diagnostic_file

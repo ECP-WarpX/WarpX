@@ -117,17 +117,21 @@ void init_WarpXParticleContainer (py::module& m)
                 {
                     const long np = pti.numParticles();
                     auto& wp = pti.GetAttribs(PIdx::w);
-                    pc.DepositCharge(pti, wp, nullptr, rho, 0, 0, np, 0, lev, lev);
+                    int* ion_lev = nullptr;
+                    if (pc.DoFieldIonization()) {
+                        ion_lev = pti.GetiAttribs("ionizationLevel").dataPtr();
+                    }
+                    pc.DepositCharge(pti, wp, ion_lev, rho, 0, 0, np, 0, lev, lev);
                 }
             },
             py::arg("rho"), py::arg("lev")
         )
         .def("get_charge_density",
-            [](WarpXParticleContainer& pc, int lev, bool local)
+            [](WarpXParticleContainer& pc, int lev, bool local, bool finalize)
             {
-                return pc.GetChargeDensity(lev, local);
+                return pc.GetChargeDensityOnLevel(lev, local, finalize);
             },
-            py::arg("lev"), py::arg("local")
+            py::arg("lev"), py::arg("local"), py::arg("finalize")
         )
         .def("deposit_current",
             [](WarpXParticleContainer& pc, std::string mf_name, int lev, double dt, double relative_time)

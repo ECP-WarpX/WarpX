@@ -70,6 +70,8 @@ public:
 
     virtual void FinishStep(amrex::Real /* a_start_time */, int /* a_step */) {}
 
+    [[nodiscard]] ImplicitOptions const& GetImplicitOptions () const { return m_implicit_options; }
+
     /**
      * \brief Advance fields and particles by one time step using the specified implicit algorithm
      */
@@ -94,16 +96,17 @@ public:
      * e.g., Ebar - E^n = cvac^2*0.5*dt*(curl(Bbar) - mu0*Jbar(Ebar,Bbar))
      * Here, U = Ebar, b = E^n, and the expression on the right is RHS(U).
      */
-    virtual void ComputeRHS ( WarpXSolverVec&  a_RHS,
-                        const WarpXSolverVec&  a_E,
-                              amrex::Real      a_time,
-                              int              a_nl_iter,
-                              bool             a_from_jacobian ) = 0;
+    virtual void ComputeRHS (WarpXSolverVec& a_RHS,
+                       const WarpXSolverVec& a_E,
+                             amrex::Real     a_time,
+                             int             a_nl_iter,
+                             bool            a_from_jacobian,
+                             bool            update_pc = true) = 0;
 
     /**
      * Prepare for the linear solve. This includes depositing the mass matrices and updating the PC.
      */
-    void PreLinearSolve ();
+    void PreLinearSolve (bool update_pc = true);
 
     [[nodiscard]] int numAMRLevels () const { return m_num_amr_levels; }
 
@@ -257,6 +260,9 @@ protected:
      */
     bool m_print_unconverged_particle_details = false;
 
+    // Stable particle options. PreRHSOp copies this before setting per-call values.
+    ImplicitOptions m_implicit_options;
+
     /**
      * \brief whether to skip the full Picard update of particles on the initial newton step
      */
@@ -322,15 +328,18 @@ protected:
      */
     void InitializeMassMatrices ();
 
+    void InitializeImplicitOptions ();
+
     void PrintBaseImplicitSolverParameters () const;
 
     /**
      * \brief Perform operations needed before computing the Right Hand Side
      */
-    void PreRHSOp ( amrex::Real  a_cur_time,
-                    int          a_nl_iter,
-                    bool         a_from_jacobian,
-                    amrex::Real  a_dt_scale = amrex::Real(1.));
+    void PreRHSOp (amrex::Real a_cur_time,
+                   int         a_nl_iter,
+                   bool        a_from_jacobian,
+                   amrex::Real a_dt_scale,
+                   bool        update_pc = true);
 
     /**
      * \brief Communicate Mass Matrices used for PC and apply boundary conditions
