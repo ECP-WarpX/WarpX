@@ -44,7 +44,7 @@ RhoFunctor::operator() ( amrex::MultiFab& mf_dst, const int dcomp, const int /*i
     // Dump total rho
     if (m_species_index == -1) {
         auto& mypc = warpx.GetPartContainer();
-        rho = mypc.GetChargeDensity(m_lev, true, /*finalize*/false);
+        rho = mypc.GetChargeDensityOnLevel(m_lev, true, /*finalize*/false);
         if (warpx.DoFluidSpecies()) {
             auto& myfl = warpx.GetFluidContainer();
             myfl.DepositCharge(warpx.m_fields, *rho, m_lev);
@@ -53,7 +53,7 @@ RhoFunctor::operator() ( amrex::MultiFab& mf_dst, const int dcomp, const int /*i
     // Dump rho per species
     else {
         auto& mypc = warpx.GetPartContainer().GetParticleContainer(m_species_index);
-        rho = mypc.GetChargeDensity(m_lev, true, /*finalize*/false);
+        rho = mypc.GetChargeDensityOnLevel(m_lev, true, /*finalize*/false);
     }
 
     // Handle the parallel transfers of guard cells and

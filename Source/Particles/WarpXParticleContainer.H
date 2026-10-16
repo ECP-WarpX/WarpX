@@ -280,9 +280,10 @@ public:
      */
     virtual void DepositMassMatrices (ablastr::fields::MultiFabRegister& fields,
                                       int lev,
-                                      amrex::Real dt)
+                                      amrex::Real dt,
+                                      ImplicitOptions const& implicit_options)
     {
-        amrex::ignore_unused(fields,lev,dt);
+        amrex::ignore_unused(fields,lev,dt,implicit_options);
     }
 
     virtual void PostRestart () = 0;
@@ -389,7 +390,7 @@ public:
      *                     scaling to return physical charge density; requires local=false.
      *                     If false, leave boundary handling and radial scaling to the caller.
      */
-    std::unique_ptr<amrex::MultiFab> GetChargeDensity(int lev, bool local, bool finalize);
+    std::unique_ptr<amrex::MultiFab> GetChargeDensityOnLevel (int lev, bool local, bool finalize);
 
     virtual void DepositCharge (WarpXParIter& pti,
                                RealVector const & wp,
@@ -486,7 +487,8 @@ public:
                               int thread_num,
                               int lev,
                               int depos_lev,
-                              amrex::Real dt);
+                              amrex::Real dt,
+                              ImplicitOptions const& implicit_options);
 
     // If particles start outside of the domain, ContinuousInjection
     // makes sure that they are initialized when they enter the domain, and

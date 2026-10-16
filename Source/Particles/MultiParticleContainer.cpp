@@ -527,7 +527,8 @@ MultiParticleContainer::Evolve (ablastr::fields::MultiFabRegister& fields,
 
 void
 MultiParticleContainer::DepositMassMatrices (ablastr::fields::MultiFabRegister& fields,
-                                             int lev, amrex::Real dt)
+                                             int lev, amrex::Real dt,
+                                             ImplicitOptions const& implicit_options)
 {
     using ablastr::fields::Direction;
 
@@ -538,7 +539,7 @@ MultiParticleContainer::DepositMassMatrices (ablastr::fields::MultiFabRegister& 
     }
 
     for (auto& pc : allcontainers) {
-        pc->DepositMassMatrices(fields, lev, dt);
+        pc->DepositMassMatrices(fields, lev, dt, implicit_options);
     }
 }
 
@@ -669,14 +670,14 @@ MultiParticleContainer::DepositTemperatures (
 }
 
 std::unique_ptr<MultiFab>
-MultiParticleContainer::GetChargeDensity (int lev, bool local, bool finalize)
+MultiParticleContainer::GetChargeDensityOnLevel (int lev, bool local, bool finalize)
 {
 
     std::unique_ptr<MultiFab> rho = GetZeroChargeDensity(lev);
 
     for (auto& container : allcontainers) {
         if (container->do_not_deposit) { continue; }
-        const auto rhoi = container->GetChargeDensity(lev, /*local=*/true, /*finalize=*/false);
+        const auto rhoi = container->GetChargeDensityOnLevel(lev, /*local=*/true, /*finalize=*/false);
         MultiFab::Add(*rho, *rhoi, 0, 0, rho->nComp(), rho->nGrowVect());
     }
     if (!local) {
@@ -691,7 +692,7 @@ MultiParticleContainer::GetChargeDensity (int lev, bool local, bool finalize)
     if (finalize) {
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
             !local,
-            "GetChargeDensity requires local=false when finalize=true.");
+            "GetChargeDensityOnLevel requires local=false when finalize=true.");
         WarpX::GetInstance().FinalizeRhoOnLevel(lev, rho.get(), PatchType::fine);
     }
     return rho;

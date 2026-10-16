@@ -124,7 +124,8 @@ public:
      * \brief Deposit mass matrices.
     */
     void DepositMassMatrices (ablastr::fields::MultiFabRegister& fields,
-                              int lev, amrex::Real dt);
+                              int lev, amrex::Real dt,
+                              ImplicitOptions const& implicit_options);
 
     /**
     * \brief This pushes the particle positions by one time step for all the species in the
@@ -153,9 +154,9 @@ public:
     std::unique_ptr<amrex::MultiFab> GetZeroChargeDensity(int lev);
 
     /**
-     * \brief Deposit charge from all species without synchronization or finalization.
-     *
-     * Physical boundary folding and radial volume scaling are left to the caller.
+     * \brief Deposit charge from all species without synchronization (i.e. summing guard
+     * cells and transferring charge across mesh-refinement levels) and without finalization
+     * (i.e. applying physical boundary conditions and radial volume scaling).
      *
      * \param[in,out] rho Charge deposits, one MultiFab per mesh refinement level.
      * \param[in] relative_time Time at which to deposit rho, relative to the time of the
@@ -211,8 +212,7 @@ public:
      *                     scaling to return physical charge density; requires local=false.
      *                     If false, leave boundary handling and radial scaling to the caller.
      */
-    std::unique_ptr<amrex::MultiFab> GetChargeDensity(
-        int lev, bool local, bool finalize);
+    std::unique_ptr<amrex::MultiFab> GetChargeDensityOnLevel (int lev, bool local, bool finalize);
 
     std::unique_ptr<amrex::MultiFab> GetGlobalPlasmaFrequency (int lev);
     void GenerateGlobalDebyeLength ();
