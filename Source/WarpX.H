@@ -154,7 +154,7 @@ public:
     void FinishImplicitField (const ablastr::fields::MultiLevelVectorField& Field_fp,
                               const ablastr::fields::MultiLevelVectorField& Field_n,
                               amrex::Real theta);
-    void DepositMassMatrices (amrex::Real a_dt);
+    void DepositMassMatrices (amrex::Real a_dt, ImplicitOptions const& implicit_options);
     void ImplicitComputeRHSE (         amrex::Real dt, WarpXSolverVec& a_Erhs_vec);
     void ImplicitComputeRHSE (int lev, amrex::Real dt, WarpXSolverVec& a_Erhs_vec);
     void ImplicitComputeRHSE (int lev, PatchType patch_type, amrex::Real dt, WarpXSolverVec& a_Erhs_vec);
@@ -283,7 +283,7 @@ public:
     //! Maximum number of allowed grid crossings for particles
     static int particle_max_grid_crossings;
 
-    //! Maximum number of allowed grid crossings for particles when using mass matrices for Jacobian
+    //! Maximum number of allowed grid crossings for Villasenor mass-matrix deposition
     //! The Villasenor deposition requires this value at compile time for arrays used in the routine
     static constexpr int villasenor_mass_matrices_max_grid_crossings = 3;
 
