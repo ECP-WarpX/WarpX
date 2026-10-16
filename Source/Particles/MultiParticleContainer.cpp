@@ -129,8 +129,7 @@ MultiParticleContainer::MultiParticleContainer (AmrCore* amr_core)
 void
 MultiParticleContainer::ReadParameters ()
 {
-    static bool initialized = false;
-    if (!initialized)
+    if (!m_params_initialized)
     {
         const ParmParse pp_particles("particles");
 
@@ -398,7 +397,7 @@ MultiParticleContainer::ReadParameters ()
                 pp_qed_schwinger, "zmax", m_qed_schwinger_zmax);
         }
 #endif
-        initialized = true;
+        m_params_initialized = true;
     }
 }
 
@@ -415,12 +414,12 @@ MultiParticleContainer::GetParticleContainerFromName (const std::string& name) c
 }
 
 amrex::ParticleReal
-MultiParticleContainer::maxParticleVelocity() {
-    amrex::ParticleReal max_v = 0.0_prt;
+MultiParticleContainer::maxParticleDtInv() {
+    amrex::ParticleReal max_dt_inv = 0.0_prt;
     for (const auto &pc : allcontainers) {
-        max_v = std::max(max_v, pc->maxParticleVelocity());
+        max_dt_inv = amrex::max(max_dt_inv, pc->maxParticleDtInv());
     }
-    return max_v;
+    return max_dt_inv;
 }
 
 void
@@ -436,6 +435,8 @@ MultiParticleContainer::AllocData ()
     for (auto& pc : allcontainers) {
         pc->AllocData();
     }
+
+    collisionhandler->AllocData();
 }
 
 void
@@ -526,7 +527,8 @@ MultiParticleContainer::Evolve (ablastr::fields::MultiFabRegister& fields,
 
 void
 MultiParticleContainer::DepositMassMatrices (ablastr::fields::MultiFabRegister& fields,
-                                             int lev, amrex::Real dt)
+                                             int lev, amrex::Real dt,
+                                             ImplicitOptions const& implicit_options)
 {
     using ablastr::fields::Direction;
 
@@ -537,7 +539,7 @@ MultiParticleContainer::DepositMassMatrices (ablastr::fields::MultiFabRegister& 
     }
 
     for (auto& pc : allcontainers) {
-        pc->DepositMassMatrices(fields, lev, dt);
+        pc->DepositMassMatrices(fields, lev, dt, implicit_options);
     }
 }
 
@@ -553,10 +555,11 @@ void
 MultiParticleContainer::PushP (int lev, Real dt,
                                const MultiFab& Ex, const MultiFab& Ey, const MultiFab& Ez,
                                const MultiFab& Bx, const MultiFab& By, const MultiFab& Bz,
-                               MomentumPushType momentum_push_type)
+                               MomentumPushType momentum_push_type,
+                               std::optional<FieldGatherOrders> gather_orders)
 {
     for (auto& pc : allcontainers) {
-        pc->PushP(lev, dt, Ex, Ey, Ez, Bx, By, Bz, momentum_push_type);
+        pc->PushP(lev, dt, Ex, Ey, Ez, Bx, By, Bz, momentum_push_type, gather_orders);
     }
 }
 
@@ -588,7 +591,8 @@ MultiParticleContainer::GetZeroChargeDensity (const int lev)
 void
 MultiParticleContainer::DepositCurrent (
     ablastr::fields::MultiLevelVectorField const & J,
-    const amrex::Real dt, const amrex::Real relative_time)
+    const amrex::Real dt, const amrex::Real relative_time,
+    const PushType push_type)
 {
     // Reset the J arrays
     for (const auto& J_lev : J)
@@ -601,7 +605,7 @@ MultiParticleContainer::DepositCurrent (
     // Call the deposition kernel for each species
     for (auto& pc : allcontainers)
     {
-        pc->DepositCurrent(J, dt, relative_time);
+        pc->DepositCurrent(J, dt, relative_time, push_type);
     }
 
 #if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
@@ -1246,14 +1250,17 @@ void MultiParticleContainer::CheckIonizationProductSpecies()
 void MultiParticleContainer::ScrapeParticlesAtEB (
     ablastr::fields::MultiLevelScalarField const& distance_to_eb)
 {
-    if (WarpX::eb_particle_boundary == ParticleBoundaryType::Reflecting) {
+    if (WarpX::eb_particle_boundary == ParticleBoundaryType::Reflecting ||
+        WarpX::eb_particle_boundary == ParticleBoundaryType::Thermal) {
         auto& warpx = WarpX::GetInstance();
         for (auto& pc : allcontainers) {
             amrex::ParticleReal const mass = pc->getMass();
+            amrex::ParticleReal const uth = pc->getBoundaryThermalVelocity();
             for (int lev = 0; lev <= pc->finestLevel(); ++lev) {
                 amrex::Real const dt_lev = warpx.getdt(lev);
                 scrapeParticlesAtEB(*pc, distance_to_eb, lev,
-                    ParticleBoundaryProcess::Reflect{dt_lev, mass});
+                    ParticleBoundaryProcess::ParticleBoundaryInteraction{
+                        dt_lev, mass, WarpX::eb_particle_boundary, uth});
             }
         }
     } else {
@@ -1663,7 +1670,7 @@ MultiParticleContainer::doQEDSchwinger ()
     for (MFIter mfi(Ex, TilingIfNotGPU()); mfi.isValid(); ++mfi )
     {
         // Make the box cell centered to avoid creating particles twice on the tile edges
-        amrex::Box box = enclosedCells(mfi.nodaltilebox());
+        amrex::Box box = mfi.tilebox(amrex::IntVect::TheZeroVector());
 
         // Get the box representing global Schwinger boundaries
         const amrex::Box global_schwinger_box = ComputeSchwingerGlobalBox();

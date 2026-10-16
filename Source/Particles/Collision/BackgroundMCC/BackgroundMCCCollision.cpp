@@ -14,6 +14,7 @@
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
 #include "Utils/ParticleUtils.H"
+#include "Utils/ScatteringUtils.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 #include "WarpX.H"
 
@@ -338,8 +339,10 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
                               // determine if this particle should collide
                               if (amrex::Random(engine) > total_collision_prob) { return; }
 
+                              // The background density and temperature parsers take Cartesian
+                              // coordinates as arguments, in all geometries.
                               amrex::ParticleReal x, y, z;
-                              GetPosition.AsStored(ip, x, y, z);
+                              GetPosition(ip, x, y, z);
 
                               const amrex::ParticleReal n_a = n_a_func(x, y, z, t);
                               const amrex::ParticleReal T_a = T_a_func(x, y, z, t);
@@ -399,10 +402,10 @@ void BackgroundMCCCollision::doBackgroundCollisionsWithinTile
                                       ua_x, ua_y, ua_z, M,
                                       u1x_out, u1y_out, u1z_out, m,
                                       u2x_out, u2y_out, u2z_out, M,
-                                      -scattering_process.m_energy_penalty*PhysConst::q_e,
-                                      // TwoProductComputeProductMomenta expects the *released* energy here, hence
-                                      // the negative sign; the energy penalty is also converted from eV to Joules.
-                                      scattering_process.m_scattering_angle_model,
+                                      -scattering_process.m_energy_penalty*PhysConst::q_e, // *released* energy (negative sign) converted from eV to Joules
+                                      scattering_process.m_scattering_angle_model, // angular distribution of the products in the center-of-mass frame
+                                      ScatteringUtils::AnisotropicCoefficientTable{}, // pass empty table because Legendre-based anisotropic scattering is unsupported for background MCC
+                                      /*energy_range_status=*/nullptr,
                                       engine);
 
                                   // update projectile velocity with new components in labframe

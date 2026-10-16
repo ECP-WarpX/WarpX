@@ -92,7 +92,7 @@ public:
         return allcontainers[index]->meanParticleVelocity();
     }
 
-    amrex::ParticleReal maxParticleVelocity();
+    amrex::ParticleReal maxParticleDtInv();
 
     void TransformMomentumToCurvilinear (bool forward);
 
@@ -124,7 +124,8 @@ public:
      * \brief Deposit mass matrices.
     */
     void DepositMassMatrices (ablastr::fields::MultiFabRegister& fields,
-                              int lev, amrex::Real dt);
+                              int lev, amrex::Real dt,
+                              ImplicitOptions const& implicit_options);
 
     /**
     * \brief This pushes the particle positions by one time step for all the species in the
@@ -141,7 +142,8 @@ public:
     void PushP (int lev, amrex::Real dt,
                 const amrex::MultiFab& Ex, const amrex::MultiFab& Ey, const amrex::MultiFab& Ez,
                 const amrex::MultiFab& Bx, const amrex::MultiFab& By, const amrex::MultiFab& Bz,
-                MomentumPushType momentum_push_type);
+                MomentumPushType momentum_push_type,
+                std::optional<FieldGatherOrders> gather_orders = std::nullopt);
 
     /**
     * \brief This returns a MultiFAB filled with zeros. It is used to return the charge density
@@ -174,10 +176,13 @@ public:
      *                          current positions of the particles. When different than 0,
      *                          the particle position will be temporarily modified to match
      *                          the time of the deposition.
+     * \param[in] push_type Type of particle push used with the deposition. With
+     *                      PushType::Implicit the time-centered velocities are used.
      */
     void
     DepositCurrent (ablastr::fields::MultiLevelVectorField const& J,
-                    amrex::Real dt, amrex::Real relative_time);
+                    amrex::Real dt, amrex::Real relative_time,
+                    PushType push_type = PushType::Explicit);
 
     /**
      * \brief Deposit temperature to species MFs. This is done for each
@@ -544,6 +549,10 @@ private:
     amrex::Vector<std::unique_ptr<WarpXParticleContainer>> allcontainers;
 
     void ReadParameters ();
+
+    /** Guards ReadParameters against running twice for this instance.
+     */
+    bool m_params_initialized = false;
 
     void mapSpeciesProduct ();
 

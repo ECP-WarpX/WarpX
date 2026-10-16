@@ -46,7 +46,10 @@ namespace warpx::fields
         vector_potential_grad_buf_e_stag,
         vector_potential_grad_buf_b_stag,
         hybrid_electron_pressure_fp, /**< Used with Ohm's law solver. Stores the electron pressure */
-        hybrid_electron_temperature_fp, /**< Used with Ohm's law solver. Stores the electron temperature (K) implied by the electron-pressure closure */
+        hybrid_electron_temperature_fp, /**< Used with Ohm's law solver. Stores the electron temperature T_e (K): implied by the electron-pressure closure by default, or the QDSMC electron-energy-equation state variable (updated each step from the entropy K_e) when that equation is solved. */
+        hybrid_entropy_fp,           /**< Used with the QDSMC electron-energy equation. Stores the electron entropy K_e = T_e * n_e^(1-gamma) on the grid; the QDSMC fictitious particles read this at the start of each step and rewrite it after Lagrangian advection. */
+        hybrid_qdsmc_weights_fp,     /**< Used with the QDSMC electron-energy equation. Scratch field for the per-cell weight (N_e) deposited by QDSMC particles after their push, used to recover K_e^{n+1} as (deposited K*N) / (deposited N). */
+        hybrid_electron_velocity_fp, /**< Used with the QDSMC electron-energy equation. Stores the electron fluid velocity V_e = -(J_plasma - J_i) / (q_e * n_e) on a NODAL grid (3 components); read by QDSMC SetV at the start of each step to advect the entropy-carrying particles. */
         hybrid_rho_fp_temp,          /**< Used with Ohm's law solver. Stores the time interpolated/extrapolated charge density */
         hybrid_current_fp_temp,      /**< Used with Ohm's law solver. Stores the time interpolated/extrapolated current density */
         hybrid_current_fp_plasma,    /**< Used with Ohm's law solver. Stores plasma current calculated as J_plasma = curl x B / mu0 - J_ext */
@@ -77,7 +80,6 @@ namespace warpx::fields
         pml_j_cp,
         pml_F_cp,
         pml_G_cp,
-        pml_edge_lengths,
         Efield_avg_fp,
         Bfield_avg_fp,
         Efield_avg_cp,
@@ -94,6 +96,7 @@ namespace warpx::fields
         ECTRhofield,
         Venl,
         global_debye_length,
+        dA_fp,   /**< Used by the Darwin solver; the change in vector potential over one step */
         effective_potential_sigma  /**< Only used with effective potential ES solver. Stores the Poisson equation dressing */
     );
 
@@ -144,7 +147,8 @@ namespace warpx::fields
         FieldType::MassMatrices_PC,
         FieldType::curl2_BC_mask,
         FieldType::ECTRhofield,
-        FieldType::Venl
+        FieldType::Venl,
+        FieldType::dA_fp,
     };
 
     /** Returns true if a FieldType represents a vector field */
