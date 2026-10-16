@@ -153,9 +153,9 @@ public:
     std::unique_ptr<amrex::MultiFab> GetZeroChargeDensity(int lev);
 
     /**
-     * \brief Deposit charge from all species without synchronization or finalization.
-     *
-     * Physical boundary folding and radial volume scaling are left to the caller.
+     * \brief Deposit charge from all species without synchronization (i.e. summing guard
+     * cells and transferring charge across mesh-refinement levels) and without finalization
+     * (i.e. applying physical boundary conditions and radial volume scaling).
      *
      * \param[in,out] rho Charge deposits, one MultiFab per mesh refinement level.
      * \param[in] relative_time Time at which to deposit rho, relative to the time of the
