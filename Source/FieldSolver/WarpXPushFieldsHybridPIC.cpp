@@ -410,7 +410,7 @@ void WarpX::HybridPICDepositRhoAndJ ()
     // filter (if used), exchange guard cells, interpolate across MR levels
     SyncCurrentAndRho();
 
-    // Apply boundary conditions and finalize rho volume scaling.
+    // Apply boundary conditions to J and rho, then apply volume scaling.
     FinalizeRho();
     FinalizeJ();
 

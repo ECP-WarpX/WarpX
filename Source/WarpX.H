@@ -756,6 +756,44 @@ public:
     }
 
     /**
+     * \brief Finalize deposited rho on all fine and coarse patches.
+     *
+     * - Apply physical boundary conditions: charge deposited in guard cells beyond
+     *   a PEC, PMC or reflecting boundary is folded back into the valid cells next
+     *   to the boundary, and the guard cells are updated accordingly.
+     * - In cylindrical and spherical geometries, fold charge deposited at negative
+     *   radius onto cells at positive radius and divide by the radial volume factor
+     *   so that rho becomes a physical charge density.
+     *
+     * Deposition routines accumulate raw charge on the grid. Finalize rho before
+     * using it in a field solver or writing it to a diagnostic. Call once per
+     * deposition, after filtering, guard-cell summation and transfers between
+     * mesh-refinement levels (i.e. after SyncRho()).
+     */
+    void FinalizeRho ();
+
+    /**
+     * \brief Finalize selected rho components on one fine or coarse patch.
+     *
+     * Apply the physical-boundary and radial-axis folding and radial volume scaling
+     * described in FinalizeRho(). Call once per deposited component, after filtering,
+     * guard-cell summation and transfers between mesh-refinement levels for those
+     * components are complete, and before using rho in a field solver or diagnostic.
+     *
+     * \param[in] lev Mesh refinement level of the patch.
+     * \param[in,out] rho Deposited charge to finalize into physical charge density.
+     * \param[in] patch_type Fine or coarse patch; a coarse patch uses level lev-1 geometry.
+     * \param[in] scomp Starting array component to finalize.
+     * \param[in] ncomp Number of array components; -1 selects all remaining components.
+     */
+    void FinalizeRhoOnLevel (int lev, amrex::MultiFab* rho, PatchType patch_type, int scomp = 0, int ncomp = -1);
+
+    [[nodiscard]] bool UseVerboncoeurAxisCorrection () const
+    {
+        return m_verboncoeur_axis_correction;
+    }
+
+    /**
      * \brief Apply filter and sum guard cells across MR levels.
      * If current centering is used, center the current from a nodal grid
      * to a staggered grid. For each MR level beyond level 0, interpolate
