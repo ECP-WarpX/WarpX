@@ -10,7 +10,7 @@
 #define WARPX_UTILS_ALGORITHMS_ISIN_H_
 
 #include <algorithm>
-#include <type_traits>
+#include <concepts>
 #include <vector>
 
 namespace utils::algorithms
@@ -29,7 +29,7 @@ namespace utils::algorithms
     template <typename TV, typename TE>
     bool is_in(const std::vector<TV>& vect,
                const TE& elem)
-    requires (std::is_convertible_v<TE,TV>)
+    requires std::convertible_to<TE,TV>
     {
         return (std::find(vect.begin(), vect.end(), elem) != vect.end());
     }
@@ -49,7 +49,7 @@ namespace utils::algorithms
     template <typename TV, typename TE>
     bool any_of_is_in(const std::vector<TV>& vect,
                const std::vector<TE>& elems)
-    requires (std::is_convertible_v<TE,TV>)
+    requires std::convertible_to<TE,TV>
     {
         return std::any_of(elems.begin(), elems.end(),
             [&](const auto& elem){return is_in(vect, elem);});
