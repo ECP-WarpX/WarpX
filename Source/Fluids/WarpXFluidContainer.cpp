@@ -1279,7 +1279,7 @@ void WarpXFluidContainer::GatherAndPush (
                             const amrex::Real z_lab = gamma_boost*(z + beta_boost*PhysConst::c*t);
 
                             // Grab the external fields in the lab frame:
-                            if ( exte_control == has_exte ) {
+                            if constexpr ( exte_control == has_exte ) {
                                 Ex_ext_lab = Exfield_parser(x, y, z_lab, t_lab);
                                 Ey_ext_lab = Eyfield_parser(x, y, z_lab, t_lab);
                                 Ez_ext_lab = Ezfield_parser(x, y, z_lab, t_lab);
@@ -1288,7 +1288,7 @@ void WarpXFluidContainer::GatherAndPush (
                                 Ey_ext_lab = 0.0;
                                 Ez_ext_lab = 0.0;
                             }
-                            if ( extb_control == has_extb ) {
+                            if constexpr ( extb_control == has_extb ) {
                                 Bx_ext_lab = Bxfield_parser(x, y, z_lab, t_lab);
                                 By_ext_lab = Byfield_parser(x, y, z_lab, t_lab);
                                 Bz_ext_lab = Bzfield_parser(x, y, z_lab, t_lab);
@@ -1344,7 +1344,7 @@ void WarpXFluidContainer::GatherAndPush (
                         }
 
                         // Added external b fields:
-                        if ( extb_control == has_extb ){
+                        if constexpr ( extb_control == has_extb ){
 #if defined(WARPX_DIM_3D)
                             const amrex::Real x = problo[0] + i * dx[0];
                             const amrex::Real y = problo[1] + j * dx[1];
