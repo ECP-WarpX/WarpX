@@ -96,6 +96,7 @@ void SemiImplicitDarwin::Define ( WarpX*  a_WarpX, bool from_restart)
 
     // Initialize the mass matrices for plasma response
     InitializeMassMatrices();
+    InitializeImplicitOptions();
 
     // The predictor velocity push gathers the electrostatic E-field with the
     // Galerkin scheme. Skip that, and warn, if the user has explicitly selected
@@ -346,7 +347,7 @@ void SemiImplicitDarwin::AccumulateCurrentAndMassMatrices ()
     // zero-then-deposit machinery with the electromagnetic implicit solvers
     // (see ImplicitSolver::PreLinearSolve), which drive the same
     // WarpX::DepositMassMatrices() -> MultiParticleContainer::DepositMassMatrices().
-    m_WarpX->DepositMassMatrices(m_dt);
+    m_WarpX->DepositMassMatrices(m_dt, m_implicit_options);
 
     // The deposit routine only fills half of each diagonal mass matrix's
     // band (exploiting symmetry); mirror the other half to complete
@@ -405,12 +406,12 @@ void SemiImplicitDarwin::CalculateSourceVector ()
 
     // Calculate the vector Laplacian of B and write result into first temporary MF
     m_WarpX->get_pointer_fdtd_solver_fp(lev)->ComputeVectorLaplacian(
-        lapB, Bfield[lev], m_WarpX->GetEBUpdateBFlag()[lev], lev
+        lapB, Bfield[lev], m_WarpX->GetEBUpdateBFlag_fp()[lev], lev
     );
 
     // Calculate the curl of J and write result into second temporary MF
     m_WarpX->get_pointer_fdtd_solver_fp(lev)->ComputeCurlA(
-        curlJ, jfield[lev], m_WarpX->GetEBUpdateBFlag()[lev], lev
+        curlJ, jfield[lev], m_WarpX->GetEBUpdateBFlag_fp()[lev], lev
     );
 
     // Calculate 2 * laplacian(B) + 2 * mu_0 curl(J) and write result in m_source
@@ -471,7 +472,7 @@ void SemiImplicitDarwin::ComputeInductiveEfromdA ( int astep )
 
     // Calculate dA = curl(Z)
     m_WarpX->get_pointer_fdtd_solver_fp(lev)->ComputeCurlB(
-        dAfield[lev], Zscratch, m_WarpX->GetEBUpdateEFlag()[lev], lev
+        dAfield[lev], Zscratch, m_WarpX->GetEBUpdateEFlag_fp()[lev], lev
     );
     for (int ii = 0; ii < 3; ii++)
     {

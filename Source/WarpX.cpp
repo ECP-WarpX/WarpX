@@ -405,8 +405,8 @@ WarpX::WarpX ()
     Afield_dotMask.resize(nlevs_max);
     phi_dotMask.resize(nlevs_max);
 
-    m_eb_update_E.resize(nlevs_max);
-    m_eb_update_B.resize(nlevs_max);
+    m_eb_update_E_fp.resize(nlevs_max);
+    m_eb_update_B_fp.resize(nlevs_max);
     m_eb_update_E_cp.resize(nlevs_max);
     m_eb_update_B_cp.resize(nlevs_max);
     m_eb_reduce_particle_shape.resize(nlevs_max);
@@ -2755,19 +2755,19 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
             ElectromagneticSolverAlgo::PSATD) {
             for (int component = 0; component < 3; ++component) {
                 AllocInitMultiFab(
-                    m_eb_update_E[lev][component],
+                    m_eb_update_E_fp[lev][component],
                     m_fields
                         .get(FieldType::Efield_fp, Direction{component}, lev)
                         ->boxArray(),
                     dm, ncomps, guard_cells.ng_FieldSolver, lev,
-                    "m_eb_update_E", 1);
+                    "m_eb_update_E_fp", 1);
                 AllocInitMultiFab(
-                    m_eb_update_B[lev][component],
+                    m_eb_update_B_fp[lev][component],
                     m_fields
                         .get(FieldType::Bfield_fp, Direction{component}, lev)
                         ->boxArray(),
                     dm, ncomps, guard_cells.ng_FieldSolver, lev,
-                    "m_eb_update_B", 1);
+                    "m_eb_update_B_fp", 1);
             }
         }
 
@@ -2793,17 +2793,17 @@ WarpX::AllocLevelMFs (int lev, const BoxArray& ba, const DistributionMapping& dm
                     dm, ncomps, guard_cells.ng_FieldSolver, 0.0_rt);
 
                 AllocInitMultiFab(m_flag_info_face[lev][0], amrex::convert(ba, Bx_nodal_flag), dm, ncomps,
-                                  guard_cells.ng_FieldSolver, lev, "m_flag_info_face[x]");
+                                    guard_cells.ng_FieldSolver, lev, "m_flag_info_face[x]");
                 AllocInitMultiFab(m_flag_info_face[lev][1], amrex::convert(ba, By_nodal_flag), dm, ncomps,
-                                  guard_cells.ng_FieldSolver, lev, "m_flag_info_face[y]");
+                                    guard_cells.ng_FieldSolver, lev, "m_flag_info_face[y]");
                 AllocInitMultiFab(m_flag_info_face[lev][2], amrex::convert(ba, Bz_nodal_flag), dm, ncomps,
-                                  guard_cells.ng_FieldSolver, lev, "m_flag_info_face[z]");
+                                    guard_cells.ng_FieldSolver, lev, "m_flag_info_face[z]");
                 AllocInitMultiFab(m_flag_ext_face[lev][0], amrex::convert(ba, Bx_nodal_flag), dm, ncomps,
-                                  guard_cells.ng_FieldSolver, lev, "m_flag_ext_face[x]");
+                                    guard_cells.ng_FieldSolver, lev, "m_flag_ext_face[x]");
                 AllocInitMultiFab(m_flag_ext_face[lev][1], amrex::convert(ba, By_nodal_flag), dm, ncomps,
-                                  guard_cells.ng_FieldSolver, lev, "m_flag_ext_face[y]");
+                                    guard_cells.ng_FieldSolver, lev, "m_flag_ext_face[y]");
                 AllocInitMultiFab(m_flag_ext_face[lev][2], amrex::convert(ba, Bz_nodal_flag), dm, ncomps,
-                                  guard_cells.ng_FieldSolver, lev, "m_flag_ext_face[z]");
+                                    guard_cells.ng_FieldSolver, lev, "m_flag_ext_face[z]");
 
                 /** EB: area_mod contains the modified areas of the mesh faces, i.e. if a face is enlarged it
                 * contains the area of the enlarged face

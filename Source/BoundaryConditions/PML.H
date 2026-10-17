@@ -176,8 +176,18 @@ public:
      *  should be updated, depending on their position relative to the embedded
      *  boundary. */
     [[nodiscard]] std::array<std::unique_ptr<amrex::iMultiFab>, 3> const&
+    GetEBUpdateEFlag_fp () const {
+        return m_eb_update_E_fp;
+    }
+
+    [[nodiscard]] std::array<std::unique_ptr<amrex::iMultiFab>, 3> const&
+    GetEBUpdateEFlag_cp () const {
+        return m_eb_update_E_cp;
+    }
+
+    [[nodiscard]] std::array<std::unique_ptr<amrex::iMultiFab>, 3> const&
     GetEBUpdateEFlag (PatchType patch_type = PatchType::fine) const {
-        return patch_type == PatchType::fine ? m_eb_update_E : m_eb_update_E_cp;
+        return patch_type == PatchType::fine ? m_eb_update_E_fp : m_eb_update_E_cp;
     }
 
 #ifdef WARPX_USE_FFT
@@ -229,7 +239,7 @@ private:
 
     // Flags indicating on which grid points the E field (and PML current) should
     // be updated, depending on their position relative to the embedded boundary.
-    std::array< std::unique_ptr<amrex::iMultiFab>, 3 > m_eb_update_E;
+    std::array< std::unique_ptr<amrex::iMultiFab>, 3 > m_eb_update_E_fp;
     std::array<std::unique_ptr<amrex::iMultiFab>, 3> m_eb_update_E_cp;
 
 #ifdef WARPX_USE_FFT

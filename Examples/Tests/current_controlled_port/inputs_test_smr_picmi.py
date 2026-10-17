@@ -243,9 +243,11 @@ elif (args.implicit or is_rz) and args.source == "antenna":
         simulation.initialize_warpx()
     else:
         simulation.step(1)
+    # Charge deposition now leaves rho unscaled until explicit finalization.
+    # Compare physical charge densities, including boundary folding, on both levels.
     independent_rho_before = [
         np.squeeze(
-            np.asarray(simulation.particles.get_charge_density(level, False)[...])
+            np.asarray(simulation.particles.get_charge_density(level, False, True)[...])
         )
         for level in (0, 1)
     ]
@@ -278,7 +280,9 @@ if args.source == "antenna":
     for level in (0, 1):
         if independent_rho_before is not None:
             rho_after = np.squeeze(
-                np.asarray(simulation.particles.get_charge_density(level, False)[...])
+                np.asarray(
+                    simulation.particles.get_charge_density(level, False, True)[...]
+                )
             )
             charge_change = rho_after - independent_rho_before[level]
         else:

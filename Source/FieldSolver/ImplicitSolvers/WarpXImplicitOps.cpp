@@ -11,6 +11,7 @@
 #include "Diagnostics/ReducedDiags/MultiReducedDiags.H"
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
 #include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
+#include "FieldSolver/ImplicitSolvers/ImplicitOptions.H"
 #include "Fields.H"
 #include "Parallelization/GuardCellManager.H"
 #include "Particles/MultiParticleContainer.H"
@@ -336,9 +337,18 @@ WarpX::FinishImplicitField( ablastr::fields::MultiLevelVectorField const& Field_
 }
 
 void
-WarpX::DepositMassMatrices (amrex::Real a_dt)
+WarpX::DepositMassMatrices (amrex::Real a_dt, ImplicitOptions const& implicit_options)
 {
     ABLASTR_PROFILE("WarpX::DepositMassMatrices()");
+
+    for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            implicit_options.ncomp_xx[dir] > 0 &&
+            implicit_options.ncomp_yy[dir] > 0 &&
+            implicit_options.ncomp_zz[dir] > 0,
+            "DepositMassMatrices requires initialized mass-matrix component counts. "
+            "Call InitData before depositing mass matrices.");
+    }
 
     amrex::Real const dt_scale = a_dt/dt[0];
 
@@ -347,7 +357,8 @@ WarpX::DepositMassMatrices (amrex::Real a_dt)
         mypc->DepositMassMatrices(
             m_fields,
             lev,
-            dt[lev]*dt_scale
+            dt[lev]*dt_scale,
+            implicit_options
         );
     }
 

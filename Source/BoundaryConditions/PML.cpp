@@ -904,10 +904,10 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
         // Allocate the flags that indicate on which grid points the E field
         // (and the PML current) should be updated. By default, all grid points
         // are updated; this is refined below for the finite-difference solvers.
-        m_eb_update_E[0] = std::make_unique<amrex::iMultiFab>(ba_Ex, dm, WarpX::ncomps, max_guard_EB_vect);
-        m_eb_update_E[1] = std::make_unique<amrex::iMultiFab>(ba_Ey, dm, WarpX::ncomps, max_guard_EB_vect);
-        m_eb_update_E[2] = std::make_unique<amrex::iMultiFab>(ba_Ez, dm, WarpX::ncomps, max_guard_EB_vect);
-        for (int idim = 0; idim < 3; ++idim) { m_eb_update_E[idim]->setVal(1); }
+        m_eb_update_E_fp[0] = std::make_unique<amrex::iMultiFab>(ba_Ex, dm, WarpX::ncomps, max_guard_EB_vect);
+        m_eb_update_E_fp[1] = std::make_unique<amrex::iMultiFab>(ba_Ey, dm, WarpX::ncomps, max_guard_EB_vect);
+        m_eb_update_E_fp[2] = std::make_unique<amrex::iMultiFab>(ba_Ez, dm, WarpX::ncomps, max_guard_EB_vect);
+        for (int idim = 0; idim < 3; ++idim) { m_eb_update_E_fp[idim]->setVal(1); }
 
         if (WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee ||
             WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::CKC ||
@@ -917,7 +917,7 @@ PML::PML (const int lev, const BoxArray& grid_ba, const DistributionMapping& gri
 
             // Mark on which grid points E should be updated (stair-case approximation)
             warpx::embedded_boundary::MarkUpdateCellsStairCase(
-                m_eb_update_E,
+                m_eb_update_E_fp,
                 fields.get_alldirs(FieldType::pml_E_fp, lev),
                 eb_fact, m_geom->periodicity());
         }

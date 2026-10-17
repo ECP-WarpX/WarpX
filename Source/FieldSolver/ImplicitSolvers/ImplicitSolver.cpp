@@ -737,6 +737,9 @@ void ImplicitSolver::parseNonlinearSolverParams ( const amrex::ParmParse&  pp )
         if (m_use_mass_matrices_pc) {
             m_mass_matrices_pc_width = 0;
             pp.query("mass_matrices_pc_width", m_mass_matrices_pc_width);
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                m_mass_matrices_pc_width >= 0,
+                "ImplicitSolver: mass_matrices_pc_width must be a non-negative integer");
         }
         if ( (WarpX::current_deposition_algo == CurrentDepositionAlgo::Villasenor ||
               WarpX::current_deposition_algo == CurrentDepositionAlgo::Esirkepov) &&
@@ -816,12 +819,13 @@ void ImplicitSolver::InitializeMassMatrices ()
     int Nc_tot_xx = 1, Nc_tot_xy = 1, Nc_tot_xz = 1;
     int Nc_tot_yx = 1, Nc_tot_yy = 1, Nc_tot_yz = 1;
     int Nc_tot_zx = 1, Nc_tot_zy = 1, Nc_tot_zz = 1;
-    if (m_use_mass_matrices_jacobian) {
-
-        for (int dir=0; dir<AMREX_SPACEDIM; dir++) {
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE( ngE[dir]>=ngJ[dir],
-                "Mass Matrices for Jacobian requires guard cells for E "
-                "to be at least as many as those for J.");
+    if (m_use_mass_matrices) {
+        if (m_use_mass_matrices_jacobian) {
+            for (int dir=0; dir<AMREX_SPACEDIM; dir++) {
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE( ngE[dir]>=ngJ[dir],
+                    "Mass Matrices for Jacobian requires guard cells for E "
+                    "to be at least as many as those for J.");
+            }
         }
 
         if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Direct) {
@@ -849,19 +853,32 @@ void ImplicitSolver::InitializeMassMatrices ()
         }
         else if (WarpX::current_deposition_algo == CurrentDepositionAlgo::Villasenor) {
 #ifdef WARPX_DIM_3D
-            WARPX_ABORT_WITH_MESSAGE(
-                "Mass matrices for Jacobian with Villasenor deposition are not yet implemented "
-                "in 3D. Use algo.current_deposition = direct.");
+            if (m_use_mass_matrices_jacobian) {
+                WARPX_ABORT_WITH_MESSAGE(
+                    "ImplicitSolver: Mass matrices for Jacobian with Villasenor deposition "
+                    "is not yet implemented in 3D. Use algo.current_deposition = direct.");
+            }
+            else if (m_use_mass_matrices_pc && m_mass_matrices_pc_width > 0) {
+                WARPX_ABORT_WITH_MESSAGE(
+                    "ImplicitSolver: Mass matrices pc width > 0 with the "
+                    "Villasenor deposition in 3D is not yet supported.");
+            }
 #else
-            const int max_grid_crossings = ngJ[0] - shape / 2;
+            const int max_grid_crossings = WarpX::particle_max_grid_crossings;
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(max_grid_crossings > 0,
-                "Mass Matrices for Jacobian with Villasenor deposition requires particles.max_grid_crossings > 0.");
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(max_grid_crossings == WarpX::particle_max_grid_crossings,
-                "Guard cells for J are not consistent with particle_max_grid_crossings.");
+                "Mass matrices with Villasenor deposition require "
+                "particles.max_grid_crossings > 0 for both Jacobian and preconditioner use.");
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 max_grid_crossings <= WarpX::villasenor_mass_matrices_max_grid_crossings,
-                "Mass matrices for the Jacobian with Villasenor deposition support "
-                "particles.max_grid_crossings <= WarpX::villasenor_mass_matrices_max_grid_crossings.");
+                "Mass matrices with Villasenor deposition require "
+                "particles.max_grid_crossings <= WarpX::villasenor_mass_matrices_max_grid_crossings "
+                "for both Jacobian and preconditioner use.");
+            for (int dir = 0; dir < AMREX_SPACEDIM; ++dir) {
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(ngJ[dir] >= shape / 2 + max_grid_crossings,
+                    "Mass matrices with Villasenor deposition require at least "
+                    "particle_shape / 2 + particles.max_grid_crossings guard cells for J "
+                    "in each direction for both Jacobian and preconditioner use.");
+            }
 #endif
             // Comment on direction-dependent number of mass matrices components
             // set below for charge-conserving Villasenor deposition:
@@ -911,6 +928,10 @@ void ImplicitSolver::InitializeMassMatrices ()
             m_ncomp_zx[1] = 0 + 2*shape + 2*max_grid_crossings;
             m_ncomp_zy[1] = 0 + 2*shape + 2*max_grid_crossings;
             m_ncomp_zz[1] = 1 + 2*(shape-1) + 2*max_grid_crossings;
+#elif defined(WARPX_DIM_3D)
+            m_ncomp_xx = amrex::IntVect{1};
+            m_ncomp_yy = amrex::IntVect{1};
+            m_ncomp_zz = amrex::IntVect{1};
 #endif
             for (int dir=0; dir<AMREX_SPACEDIM; dir++) {
                 Nc_tot_xx *= m_ncomp_xx[dir];
@@ -928,28 +949,40 @@ void ImplicitSolver::InitializeMassMatrices ()
             WARPX_ABORT_WITH_MESSAGE("Mass matrices can only be used with Direct and Villasenor depositions.");
         }
     }
-    else { // Mass matrices used for PC only
-        for (int dir=0; dir<AMREX_SPACEDIM; dir++) {
-            m_ncomp_xx[dir] = 1;
-            m_ncomp_xy[dir] = 0;
-            m_ncomp_xz[dir] = 0;
-            m_ncomp_yx[dir] = 0;
-            m_ncomp_yy[dir] = 1;
-            m_ncomp_yz[dir] = 0;
-            m_ncomp_zx[dir] = 0;
-            m_ncomp_zy[dir] = 0;
-            m_ncomp_zz[dir] = 1;
-            //
-            Nc_tot_xx *= m_ncomp_xx[dir];
-            Nc_tot_xy *= m_ncomp_xy[dir];
-            Nc_tot_xz *= m_ncomp_xz[dir];
-            Nc_tot_yx *= m_ncomp_yx[dir];
-            Nc_tot_yy *= m_ncomp_yy[dir];
-            Nc_tot_yz *= m_ncomp_yz[dir];
-            Nc_tot_zx *= m_ncomp_zx[dir];
-            Nc_tot_zy *= m_ncomp_zy[dir];
-            Nc_tot_zz *= m_ncomp_zz[dir];
-        }
+
+    int ncomp_tot_pc_xx = 1;
+    int ncomp_tot_pc_yy = 1;
+    int ncomp_tot_pc_zz = 1;
+    const int ncomp_dir_pc = m_use_mass_matrices_pc ? 1 + 2*m_mass_matrices_pc_width : 1;
+    for (int dir=0; dir<AMREX_SPACEDIM; dir++) {
+        m_ncomp_pc_xx[dir] = std::min(m_ncomp_xx[dir], ncomp_dir_pc);
+        m_ncomp_pc_yy[dir] = std::min(m_ncomp_yy[dir], ncomp_dir_pc);
+        m_ncomp_pc_zz[dir] = std::min(m_ncomp_zz[dir], ncomp_dir_pc);
+        ncomp_tot_pc_xx *= m_ncomp_pc_xx[dir];
+        ncomp_tot_pc_yy *= m_ncomp_pc_yy[dir];
+        ncomp_tot_pc_zz *= m_ncomp_pc_zz[dir];
+    }
+
+    if (!m_use_mass_matrices_jacobian) {
+        // Store only the selected diagonal stencil when mass matrices are used for the PC alone.
+        m_ncomp_xx = m_ncomp_pc_xx;
+        m_ncomp_yy = m_ncomp_pc_yy;
+        m_ncomp_zz = m_ncomp_pc_zz;
+        m_ncomp_xy = amrex::IntVect{0};
+        m_ncomp_xz = amrex::IntVect{0};
+        m_ncomp_yx = amrex::IntVect{0};
+        m_ncomp_yz = amrex::IntVect{0};
+        m_ncomp_zx = amrex::IntVect{0};
+        m_ncomp_zy = amrex::IntVect{0};
+        Nc_tot_xx = ncomp_tot_pc_xx;
+        Nc_tot_yy = ncomp_tot_pc_yy;
+        Nc_tot_zz = ncomp_tot_pc_zz;
+        Nc_tot_xy = 0;
+        Nc_tot_xz = 0;
+        Nc_tot_yx = 0;
+        Nc_tot_yz = 0;
+        Nc_tot_zx = 0;
+        Nc_tot_zy = 0;
     }
 
     for (int lev = 0; lev < m_num_amr_levels; ++lev) {
@@ -977,21 +1010,6 @@ void ImplicitSolver::InitializeMassMatrices ()
         m_WarpX->m_fields.alloc_init(FieldType::MassMatrices_Z, Direction{2}, lev, ba_Jz, dm, Nc_tot_zz, ngJ, 0.0_rt);
         //
         if (m_use_mass_matrices_pc) {
-            int ncomp_tot_pc_xx = 1;
-            int ncomp_tot_pc_yy = 1;
-            int ncomp_tot_pc_zz = 1;
-
-            // Additional MM components in PC not setup yet for when MM is only used for the PC
-            const int ncomp_dir_pc = (m_use_mass_matrices_jacobian ? 1 + 2*m_mass_matrices_pc_width : 1);
-            for (int dir=0; dir<AMREX_SPACEDIM; dir++) {
-                m_ncomp_pc_xx[dir] = std::min(m_ncomp_xx[dir],ncomp_dir_pc);
-                m_ncomp_pc_yy[dir] = std::min(m_ncomp_yy[dir],ncomp_dir_pc);
-                m_ncomp_pc_zz[dir] = std::min(m_ncomp_zz[dir],ncomp_dir_pc);
-                ncomp_tot_pc_xx *= m_ncomp_pc_xx[dir];
-                ncomp_tot_pc_yy *= m_ncomp_pc_yy[dir];
-                ncomp_tot_pc_zz *= m_ncomp_pc_zz[dir];
-            }
-
             m_WarpX->m_fields.alloc_init(FieldType::MassMatrices_PC, Direction{0}, lev, ba_Jx, dm, ncomp_tot_pc_xx, ngJ, 0.0_rt);
             m_WarpX->m_fields.alloc_init(FieldType::MassMatrices_PC, Direction{1}, lev, ba_Jy, dm, ncomp_tot_pc_yy, ngJ, 0.0_rt);
             m_WarpX->m_fields.alloc_init(FieldType::MassMatrices_PC, Direction{2}, lev, ba_Jz, dm, ncomp_tot_pc_zz, ngJ, 0.0_rt);
@@ -1007,13 +1025,29 @@ void ImplicitSolver::InitializeMassMatrices ()
 
 }
 
+void ImplicitSolver::InitializeImplicitOptions ()
+{
+    // Called after mass-matrix allocation has finalized the component counts.
+    m_implicit_options.max_particle_iterations = m_max_particle_iterations;
+    m_implicit_options.particle_tolerance = m_particle_tolerance;
+    m_implicit_options.print_unconverged_particle_details = m_print_unconverged_particle_details;
+    m_implicit_options.use_mass_matrices_jacobian = m_use_mass_matrices_jacobian;
+    m_implicit_options.use_mass_matrices_pc = m_use_mass_matrices_pc;
+    m_implicit_options.ncomp_xx = m_ncomp_xx;
+    m_implicit_options.ncomp_yy = m_ncomp_yy;
+    m_implicit_options.ncomp_zz = m_ncomp_zz;
+    m_implicit_options.ncomp_pc_xx = m_ncomp_pc_xx;
+    m_implicit_options.ncomp_pc_yy = m_ncomp_pc_yy;
+    m_implicit_options.ncomp_pc_zz = m_ncomp_pc_zz;
+}
+
 void ImplicitSolver::PreLinearSolve (const bool update_pc)
 {
     BL_PROFILE("ImplicitSolver::PreLinearSolve()");
 
     // The deposit is skipped when the mass matrices are used only for a PC that is not updated
     if (m_use_mass_matrices_jacobian || (m_use_mass_matrices_pc && update_pc)) {
-        m_WarpX->DepositMassMatrices(m_dt);
+        m_WarpX->DepositMassMatrices(m_dt, m_implicit_options);
         FinishMassMatricesDeposition();
     }
 
@@ -1050,9 +1084,10 @@ void ImplicitSolver::PreRHSOp (const amrex::Real a_cur_time,
     // This uses Efield_fp and Bfield_fp, the field at n+1/2 from the previous iteration.
     const bool skip_deposition = false;
 
-    // Set the implict solver options for particles and setting the current density
-    ImplicitOptions options;
+    // Copy stable options, then set values specific to this RHS evaluation.
+    ImplicitOptions options = m_implicit_options;
     options.linear_stage_of_jfnk = a_from_jacobian;
+
     // PC deposition and zeroing follow the same schedule as sparse assembly.
     options.use_mass_matrices_pc = m_use_mass_matrices_pc && update_pc && !a_from_jacobian;
     options.use_mass_matrices_jacobian = m_use_mass_matrices_jacobian;
@@ -1060,13 +1095,9 @@ void ImplicitSolver::PreRHSOp (const amrex::Real a_cur_time,
 
     if (a_nl_iter == 0 && !a_from_jacobian &&
         m_use_mass_matrices_jacobian && m_skip_particle_picard_init) {
-        // Only do a single Picard iteration for particles on the initial Newton step
+        // Only do a single Picard iteration for particles on the initial Newton step.
         options.max_particle_iterations = 1;
         options.particle_tolerance = 0.0;
-    }
-    else {
-        options.max_particle_iterations = m_max_particle_iterations;
-        options.particle_tolerance = m_particle_tolerance;
     }
 
     if (m_use_mass_matrices_jacobian && a_from_jacobian) { // Called from linear stage of JFNK and using mass matrices for Jacobian
@@ -1084,9 +1115,8 @@ void ImplicitSolver::PreRHSOp (const amrex::Real a_cur_time,
 
 #if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
     // Apply the inverse volume scaling for radial geometries after the total
-    // current has been accumulated from all containers above. The charge
-    // density needs no such treatment here: rho is deposited directly and is
-    // scaled inside WarpX::PushParticlesandDeposit(), on the implicit path too.
+    // current has been accumulated from all containers above.
+    // Rho (if used) is scaled inside WarpX::FinalizeRho().
     for (int lev = 0; lev < m_num_amr_levels; ++lev) {
         ablastr::fields::VectorField J = m_WarpX->m_fields.get_alldirs(FieldType::current_fp, lev);
         m_WarpX->ApplyInverseVolumeScalingToCurrentDensity(J[0], J[1], J[2], lev);
@@ -1095,6 +1125,7 @@ void ImplicitSolver::PreRHSOp (const amrex::Real a_cur_time,
 
     // Apply BCs to J and communicate
     m_WarpX->SyncCurrentAndRho();
+    m_WarpX->FinalizeRho();
 
 }
 
@@ -1103,8 +1134,8 @@ void ImplicitSolver::SyncMassMatricesPCAndApplyBCs ()
     using ablastr::fields::Direction;
     using warpx::fields::FieldType;
 
-    // Add select mass matrices elements to the preconditioner containers,
-    // which may alread include contributions from suborbit particles that
+    // Add mass matrix elements to the preconditioner containers,
+    // which may already include contributions from suborbit particles that
     // are not included in the mass matrices.
 
     const int diag_comp_xx = (AMREX_D_TERM(m_ncomp_xx[0],*m_ncomp_xx[1],*m_ncomp_xx[2])-1)/2;
@@ -1136,7 +1167,6 @@ void ImplicitSolver::SyncMassMatricesPCAndApplyBCs ()
         const amrex::MultiFab* MM_yy = m_WarpX->m_fields.get(FieldType::MassMatrices_Y, Direction{1}, lev);
         const amrex::MultiFab* MM_zz = m_WarpX->m_fields.get(FieldType::MassMatrices_Z, Direction{2}, lev);
         ablastr::fields::VectorField MM_PC = m_WarpX->m_fields.get_alldirs(FieldType::MassMatrices_PC, lev);
-
 
         const int diag_comp_pc_xx = (MM_PC[0]->nComp() - 1)/2;
         for (int comp2 = 0; comp2 < MM_PC_ncomp_xx[2]; comp2++) {
@@ -1283,9 +1313,14 @@ void ImplicitSolver::FinishMassMatricesDeposition ()
 {
     BL_PROFILE("ImplicitSolver::FinishMassMatricesDeposition()");
 
-    // The MM deposit routines take advantage of symmetry for the diagonal mass
+    // The full MM deposit routines take advantage of symmetry for the diagonal mass
     // matrices to only deposit half of the values. The remainder are computed
     // via copy here in this routine (see FoldMassMatrix).
+
+    // The full mass-matrix deposit leaves some diagonal-stencil components
+    // to be filled by symmetry in FoldMassMatrix. The PC-only deposit writes
+    // every retained stencil component directly, so no fold is needed.
+    if (!m_use_mass_matrices_jacobian) { return; }
 
     using warpx::fields::FieldType;
 
