@@ -8,7 +8,6 @@
 #define ABLASTR_MLMG_WRAPPER_H_
 
 #include <ablastr/fields/MLMGOptions.H>
-#include <ablastr/fields/MLMGTuningCache.H>
 
 #include <AMReX.H>
 #include <AMReX_Array.H>
@@ -70,18 +69,26 @@ inline std::string bottomSolverName (amrex::BottomSolver s)
  * Cartesian geometry.  Kept between solves by the caller, so that MLMG keeps
  * its setup (the AlgMG hierarchy in particular).
  *
- * With tuning enabled (@see MLMGTuningCache::setTuning), the constructor times
- * trial solves over the maximum coarsening level, the agglomeration grid size,
- * the bottom solver (the configured one, default, algmg, smoother and, on
- * GPUs, custom), a single-box layout and, on GPUs, the stream
- * synchronization mode, and keeps the fastest.  Every configuration gets one
- * untimed warm-up solve, so that its setup cost does not count: the solver is
- * reused and the setup is paid once.
+ * With MLMGOptions::tune_mlmg, the constructor times trial solves over the
+ * maximum coarsening level, the agglomeration grid size, the bottom solver
+ * (the configured one, default, algmg, smoother and, on GPUs, custom), a
+ * single-box layout and, on GPUs, the stream synchronization mode, and keeps
+ * the fastest operator and solver.  Every configuration gets one untimed
+ * warm-up solve, so that its setup cost does not count: the solver is reused
+ * and the setup is paid once.
  */
 class MLMGWrapper
 {
 public:
-    using Parms = MLMGTuningCache::Parms;
+    /** The MLMG parameters that the tuning chooses from */
+    struct Parms {
+        bool single_box = false; //!< solve on one box covering the whole domain
+        int mcl = 30;            //!< maximum coarsening level (AMReX default)
+        int ags = -1;            //!< agglomeration grid size, -1 for the AMReX default
+        bool no_gpu_sync = true; //!< GPU only: single stream, no stream synchronization
+        amrex::BottomSolver bottom_solver = amrex::BottomSolver::Default;
+    };
+
     using BCArray = amrex::Array<amrex::LinOpBCType, AMREX_SPACEDIM>;
     using RealArray = amrex::Array<amrex::Real, AMREX_SPACEDIM>;
 
@@ -116,60 +123,45 @@ public:
                  amrex::Real absolute_tolerance)
         : m_geom(geom), m_ng(ng)
     {
-        using namespace amrex;
-
         m_parms.mcl = info.max_coarsening_level;
         m_parms.ags = info.agg_grid_size;
         m_parms.bottom_solver = options.bottom_solver;
 
         // Operator and solver on a layout, with given parameters
-        auto const make = [&] (BoxArray const& ba, DistributionMapping const& dm,
-                               EBFArrayBoxFactory const* fac, Parms const& parms)
+        auto const make = [&] (amrex::BoxArray const& ba, amrex::DistributionMapping const& dm,
+                               amrex::EBFArrayBoxFactory const* fac, Parms const& parms)
         {
-            LPInfo linfo = info;
+            amrex::LPInfo linfo = info;
             linfo.setMaxCoarseningLevel(parms.mcl).setAgglomerationGridSize(parms.ags);
-            auto linop = std::make_unique<MLEBNodeFDLaplacian>();
-            linop->define(Vector<Geometry>{geom}, Vector<BoxArray>{ba},
-                          Vector<DistributionMapping>{dm}, linfo,
-                          Vector<EBFArrayBoxFactory const*>{fac});
+            auto linop = std::make_unique<amrex::MLEBNodeFDLaplacian>();
+            linop->define(amrex::Vector<amrex::Geometry>{geom}, amrex::Vector<amrex::BoxArray>{ba},
+                          amrex::Vector<amrex::DistributionMapping>{dm}, linfo,
+                          amrex::Vector<amrex::EBFArrayBoxFactory const*>{fac});
             linop->setSigma(sigma);
             linop->setDomainBC(lobc, hibc);
             set_eb_dirichlet(*linop);
-            auto mlmg = std::make_unique<MLMG>(*linop);
+            auto mlmg = std::make_unique<amrex::MLMG>(*linop);
             applyMLMGOptions(*mlmg, options);
-            mlmg->setConvergenceNormType(MLMGNormType::greater);
+            mlmg->setConvergenceNormType(amrex::MLMGNormType::greater);
             // In the collocated case, computeE needs ghost node data: ask
             // MLMG to fill the BC after it solves the problem.
             mlmg->setFinalFillBC(ng > 0);
             mlmg->setBottomSolver(parms.bottom_solver);
             mlmg->setNoGpuSync(parms.no_gpu_sync);
-            return std::make_pair(std::move(linop), std::move(mlmg));
+            return Pair{std::move(linop), std::move(mlmg)};
         };
 
-        if (rho && MLMGTuningCache::tuning()) {
+        if (rho && options.tune_mlmg) {
             tune(lev, grids, dmap, factory, options, make, *rho,
                  relative_tolerance, absolute_tolerance);
         }
 
-        BoxArray ba = grids;
-        DistributionMapping dm = dmap;
-        EBFArrayBoxFactory const* fac = &factory;
-        if (m_parms.single_box) {
-            auto& sb = MLMGTuningCache::singleBox(lev, geom.Domain());
-            if (!sb.eb_factory) {
-                sb.eb_factory = makeEBFabFactory(factory.getEBIndexSpace(), geom, sb.ba, sb.dm,
-                                                 {1,1,1}, EBSupport::full);
-            }
-            ba = sb.ba;
-            dm = sb.dm;
-            fac = static_cast<EBFArrayBoxFactory const*>(sb.eb_factory.get());
-            m_phi_tmp.define(amrex::convert(ba, IntVect(1)), dm, 1, 1);
-            m_phi_tmp.setVal(0.0); // ghost nodes at Dirichlet faces are never written by MLMG
-            m_rho_tmp.define(amrex::convert(ba, IntVect(1)), dm, 1, 0);
+        if (!m_mlmg) {
+            // Not tuned, or no trial configuration converged
+            auto tmp = make(grids, dmap, &factory, m_parms);
+            m_linop = std::move(tmp.first);
+            m_mlmg = std::move(tmp.second);
         }
-        auto tmp = make(ba, dm, fac, m_parms);
-        m_linop = std::move(tmp.first);
-        m_mlmg = std::move(tmp.second);
     }
 
     amrex::MLMG& getMLMG () { return *m_mlmg; }
@@ -206,10 +198,14 @@ public:
 
 private:
 
+    using Pair = std::pair<std::unique_ptr<amrex::MLEBNodeFDLaplacian>,
+                           std::unique_ptr<amrex::MLMG>>;
+
     Parms m_parms;
     amrex::Geometry m_geom;
-    //! Temporaries of the single-box solve. MLMG aliases them, and
-    //! MLMG::getGradSolution needs them after the solve.
+    //! The single-box layout's EB factory and temporaries. MLMG aliases the
+    //! temporaries, and MLMG::getGradSolution needs them after the solve.
+    std::unique_ptr<amrex::EBFArrayBoxFactory> m_single_box_factory;
     amrex::MultiFab m_phi_tmp;
     amrex::MultiFab m_rho_tmp;
     std::unique_ptr<amrex::MLEBNodeFDLaplacian> m_linop;
@@ -235,7 +231,8 @@ private:
         return msg;
     }
 
-    /** Time trial solves over the parameter sets and keep the fastest in m_parms */
+    /** Time trial solves over the parameter sets; keep the fastest in m_parms,
+     *  and its operator and solver in m_linop and m_mlmg */
     template <typename MakeF>
     void tune (int lev,
                amrex::BoxArray const& grids,
@@ -247,16 +244,18 @@ private:
                amrex::Real relative_tolerance,
                amrex::Real absolute_tolerance)
     {
-        using namespace amrex;
-
         int const verbosity = options.verbosity;
         int const trial_verbosity = (verbosity > 2) ? verbosity - 2 : 0;
         Parms const base = m_parms;
 
-        MultiFab phi(rho.boxArray(), rho.DistributionMap(), 1, 1, MFInfo{}, rho.Factory());
+        amrex::MultiFab phi(rho.boxArray(), rho.DistributionMap(), 1, 1,
+                            amrex::MFInfo{}, rho.Factory());
 
         // Some of the configurations tried below might blow up.
         FPExceptGuard const fpe_guard{};
+
+        Pair best;                // the fastest operator and solver so far
+        double tsolve = t_failed; // and its time
 
         // Time one configuration: the fastest of a few solves after one
         // untimed warm-up solve, which builds the setup.  t_failed if a
@@ -268,42 +267,50 @@ private:
             try {
                 for (int itry = 0; itry <= n_timed; ++itry) {
                     phi.setVal(0.0);
-                    Gpu::synchronize();
+                    amrex::Gpu::synchronize();
                     auto const t0 = amrex::second();
                     solve_fn();
-                    Gpu::synchronize();
+                    amrex::Gpu::synchronize();
                     double t_try = amrex::second() - t0;
                     if (phi.contains_nan(0, 1, 0)) {
-                        throw MLMG::error("MLMGWrapper: solution contains NaNs");
+                        throw amrex::MLMG::error("MLMGWrapper: solution contains NaNs");
                     }
-                    ParallelAllReduce::Max(t_try, ParallelContext::CommunicatorSub());
+                    amrex::ParallelAllReduce::Max(t_try, amrex::ParallelContext::CommunicatorSub());
                     if (itry == 0) { continue; } // warm-up
                     t = std::min(t, t_try);
-                    if (t_try > 2.0*t_best) { break; }
+                    if (t_best < t_failed && t_try > 2.0*t_best) { break; }
                 }
-            } catch (MLMG::error const&) {
+            } catch (amrex::MLMG::error const&) {
                 t = t_failed;
             }
             return t;
         };
 
+        auto const prepare_trial = [&] (Pair& tmp, int max_iters) {
+            tmp.second->setThrowException(true); // trial solve: failure is caught, not fatal
+            tmp.second->setVerbose(trial_verbosity);
+            tmp.second->setMaxIter(max_iters);
+        };
+
         // Baseline: the parameters as given
         int mcl0 = 0;
         int niter0 = options.max_iters;
-        double tsolve = t_failed;
         {
-            auto const tmp = make(grids, dmap, &factory, base);
-            tmp.second->setThrowException(true); // trial solve: failure is caught, not fatal
-            tmp.second->setVerbose(trial_verbosity);
+            Pair tmp = make(grids, dmap, &factory, base);
+            prepare_trial(tmp, options.max_iters);
             mcl0 = tmp.first->NMGLevels(0) - 1;
             tsolve = time_config([&] {
                 tmp.second->solve({&phi}, {&rho}, relative_tolerance, absolute_tolerance);
             }, t_failed);
-            if (tsolve < t_failed) { niter0 = tmp.second->getNumIters(); }
+            if (tsolve < t_failed) {
+                niter0 = tmp.second->getNumIters();
+                best = std::move(tmp);
+            }
         }
         if (tsolve < t_failed && niter0 == 0) {
             // Nothing to time with this right-hand side, e.g. rho = 0 at initialization.
             m_tuning_skipped = true;
+            adopt(best);
             return;
         }
         // A configuration needing far more iterations than the baseline is no candidate.
@@ -320,23 +327,24 @@ private:
         auto const push_unique = [] (auto& v, auto const& x) {
             if (std::find(v.begin(), v.end(), x) == v.end()) { v.push_back(x); }
         };
-        std::vector<BottomSolver> bottom_solvers{base.bottom_solver};
-        for (auto const b : {BottomSolver::Default, BottomSolver::algmg, BottomSolver::smoother}) {
+        std::vector<amrex::BottomSolver> bottom_solvers{base.bottom_solver};
+        for (auto const b : {amrex::BottomSolver::Default, amrex::BottomSolver::algmg,
+                             amrex::BottomSolver::smoother}) {
             push_unique(bottom_solvers, b);
         }
 #if defined(AMREX_USE_CUDA) || defined(AMREX_USE_HIP)
         // The operator's own bottom solver: a fused kernel when the bottom
         // level is one box, otherwise the same as bicgstab.
-        push_unique(bottom_solvers, BottomSolver::custom);
+        push_unique(bottom_solvers, amrex::BottomSolver::custom);
 #endif
         std::vector<int> agg_grid_sizes{base.ags};
         if (grids.size() > 1) {
-            int const d = LPInfo::getDefaultAgglomerationGridSize();
+            int const d = amrex::LPInfo::getDefaultAgglomerationGridSize();
             for (int const a : {d, 2*d, 4*d}) { push_unique(agg_grid_sizes, a); }
         }
         // The smoother alone cannot solve a large bottom problem.
-        auto const skip = [&] (BottomSolver b, int mcl) {
-            return (b == BottomSolver::smoother) && (mcl != mcl0);
+        auto const skip = [&] (amrex::BottomSolver b, int mcl) {
+            return (b == amrex::BottomSolver::smoother) && (mcl != mcl0);
         };
         auto const consider = [&] (Parms const& p, double t) {
             if (t < tsolve) {
@@ -348,30 +356,32 @@ private:
                                << ((t < t_failed) ? std::to_string(t) + " s" : "failed") << "\n";
             }
         };
+        // Keep a trial pair if one of its configurations became the fastest
+        auto const keep_if_best = [&] (Pair& tmp, double t_before) {
+            if (tsolve < t_before) { best = std::move(tmp); }
+        };
 
         // One box covering the whole domain
         if ((lev == 0) && (grids.size() > 1)
-            && (m_geom.Domain().numPts() <= (Long(256)*Long(256)*Long(256))))
+            && (m_geom.Domain().numPts() <= (amrex::Long(256)*amrex::Long(256)*amrex::Long(256))))
         {
-            auto& sb = MLMGTuningCache::singleBox(lev, m_geom.Domain());
-            if (!sb.eb_factory) {
-                sb.eb_factory = makeEBFabFactory(factory.getEBIndexSpace(), m_geom,
-                                                 sb.ba, sb.dm, {1,1,1}, EBSupport::full);
-            }
-            auto const* fac = static_cast<EBFArrayBoxFactory const*>(sb.eb_factory.get());
-            MultiFab phi_sb(amrex::convert(sb.ba, IntVect(1)), sb.dm, 1, 1);
-            phi_sb.setVal(0.0);
-            MultiFab rho_sb(amrex::convert(sb.ba, IntVect(1)), sb.dm, 1, 0);
+            amrex::BoxArray const sb_ba(m_geom.Domain());
+            amrex::DistributionMapping const sb_dm(amrex::Vector<int>{0});
+            m_single_box_factory = amrex::makeEBFabFactory(factory.getEBIndexSpace(), m_geom,
+                                                           sb_ba, sb_dm, {1,1,1},
+                                                           amrex::EBSupport::full);
+            m_phi_tmp.define(amrex::convert(sb_ba, amrex::IntVect(1)), sb_dm, 1, 1);
+            m_phi_tmp.setVal(0.0); // ghost nodes at Dirichlet faces are never written by MLMG
+            m_rho_tmp.define(amrex::convert(sb_ba, amrex::IntVect(1)), sb_dm, 1, 0);
 
             // With a single box, the agglomeration grid size does not matter.
             for (int mcl = 0; mcl <= mcl0; ++mcl) {
                 Parms p = base;
                 p.single_box = true;
                 p.mcl = mcl;
-                auto const tmp = make(sb.ba, sb.dm, fac, p);
-                tmp.second->setThrowException(true);
-                tmp.second->setVerbose(trial_verbosity);
-                tmp.second->setMaxIter(trial_max_iters);
+                Pair tmp = make(sb_ba, sb_dm, m_single_box_factory.get(), p);
+                prepare_trial(tmp, trial_max_iters);
+                double const t_before = tsolve;
                 for (auto const b : bottom_solvers) {
                     if (skip(b, mcl)) { continue; }
                     p.bottom_solver = b;
@@ -380,11 +390,13 @@ private:
                         p.no_gpu_sync = nosync;
                         tmp.second->setNoGpuSync(nosync);
                         consider(p, time_config([&] {
-                            solve_single_box(m_geom, *tmp.second, m_ng, phi, rho, phi_sb, rho_sb,
+                            solve_single_box(m_geom, *tmp.second, m_ng, phi, rho,
+                                             m_phi_tmp, m_rho_tmp,
                                              relative_tolerance, absolute_tolerance);
                         }, tsolve));
                     }
                 }
+                keep_if_best(tmp, t_before);
             }
         }
 
@@ -396,10 +408,9 @@ private:
                 Parms p = base;
                 p.mcl = mcl;
                 p.ags = ags;
-                auto const tmp = make(grids, dmap, &factory, p);
-                tmp.second->setThrowException(true);
-                tmp.second->setVerbose(trial_verbosity);
-                tmp.second->setMaxIter(trial_max_iters);
+                Pair tmp = make(grids, dmap, &factory, p);
+                prepare_trial(tmp, trial_max_iters);
+                double const t_before = tsolve;
                 for (auto const b : bottom_solvers) {
                     if (skip(b, mcl)) { continue; }
                     p.bottom_solver = b;
@@ -413,6 +424,7 @@ private:
                         }, tsolve));
                     }
                 }
+                keep_if_best(tmp, t_before);
             }
         }
 
@@ -431,7 +443,20 @@ private:
             }
         }
         if (!m_parms.single_box) {
-            MLMGTuningCache::eraseSingleBox(lev);
+            m_single_box_factory.reset();
+            m_phi_tmp.clear();
+            m_rho_tmp.clear();
+        }
+        adopt(best);
+    }
+
+    //! Make a trial pair the production operator and solver; it keeps its setup
+    void adopt (Pair& best)
+    {
+        if (best.second) {
+            best.second->setThrowException(false);
+            m_linop = std::move(best.first);
+            m_mlmg = std::move(best.second);
         }
     }
 
@@ -588,7 +613,7 @@ getEBPoissonSolver (
         && c.hibc == hibc;
 
     if (same_layout && c.sigma == sigma) {
-        bool const retry_tuning = MLMGTuningCache::tuning() && c.solver->tuningSkipped();
+        bool const retry_tuning = options.tune_mlmg && c.solver->tuningSkipped();
         if (!retry_tuning) { return c.solver; }
     } else if (same_layout) {
         c.unstable = true;

@@ -57,6 +57,13 @@ struct MLMGOptions
      */
     amrex::BottomSolver bottom_solver = amrex::BottomSolver::Default;
 
+    /** Time trial solves and keep the fastest MLMG parameters, @see MLMGWrapper
+     *
+     * Applies to solves whose operator and solver are kept between calls
+     * (embedded boundaries in Cartesian geometry).
+     */
+    bool tune_mlmg = false;
+
     /** Verbosity of the bottom solver (0: silent) */
     int bottom_verbosity = 0;
 
