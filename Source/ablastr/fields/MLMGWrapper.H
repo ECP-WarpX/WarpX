@@ -361,9 +361,10 @@ private:
             if (tsolve < t_before) { best = std::move(tmp); }
         };
 
-        // One box covering the whole domain
+        // One box covering the whole domain.  Its EB data, temporaries and
+        // operator all live on one rank, so only small domains are tried.
         if ((lev == 0) && (grids.size() > 1)
-            && (m_geom.Domain().numPts() <= (amrex::Long(256)*amrex::Long(256)*amrex::Long(256))))
+            && (m_geom.Domain().numPts() <= (amrex::Long(128)*amrex::Long(128)*amrex::Long(128))))
         {
             amrex::BoxArray const sb_ba(m_geom.Domain());
             amrex::DistributionMapping const sb_dm(amrex::Vector<int>{0});
