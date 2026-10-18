@@ -365,7 +365,6 @@ computePhi (
 #if defined(AMREX_USE_EB)
         std::shared_ptr<MLMGWrapper> eb_solver; // kept until after the post-solve step
 #endif
-        bool solved = false;
 
         if (eb_enabled || is_rz) {
             // In the presence of EB or RZ: the solver assumes that the beam is
@@ -397,7 +396,6 @@ computePhi (
                                      mlmg_options.relative_tolerance, absolute_tolerance);
                     linop = &eb_solver->getLinOp();
                     mlmg = &eb_solver->getMLMG();
-                    solved = true;
                 }
 #endif
             } else {
@@ -455,7 +453,7 @@ computePhi (
             linop_owned = std::move(linop_tenslap);
         }
 
-        if (!solved) {
+        if (!mlmg) { // not solved by the cached EB solver
             mlmg_owned = std::make_unique<amrex::MLMG>(*linop); // actual solver defined here
             mlmg = mlmg_owned.get();
             applyMLMGOptions(*mlmg, mlmg_options);

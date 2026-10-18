@@ -292,7 +292,7 @@ private:
         int niter0 = options.max_iters;
         double tsolve = t_failed;
         {
-            auto tmp = make(grids, dmap, &factory, base);
+            auto const tmp = make(grids, dmap, &factory, base);
             tmp.second->setThrowException(true); // trial solve: failure is caught, not fatal
             tmp.second->setVerbose(trial_verbosity);
             mcl0 = tmp.first->NMGLevels(0) - 1;
@@ -368,7 +368,7 @@ private:
                 Parms p = base;
                 p.single_box = true;
                 p.mcl = mcl;
-                auto tmp = make(sb.ba, sb.dm, fac, p);
+                auto const tmp = make(sb.ba, sb.dm, fac, p);
                 tmp.second->setThrowException(true);
                 tmp.second->setVerbose(trial_verbosity);
                 tmp.second->setMaxIter(trial_max_iters);
@@ -396,7 +396,7 @@ private:
                 Parms p = base;
                 p.mcl = mcl;
                 p.ags = ags;
-                auto tmp = make(grids, dmap, &factory, p);
+                auto const tmp = make(grids, dmap, &factory, p);
                 tmp.second->setThrowException(true);
                 tmp.second->setVerbose(trial_verbosity);
                 tmp.second->setMaxIter(trial_max_iters);
