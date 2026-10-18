@@ -13,6 +13,7 @@
 #include "Utils/Parser/ParserUtils.H"
 #include "WarpX.H"
 
+#include <ablastr/fields/MLMGTuningCache.H>
 #include <ablastr/fields/PoissonSolver.H>
 
 #include <string>
@@ -49,6 +50,12 @@ void ElectrostaticSolver::ReadParameters () {
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         m_mlmg_options.num_final_sweeps > 0,
         "warpx.self_fields_num_final_sweeps must be > 0");
+
+    {
+        bool tune_mlmg = false;
+        pp_warpx.query("tune_mlmg", tune_mlmg);
+        ablastr::fields::MLMGTuningCache::setTuning(tune_mlmg);
+    }
 
     // MLMG bottom solver options
     std::string bottom_solver_name = "default";

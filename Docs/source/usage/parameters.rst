@@ -592,6 +592,27 @@ Overall simulation parameters
 
     Must be greater than zero when specified.
 
+.. pp:param:: warpx.tune_mlmg
+    :type: ``bool``
+    :default: ``false``
+
+    Whether to auto-tune the AMReX MLMG parameters of the electrostatic Poisson
+    solver: maximum coarsening level, grid agglomeration, bottom solver
+    (the configured one, ``default``, ``algmg``, ``smoother`` and, on GPUs,
+    ``custom``), a single-box solve and, on GPUs, stream synchronization.
+
+    This applies to solves with embedded boundaries in Cartesian geometry,
+    where the operator and solver of each level are kept between solves.
+    The first solve on a given grid layout times trial solves for each
+    parameter set and keeps the fastest; the setup cost of a parameter set
+    (e.g. the AlgMG hierarchy) is paid once and is not counted. Parameter
+    sets that fail or produce NaNs are discarded; if none work, the given
+    parameters are used. The tuning is repeated when the grid layout changes,
+    e.g. after a load balance, so it pays off when there are many solves
+    between layout changes. Levels whose operator coefficients change
+    between solves (the ``relativistic`` solver with a varying beta) are not
+    tuned.
+
 .. pp:param:: warpx.self_fields_bottom_solver
     :type: ``string``
     :default: ``default``
