@@ -2467,6 +2467,10 @@ class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
         default=None,
         description="Maximum number of MLMG coarsening levels (AMReX default: 30). Lowering this leaves a larger problem to the bottom solver.",
     )
+    tune_mlmg: bool | None = Field(
+        default=None,
+        description="Whether to time trial solves and keep the fastest MLMG parameters (coarsening, agglomeration, bottom solver, ...) for solves with embedded boundaries in Cartesian geometry (default: False)",
+    )
     # MLMG coarse level distribution parameters
     self_fields_agglomeration: bool | None = Field(
         default=None,
@@ -2566,6 +2570,7 @@ class ElectrostaticSolver(picmistandard.PICMI_ElectrostaticSolver):
         pywarpx.warpx.self_fields_consolidation_grid_size = (
             self.self_fields_consolidation_grid_size
         )
+        pywarpx.warpx.tune_mlmg = self.tune_mlmg
 
         if self.relativistic:
             pywarpx.warpx.do_electrostatic = "relativistic"

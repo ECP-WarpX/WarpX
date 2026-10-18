@@ -71,7 +71,7 @@ inline std::string bottomSolverName (amrex::BottomSolver s)
  *
  * With MLMGOptions::tune_mlmg, the constructor times trial solves over the
  * maximum coarsening level, the agglomeration grid size, the bottom solver
- * (the configured one, default, algmg, smoother and, on GPUs, custom), a
+ * (the configured one, default, algmg, smoother and, on CUDA and HIP, custom), a
  * single-box layout and, on GPUs, the stream synchronization mode, and keeps
  * the fastest operator and solver.  Every configuration gets one untimed
  * warm-up solve, so that its setup cost does not count: the solver is reused
@@ -152,7 +152,7 @@ public:
         };
 
         if (rho && options.tune_mlmg) {
-            tune(lev, grids, dmap, factory, options, make, *rho,
+            tune(lev, grids, dmap, factory, info, options, make, *rho,
                  relative_tolerance, absolute_tolerance);
         }
 
@@ -238,6 +238,7 @@ private:
                amrex::BoxArray const& grids,
                amrex::DistributionMapping const& dmap,
                amrex::EBFArrayBoxFactory const& factory,
+               amrex::LPInfo const& info,
                MLMGOptions const& options,
                MakeF const& make,
                amrex::MultiFab const& rho,
@@ -292,16 +293,28 @@ private:
             tmp.second->setMaxIter(max_iters);
         };
 
+        auto const consider = [&] (Parms const& p, double t) {
+            if (t < tsolve) {
+                tsolve = t;
+                m_parms = p;
+            }
+            if (verbosity > 1) {
+                amrex::Print() << "MLMG tuning: " << describe(p) << " : "
+                               << ((t < t_failed) ? std::to_string(t) + " s" : "failed") << "\n";
+            }
+        };
+
         // Baseline: the parameters as given
         int mcl0 = 0;
         int niter0 = options.max_iters;
         {
             Pair tmp = make(grids, dmap, &factory, base);
             prepare_trial(tmp, options.max_iters);
-            mcl0 = tmp.first->NMGLevels(0) - 1;
-            tsolve = time_config([&] {
+            consider(base, time_config([&] {
                 tmp.second->solve({&phi}, {&rho}, relative_tolerance, absolute_tolerance);
-            }, t_failed);
+            }, t_failed));
+            // The MG hierarchy is built at the first solve.
+            mcl0 = tmp.first->NMGLevels(0) - 1;
             if (tsolve < t_failed) {
                 niter0 = tmp.second->getNumIters();
                 best = std::move(tmp);
@@ -338,23 +351,13 @@ private:
         push_unique(bottom_solvers, amrex::BottomSolver::custom);
 #endif
         std::vector<int> agg_grid_sizes{base.ags};
-        if (grids.size() > 1) {
+        if (grids.size() > 1 && info.do_agglomeration) {
             int const d = amrex::LPInfo::getDefaultAgglomerationGridSize();
             for (int const a : {d, 2*d, 4*d}) { push_unique(agg_grid_sizes, a); }
         }
         // The smoother alone cannot solve a large bottom problem.
         auto const skip = [&] (amrex::BottomSolver b, int mcl) {
             return (b == amrex::BottomSolver::smoother) && (mcl != mcl0);
-        };
-        auto const consider = [&] (Parms const& p, double t) {
-            if (t < tsolve) {
-                tsolve = t;
-                m_parms = p;
-            }
-            if (verbosity > 1) {
-                amrex::Print() << "MLMG tuning: " << describe(p) << " : "
-                               << ((t < t_failed) ? std::to_string(t) + " s" : "failed") << "\n";
-            }
         };
         // Keep a trial pair if one of its configurations became the fastest
         auto const keep_if_best = [&] (Pair& tmp, double t_before) {
@@ -418,6 +421,9 @@ private:
                     tmp.second->setBottomSolver(b);
                     for (bool const nosync : sync_options) {
                         p.no_gpu_sync = nosync;
+                        // The baseline, already timed
+                        if (mcl == mcl0 && ags == base.ags && b == base.bottom_solver
+                            && nosync == base.no_gpu_sync) { continue; }
                         tmp.second->setNoGpuSync(nosync);
                         consider(p, time_config([&] {
                             tmp.second->solve({&phi}, {&rho},
@@ -579,7 +585,8 @@ inline bool sameGeometry (amrex::Geometry const& a, amrex::Geometry const& b)
  * whose coefficients change (a beta that varies between solves) gets a
  * solver per call and no tuning, since its matrix is not stable.
  *
- * Parameters are those of the MLMGWrapper constructor.
+ * Parameters are those of the MLMGWrapper constructor, plus
+ * \param[out] reused true if the solver comes from the cache (its EB potential is stale)
  */
 template <typename F>
 std::shared_ptr<MLMGWrapper>
@@ -598,8 +605,10 @@ getEBPoissonSolver (
     F const& set_eb_dirichlet,
     amrex::MultiFab const& rho,
     amrex::Real relative_tolerance,
-    amrex::Real absolute_tolerance)
+    amrex::Real absolute_tolerance,
+    bool& reused)
 {
+    reused = false;
     auto& cache = ebPoissonSolverCache();
     if (lev >= static_cast<int>(cache.size())) { cache.resize(lev+1); }
     auto& c = cache[lev];
@@ -615,7 +624,10 @@ getEBPoissonSolver (
 
     if (same_layout && c.sigma == sigma) {
         bool const retry_tuning = options.tune_mlmg && c.solver->tuningSkipped();
-        if (!retry_tuning) { return c.solver; }
+        if (!retry_tuning) {
+            reused = true;
+            return c.solver;
+        }
     } else if (same_layout) {
         c.unstable = true;
         c.solver.reset();

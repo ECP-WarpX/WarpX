@@ -598,8 +598,8 @@ Overall simulation parameters
 
     Whether to auto-tune the AMReX MLMG parameters of the electrostatic Poisson
     solver: maximum coarsening level, grid agglomeration, bottom solver
-    (the configured one, ``default``, ``algmg``, ``smoother`` and, on GPUs,
-    ``custom``), a single-box solve and, on GPUs, stream synchronization.
+    (the configured one, ``default``, ``algmg``, ``smoother`` and, on CUDA and
+    HIP, ``custom``), a single-box solve and, on GPUs, stream synchronization.
 
     This applies to solves with embedded boundaries in Cartesian geometry,
     where the operator and solver of each level are kept between solves.
