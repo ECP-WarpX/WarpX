@@ -258,12 +258,12 @@ private:
         Pair best;                // the fastest operator and solver so far
         double tsolve = t_failed; // and its time
 
-        // Time one configuration: the fastest of a few solves after one
+        // Time one configuration: the fastest of two solves after one
         // untimed warm-up solve, which builds the setup.  t_failed if a
         // solve fails or gives NaNs.  Stops early when not competitive.
         auto const time_config = [&] (auto&& solve_fn, double t_best) -> double
         {
-            constexpr int n_timed = 3;
+            constexpr int n_timed = 2;
             double t = t_failed;
             try {
                 for (int itry = 0; itry <= n_timed; ++itry) {
