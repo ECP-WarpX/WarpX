@@ -185,14 +185,14 @@ void DarwinLinearFieldOperator::apply ( WarpXSolverVec& a_Ax, const WarpXSolverV
     // Evaluation of the (single) 4th-order field equation:
     // bilaplacian(Z), discretized directly in a single pass over Z.
     warpx_ptr->get_pointer_fdtd_solver_fp(lev)->ComputeVectorBiLaplacian(
-        rhs_vec[lev], Zscratch, warpx_ptr->GetEBUpdateBFlag()[lev], lev
+        rhs_vec[lev], Zscratch, warpx_ptr->GetEBUpdateBFlag_fp()[lev], lev
     );
 
     // Calculate dA = curl(Z), out into dA's full guard region so that the mass
     // matrix gather below never runs off the end of it
     // (ComputeCurlB resets dA to zero internally).
     warpx_ptr->get_pointer_fdtd_solver_fp(lev)->ComputeCurlB(
-        dA[lev], Zscratch, warpx_ptr->GetEBUpdateEFlag()[lev], lev, m_dA_x.nGrowVect()
+        dA[lev], Zscratch, warpx_ptr->GetEBUpdateEFlag_fp()[lev], lev, m_dA_x.nGrowVect()
     );
 
     // Calculate chi dA (the scaled mass matrices applied to dA) and write into
@@ -207,7 +207,7 @@ void DarwinLinearFieldOperator::apply ( WarpXSolverVec& a_Ax, const WarpXSolverV
 
     // Reuse lapZ as a temporary storage location for curl(chi curl(Z))
     warpx_ptr->get_pointer_fdtd_solver_fp(lev)->ComputeCurlA(
-        lapZ, chidA[lev], warpx_ptr->GetEBUpdateBFlag()[lev], lev
+        lapZ, chidA[lev], warpx_ptr->GetEBUpdateBFlag_fp()[lev], lev
     );
 
     for (int ii = 0; ii < 3; ii++)
