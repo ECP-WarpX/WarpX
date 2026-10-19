@@ -4072,6 +4072,24 @@ electric fields. Conductivity is evaluated at the trial field time
 
     Comparing the two methods, Lax-Wendroff is more prone to developing oscillations and requires a smaller timestep for stability. On the other hand, Backward Euler is more robust but it is first-order accurate in time compared to the second-order Lax-Wendroff method.
 
+.. pp:param:: macroscopic.dive_cleaning_vacuum_patches_only
+    :type: ``bool``
+    :default: 0
+
+    Restrict electric divergence cleaning to entirely vacuum material patches
+    when :pp:param:`algo.em_solver_medium = macroscopic` and
+    :pp:param:`warpx.do_dive_cleaning = 1`.
+    A patch here means a complete fine- or coarse-patch field set at one
+    refinement level, including the material interpolation halo.
+    Its static coefficients must be exactly zero conductivity, vacuum
+    permittivity and vacuum permeability.
+
+    Vacuum patches use the vacuum Maxwell update, including the electric
+    cleaning gradient. Material-bearing patches and their PML skip electric
+    cleaning, because particle charge density does not include conductor or
+    impressed-source charge. Magnetic cleaning is controlled separately.
+    All non-particle charge sources must lie outside the cleaned vacuum patches.
+
 .. pp:param:: macroscopic.sigma/epsilon/mu_function(x,y,z)
     :link_aliases:
         macroscopic.sigma_function(x,y,z)

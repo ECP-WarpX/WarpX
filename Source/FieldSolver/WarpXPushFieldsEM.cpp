@@ -11,6 +11,7 @@
 #include "BoundaryConditions/PML.H"
 #include "Fields.H"
 #include "FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H"
+#include "FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H"
 #if defined(WARPX_USE_FFT)
 #   include "FieldSolver/SpectralSolver/SpectralFieldData.H"
 #   ifdef WARPX_DIM_RZ
@@ -1118,6 +1119,20 @@ WarpX::EvolveF (int lev, PatchType patch_type, amrex::Real a_dt, int const rho_c
 
     ABLASTR_PROFILE("WarpX::EvolveF()");
 
+    if (m_em_solver_medium == MediumForEM::Macroscopic) {
+        auto const& material =
+            *m_macroscopic_properties[lev][patch_type == PatchType::fine ? 0 : 1];
+        if (!material.IsVacuumPatch()) {
+            // Conductivity and impressed sources can create physical charge
+            // that is not present in the particle rho used by this cleaner.
+            if (material.CleanVacuumPatchesOnly()) { return; }
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!do_dive_cleaning,
+                "Electric divergence cleaning with macroscopic media requires vacuum properties "
+                "on cleaned patches. Set macroscopic.dive_cleaning_vacuum_patches_only=1 "
+                "to leave material-bearing patches and their PML uncleaned.");
+        }
+    }
+
     // Evolve F field in regular cells
     if (do_dive_cleaning) {
         if (patch_type == PatchType::fine) {
@@ -1228,6 +1243,17 @@ void
 WarpX::MacroscopicEvolveE (int lev, PatchType patch_type, amrex::Real a_dt, amrex::Real start_time) {
 
     bool const fine_patch = patch_type == PatchType::fine;
+    auto const& material = *m_macroscopic_properties[lev][fine_patch ? 0 : 1];
+    if (m_fields.has(fine_patch ? FieldType::F_fp : FieldType::F_cp, lev)) {
+        if (material.IsVacuumPatch()) {
+            // The vacuum update includes grad(F); the material update does not.
+            EvolveE(lev, patch_type, a_dt, start_time);
+            return;
+        }
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(material.CleanVacuumPatchesOnly(),
+            "Electric divergence cleaning with macroscopic media requires vacuum properties "
+            "on cleaned patches.");
+    }
     auto* const solver = fine_patch ? m_fdtd_solver_fp[lev].get() : m_fdtd_solver_cp[lev].get();
     solver->MacroscopicEvolveE(
         m_macroscopic_solver_algo,
