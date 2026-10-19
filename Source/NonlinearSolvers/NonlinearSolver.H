@@ -184,6 +184,12 @@ public:
     virtual void InvalidatePreconditioner () {}
 
     /**
+     * \brief Destroy and recreate the PETSc solver objects around a finalize and
+     *        re-initialize of PETSc. No-op for solvers that do not use PETSc.
+     */
+    virtual void ReinitializePETSc () {}
+
+    /**
      * \brief Allow caller to dynamically change the verbosity flag. For
      * example, one may want to only print solver information every 100 steps.
      */

@@ -60,6 +60,10 @@ public:
     //! Solvers without a cached preconditioner need no notification.
     virtual void invalidatePreconditioner () {}
 
+    /** \brief Destroy and recreate the PETSc objects around a PETSc re-initialization.
+     *         Returns true if the solver uses PETSc and did so, false otherwise. */
+    virtual bool reinitializePETSc () { return false; }
+
     //! Sets verbosity.
     virtual void setVerbose (int v) = 0;
 

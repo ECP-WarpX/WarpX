@@ -82,6 +82,12 @@ public:
         m_pc_initialized = false;
     }
 
+    void ReinitializePETSc () override
+    {
+        // The new PETSc solver needs its preconditioner rebuilt
+        if (m_linear_solver->reinitializePETSc()) { m_pc_initialized = false; }
+    }
+
     void PrintParams () const override
     {
         this->m_params.Print("Newton");

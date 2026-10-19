@@ -264,6 +264,17 @@ protected:
     ImplicitOptions m_implicit_options;
 
     /**
+     * \brief Finalize and re-initialize PETSc every this many steps (0: never), to release
+     *        the host memory PETSc's GPU vector operations accumulate until PetscFinalize.
+     *        Only GPU builds leak, so the default is on for them only.
+     */
+#ifdef AMREX_USE_GPU
+    int m_petsc_reinit_interval = 1000;
+#else
+    int m_petsc_reinit_interval = 0;
+#endif
+
+    /**
      * \brief whether to skip the full Picard update of particles on the initial newton step
      */
     bool m_skip_particle_picard_init = false;

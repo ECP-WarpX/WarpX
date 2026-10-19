@@ -28,6 +28,13 @@ namespace warpx::initialization
      */
     void finalize_external_libraries ();
 
+    /** \brief Finalize and re-initialize PETSc with the original command line.
+     *
+     * Releases the host memory PETSc accumulates until PetscFinalize. All PETSc
+     * objects must have been destroyed before the call. No-op without PETSc.
+     */
+    void reinitialize_petsc ();
+
     /**
      * Initializes the Warning manager in ablastr
      */
