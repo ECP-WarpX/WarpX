@@ -479,17 +479,13 @@ void doDirectJandSigmaDepositionKernel ([[maybe_unused]] const amrex::ParticleRe
         if constexpr (deposit_J) {
             amrex::Gpu::Atomic::AddNoRet(&jx_arr(lo.x+j_jx+ix, 0, 0, 0), sx_jx[ix]*wqx);
         }
-        // Deposit mass matrices
-        if constexpr (full_mass_matrices) {
-            for (int aa = 0; aa <= depos_order; aa++) {
-                if (aa <= ix) { // Reduced deposit for diagonal mass matrices
-                    const int Nc = depos_order + aa - ix;
-                    amrex::Gpu::Atomic::AddNoRet(&Sxx_arr(lo.x+j_jx+ix, 0, 0, Nc), sx_jx[ix]*sx_jx[aa]*fpxx);
-                }
-            }
-        }
-        else { // Deposit mass matrices for diagonal PC only
-            amrex::Gpu::Atomic::AddNoRet(&Sxx_arr(lo.x + j_jx + ix, 0, 0, 0), sx_jx[ix]*fpxx);
+        // Full matrices deposit the lower half; PC-only matrices use the selected width.
+        const int diag_width = full_mass_matrices ? depos_order : (diag_ncomp - 1)/2;
+        const int aa_start = full_mass_matrices ? 0 : std::max(0, ix - diag_width);
+        const int aa_stop = full_mass_matrices ? ix : std::min(depos_order, ix + diag_width);
+        for (int aa = aa_start; aa <= aa_stop; aa++) {
+            const int Nc = diag_width + aa - ix;
+            amrex::Gpu::Atomic::AddNoRet(&Sxx_arr(lo.x+j_jx+ix, 0, 0, Nc), sx_jx[ix]*sx_jx[aa]*fpxx);
         }
     }
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
