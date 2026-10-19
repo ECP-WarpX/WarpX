@@ -897,6 +897,9 @@ PhysicalParticleContainer::ImplicitPushXPSubOrbits (WarpXParIter& pti,
                                                          Syx_arr, Syy_arr, Syz_arr,
                                                          Szx_arr, Szy_arr, Szz_arr});
     auto const* pSbuf = Sbuf.data();
+    const amrex::IntVect ncomp_pc_xx = implicit_options->ncomp_pc_xx;
+    const amrex::IntVect ncomp_pc_yy = implicit_options->ncomp_pc_yy;
+    const amrex::IntVect ncomp_pc_zz = implicit_options->ncomp_pc_zz;
 
     auto& attribs = pti.GetAttribs();
     amrex::ParticleReal* const AMREX_RESTRICT ux = attribs[PIdx::ux].dataPtr();
@@ -1169,6 +1172,7 @@ PhysicalParticleContainer::ImplicitPushXPSubOrbits (WarpXParIter& pti,
                     amrex::ignore_unused(max_grid_crossings);
                     amrex::ignore_unused(Jx_arr, Jy_arr, Jz_arr, invvol);
                     amrex::ignore_unused(error_count_x, error_count_y, error_count_z);
+                    amrex::ignore_unused(ncomp_pc_xx, ncomp_pc_yy, ncomp_pc_zz);
                     amrex::ignore_unused(pSbuf);
                     if constexpr (depos_order_control == order_one) {
                         //NOLINTNEXTLINE(readability-suspicious-call-argument)
@@ -1185,6 +1189,7 @@ PhysicalParticleContainer::ImplicitPushXPSubOrbits (WarpXParIter& pti,
                                                               pSbuf[0], pSbuf[1], pSbuf[2],
                                                               pSbuf[3], pSbuf[4], pSbuf[5],
                                                               pSbuf[6], pSbuf[7], pSbuf[8],
+                                                              ncomp_pc_xx, ncomp_pc_yy, ncomp_pc_zz,
                                                               dinv, xyzmin, domain_double, do_cropping, lo );
                     } else if constexpr (depos_order_control == order_two) {
                         //NOLINTNEXTLINE(readability-suspicious-call-argument)
@@ -1201,6 +1206,7 @@ PhysicalParticleContainer::ImplicitPushXPSubOrbits (WarpXParIter& pti,
                                                               pSbuf[0], pSbuf[1], pSbuf[2],
                                                               pSbuf[3], pSbuf[4], pSbuf[5],
                                                               pSbuf[6], pSbuf[7], pSbuf[8],
+                                                              ncomp_pc_xx, ncomp_pc_yy, ncomp_pc_zz,
                                                               dinv, xyzmin, domain_double, do_cropping, lo );
                     } else if constexpr (depos_order_control == order_three) {
                         //NOLINTNEXTLINE(readability-suspicious-call-argument)
@@ -1217,6 +1223,7 @@ PhysicalParticleContainer::ImplicitPushXPSubOrbits (WarpXParIter& pti,
                                                               pSbuf[0], pSbuf[1], pSbuf[2],
                                                               pSbuf[3], pSbuf[4], pSbuf[5],
                                                               pSbuf[6], pSbuf[7], pSbuf[8],
+                                                              ncomp_pc_xx, ncomp_pc_yy, ncomp_pc_zz,
                                                               dinv, xyzmin, domain_double, do_cropping, lo );
                     } else if constexpr (depos_order_control == order_four) {
                         //NOLINTNEXTLINE(readability-suspicious-call-argument)
@@ -1233,6 +1240,7 @@ PhysicalParticleContainer::ImplicitPushXPSubOrbits (WarpXParIter& pti,
                                                               pSbuf[0], pSbuf[1], pSbuf[2],
                                                               pSbuf[3], pSbuf[4], pSbuf[5],
                                                               pSbuf[6], pSbuf[7], pSbuf[8],
+                                                              ncomp_pc_xx, ncomp_pc_yy, ncomp_pc_zz,
                                                               dinv, xyzmin, domain_double, do_cropping, lo );
                     }
 
