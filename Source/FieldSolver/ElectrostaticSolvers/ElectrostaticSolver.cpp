@@ -50,6 +50,8 @@ void ElectrostaticSolver::ReadParameters () {
         m_mlmg_options.num_final_sweeps > 0,
         "warpx.self_fields_num_final_sweeps must be > 0");
 
+    pp_warpx.query("tune_mlmg", m_mlmg_options.tune_mlmg);
+
     // MLMG bottom solver options
     std::string bottom_solver_name = "default";
     pp_warpx.query("self_fields_bottom_solver", bottom_solver_name);

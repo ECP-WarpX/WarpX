@@ -57,6 +57,13 @@ struct MLMGOptions
      */
     amrex::BottomSolver bottom_solver = amrex::BottomSolver::Default;
 
+    /** Time trial solves and keep the fastest MLMG parameters, @see MLMGWrapper
+     *
+     * Applies to solves whose operator and solver are kept between calls
+     * (embedded boundaries in Cartesian geometry).
+     */
+    bool tune_mlmg = false;
+
     /** Verbosity of the bottom solver (0: silent) */
     int bottom_verbosity = 0;
 
@@ -149,6 +156,28 @@ parseBottomSolver (std::string const & name)
         "Unknown bottom solver '" + name + "'. Valid options are: default, "
         "smoother, bicgstab, cg, bicgcg, cgbicg, hypre, petsc, custom, algmg");
     return amrex::BottomSolver::Default;
+}
+
+/** Name of a bottom solver, the inverse of parseBottomSolver
+ *
+ * \param[in] s the bottom solver
+ * \return its name
+ */
+inline std::string
+bottomSolverName (amrex::BottomSolver s)
+{
+    switch (s) {
+    case amrex::BottomSolver::smoother: return "smoother";
+    case amrex::BottomSolver::bicgstab: return "bicgstab";
+    case amrex::BottomSolver::cg:       return "cg";
+    case amrex::BottomSolver::bicgcg:   return "bicgcg";
+    case amrex::BottomSolver::cgbicg:   return "cgbicg";
+    case amrex::BottomSolver::hypre:    return "hypre";
+    case amrex::BottomSolver::petsc:    return "petsc";
+    case amrex::BottomSolver::custom:   return "custom";
+    case amrex::BottomSolver::algmg:    return "algmg";
+    default:                            return "default";
+    }
 }
 
 /** Apply the multigrid hierarchy related options to an `amrex::LPInfo` object

@@ -15,6 +15,18 @@ endif()
 
 if(WarpX_EB)
     add_warpx_test(
+        test_3d_electrostatic_sphere_eb_tune_mlmg  # name
+        3  # dims
+        2  # nprocs
+        inputs_test_3d_electrostatic_sphere_eb_tune_mlmg  # inputs
+        "analysis.py"  # analysis
+        OFF  # checksum: the tuned parameters depend on timings
+        OFF  # dependency
+    )
+endif()
+
+if(WarpX_EB)
+    add_warpx_test(
         test_3d_electrostatic_sphere_eb_mixed_bc  # name
         3  # dims
         2  # nprocs
