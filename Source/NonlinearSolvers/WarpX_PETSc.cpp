@@ -750,7 +750,8 @@ void SNES_impl::destroyObjects ()
 {
     PETScSolver_impl::destroyObjects();
     m_snes = std::make_unique<SNESObj>();
-    m_pc_initialized = false;
+    // Only the PETSc preconditioner lost its state (the matrix); the native ones keep it
+    if (this->m_pc_type == PreconditionerType::pc_petsc) { m_pc_initialized = false; }
 }
 
 void SNES_impl::printParams () const
