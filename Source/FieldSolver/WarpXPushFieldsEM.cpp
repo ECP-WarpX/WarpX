@@ -1145,7 +1145,7 @@ WarpX::EvolveF (int lev, PatchType patch_type, amrex::Real a_dt, int const rho_c
 void
 WarpX::EvolveG (amrex::Real a_dt)
 {
-    if (!do_divb_cleaning) { return; }
+    if (!do_divb_cleaning && !do_pml_divb_cleaning) { return; }
 
     for (int lev = 0; lev <= finest_level; ++lev)
     {
@@ -1156,7 +1156,7 @@ WarpX::EvolveG (amrex::Real a_dt)
 void
 WarpX::EvolveG (int lev, amrex::Real a_dt)
 {
-    if (!do_divb_cleaning) { return; }
+    if (!do_divb_cleaning && !do_pml_divb_cleaning) { return; }
 
     EvolveG(lev, PatchType::fine, a_dt);
 
@@ -1169,21 +1169,21 @@ WarpX::EvolveG (int lev, amrex::Real a_dt)
 void
 WarpX::EvolveG (int lev, PatchType patch_type, amrex::Real a_dt)
 {
-    if (!do_divb_cleaning) { return; }
+    if (!do_divb_cleaning && !do_pml_divb_cleaning) { return; }
 
     ABLASTR_PROFILE("WarpX::EvolveG()");
 
     bool const skip_lev0_coarse_patch = true;
 
     // Evolve G field in regular cells
-    if (patch_type == PatchType::fine)
+    if (do_divb_cleaning && patch_type == PatchType::fine)
     {
         ablastr::fields::MultiLevelVectorField const& Bfield_fp = m_fields.get_mr_levels_alldirs(FieldType::Bfield_fp, finest_level);
         m_fdtd_solver_fp[lev]->EvolveG(
             m_fields.get(FieldType::G_fp, lev),
             Bfield_fp[lev], a_dt);
     }
-    else // coarse patch
+    else if (do_divb_cleaning) // coarse patch
     {
         ablastr::fields::MultiLevelVectorField const& Bfield_cp_new = m_fields.get_mr_levels_alldirs(FieldType::Bfield_cp, finest_level, skip_lev0_coarse_patch);
         m_fdtd_solver_cp[lev]->EvolveG(
@@ -1191,7 +1191,13 @@ WarpX::EvolveG (int lev, PatchType patch_type, amrex::Real a_dt)
             Bfield_cp_new[lev], a_dt);
     }
 
-    // TODO Evolution in PML cells will go here
+    if (do_pml_divb_cleaning && do_pml && pml[lev] && pml[lev]->ok()) {
+        bool const fine = patch_type == PatchType::fine;
+        auto* const solver = fine ? m_fdtd_solver_fp[lev].get() : m_fdtd_solver_cp[lev].get();
+        solver->EvolveGPML(m_fields.get(fine ? FieldType::pml_G_fp : FieldType::pml_G_cp, lev),
+                          m_fields.get_alldirs(fine ? FieldType::pml_B_fp : FieldType::pml_B_cp, lev),
+                          a_dt);
+    }
 }
 
 void
