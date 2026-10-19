@@ -65,19 +65,9 @@ inline std::string bottomSolverName (amrex::BottomSolver s)
 
 /** Operator and solver of one level's Poisson solve with an embedded boundary
  *
- * Holds an amrex::MLEBNodeFDLaplacian and its amrex::MLMG for one level in
- * Cartesian geometry.  Kept between solves by the caller, so that MLMG keeps
- * its setup (the AlgMG hierarchy in particular).
- *
- * With MLMGOptions::tune_mlmg, the caller requests tuning once a solve at
- * the layout needed iterations (@see requestTuning), and the next wrapper
- * built for the layout times trial solves over the maximum coarsening
- * level, the agglomeration grid size, the bottom solver (the configured one,
- * default, algmg, smoother and, on CUDA and HIP, custom), a single-box layout
- * and, on GPUs, the stream synchronization mode, and keeps the fastest
- * operator and solver.  Every configuration gets one untimed warm-up solve,
- * so that its setup cost does not count: the solver is reused and the setup
- * is paid once.
+ * An amrex::MLEBNodeFDLaplacian and its amrex::MLMG, kept between solves so
+ * that MLMG keeps its setup.  With MLMGOptions::tune_mlmg, trial solves pick
+ * the fastest MLMG parameters; see warpx.tune_mlmg in the parameter docs.
  */
 class MLMGWrapper
 {
@@ -94,20 +84,14 @@ public:
     using BCArray = amrex::Array<amrex::LinOpBCType, AMREX_SPACEDIM>;
     using RealArray = amrex::Array<amrex::Real, AMREX_SPACEDIM>;
 
-    /** Build, and tune if enabled, the operator and solver of one level
+    /** Build, and tune if `tune`, the operator and solver of level `lev`
      *
-     * \param[in] lev mesh refinement level
      * \param[in] geom, grids, dmap, factory the level's geometry, cell-centered grids, EB factory
-     * \param[in] info the coarsening options; tuning may change the coarsening depth
-     * \param[in] lobc, hibc the domain boundary conditions
-     * \param[in] sigma the operator coefficients, (1 - beta^2) per direction
-     * \param[in] options the MLMG options
+     * \param[in] info, lobc, hibc, sigma, options the operator and solver settings
      * \param[in] ng 1 if phi has ghost nodes that MLMG must fill
      * \param[in] set_eb_dirichlet callable setting the EB potential on an operator
-     * \param[in] tune whether to time trial solves, @see MLMGOptions::tune_mlmg
-     * \param[in] phi, rho initial guess (with the domain boundary values) and
-     *            right-hand side (already scaled) of the trial solves
-     * \param[in] relative_tolerance, absolute_tolerance the tolerances of the trial solves
+     * \param[in] phi, rho initial guess and (scaled) right-hand side of the trial solves
+     * \param[in] relative_tolerance, absolute_tolerance tolerances of the trial solves
      */
     template <typename F>
     MLMGWrapper (int lev,
@@ -176,11 +160,7 @@ public:
 
     amrex::MLEBNodeFDLaplacian& getLinOp () { return *m_linop; }
 
-    /** Ask for tuning on the next build for this layout
-     *
-     * Called after a solve that needed iterations: its right-hand side and
-     * boundary values make a meaningful trial problem.  Ignored once tuned.
-     */
+    //! Ask for tuning on the next build; called after a solve that needed iterations
     void requestTuning () { if (!m_tuned) { m_tuning_requested = true; } }
 
     [[nodiscard]] bool tuningRequested () const { return m_tuning_requested; }
@@ -238,8 +218,7 @@ private:
         return msg;
     }
 
-    /** Time trial solves over the parameter sets; keep the fastest in m_parms,
-     *  and its operator and solver in m_linop and m_mlmg */
+    //! Time trial solves; keep the fastest parameters, operator and solver
     template <typename MakeF>
     void tune (int lev,
                amrex::BoxArray const& grids,
@@ -376,7 +355,10 @@ private:
         };
         // Keep a trial pair if one of its configurations became the fastest
         auto const keep_if_best = [&] (Pair& tmp, double t_before) {
-            if (tsolve < t_before) { best = std::move(tmp); }
+            if (tsolve < t_before) {
+                best.second.reset(); // the solver references the operator
+                best = std::move(tmp);
+            }
         };
 
         // One box covering the whole domain.  Its EB data, temporaries and
@@ -483,6 +465,7 @@ private:
     {
         if (best.second) {
             best.second->setThrowException(false);
+            m_mlmg.reset(); // the solver references the operator
             m_linop = std::move(best.first);
             m_mlmg = std::move(best.second);
         }
@@ -546,6 +529,7 @@ namespace details
 /** The cached solver of one level and what it was built for */
 struct EBPoissonSolverEntry
 {
+    bool defined = false;
     amrex::Geometry geom;
     amrex::BoxArray grids;
     amrex::DistributionMapping dmap;
@@ -599,19 +583,12 @@ inline bool sameGeometry (amrex::Geometry const& a, amrex::Geometry const& b)
     return true;
 }
 
-/** Return the EB operator and solver of level `lev`, from the cache when possible
+/** The EB operator and solver of level `lev`, from the cache when possible
  *
- * The cached solver is reused while the level's geometry, grids, EB factory,
- * coarsening options, domain BCs and coefficients are unchanged.  A level
- * whose coefficients change (a beta that varies between solves) gets a
- * solver per call and no tuning, since its matrix is not stable.
- *
- * With MLMGOptions::tune_mlmg, a first solver for a layout is built as
- * given; once it has requested tuning (@see MLMGWrapper::requestTuning),
- * the next call rebuilds it with tuning.
- *
- * Parameters are those of the MLMGWrapper constructor, plus
- * \param[out] reused true if the solver comes from the cache (its EB potential is stale)
+ * Reused while the layout, settings and coefficients are unchanged; rebuilt
+ * with tuning once requested.  A level whose coefficients change gets a
+ * solver per call and no tuning.  Parameters are the MLMGWrapper's, plus
+ * \param[out] reused true if the solver comes from the cache (stale EB potential)
  */
 template <typename F>
 std::shared_ptr<MLMGWrapper>
@@ -639,7 +616,7 @@ getEBPoissonSolver (
     if (lev >= static_cast<int>(cache.size())) { cache.resize(lev+1); }
     auto& c = cache[lev];
 
-    bool const same_layout = c.solver
+    bool const same_layout = c.defined
         && sameGeometry(c.geom, geom)
         && c.grids == grids
         && c.dmap == dmap
@@ -649,16 +626,16 @@ getEBPoissonSolver (
         && c.hibc == hibc;
 
     bool tune = false;
-    if (same_layout && c.sigma == sigma) {
+    if (same_layout && c.sigma == sigma && c.solver) {
         tune = options.tune_mlmg && c.solver->tuningRequested();
         if (!tune) {
             reused = true;
             return c.solver;
         }
-    } else if (same_layout) {
+    } else if (same_layout && c.sigma != sigma) {
         c.unstable = true;
         c.solver.reset();
-    } else {
+    } else if (!same_layout) {
         c.unstable = false; // a new layout starts over
     }
 
@@ -672,6 +649,7 @@ getEBPoissonSolver (
     c.solver = std::make_shared<MLMGWrapper>(lev, geom, grids, dmap, factory, info, lobc, hibc,
                                              sigma, options, ng, set_eb_dirichlet, tune,
                                              phi, rho, relative_tolerance, absolute_tolerance);
+    c.defined = true;
     c.geom = geom;
     c.grids = grids;
     c.dmap = dmap;
