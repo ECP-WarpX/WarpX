@@ -261,11 +261,15 @@ int ImplicitSolver::OneStep (const amrex::Real  start_time,
         m_nlsolver->InvalidatePreconditioner();
     }
 
+    return exit_status;
+}
+
+void ImplicitSolver::ReinitializePETScIfDue (const int a_step, const bool verbose_step)
+{
     if (m_petsc_reinit_interval > 0 && (a_step + 1) % m_petsc_reinit_interval == 0) {
+        if (verbose_step) { amrex::Print() << "Re-initializing PETSc\n"; }
         m_nlsolver->ReinitializePETSc();
     }
-
-    return exit_status;
 }
 
 void ImplicitSolver::CumulateJ ()

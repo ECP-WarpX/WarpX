@@ -70,6 +70,12 @@ public:
 
     virtual void FinishStep(amrex::Real /* a_start_time */, int /* a_step */) {}
 
+    /**
+     * \brief Finalize and re-initialize PETSc after the steps given by
+     *        implicit_evolve.petsc_reinit_interval
+     */
+    void ReinitializePETScIfDue (int a_step, bool verbose_step);
+
     [[nodiscard]] ImplicitOptions const& GetImplicitOptions () const { return m_implicit_options; }
 
     /**
@@ -265,8 +271,7 @@ protected:
 
     /**
      * \brief Finalize and re-initialize PETSc every this many steps (0: never), to release
-     *        the host memory PETSc's GPU vector operations accumulate until PetscFinalize.
-     *        Only GPU builds leak, so the default is on for them only.
+     *        the host memory PETSc's GPU vector operations leak until PetscFinalize
      */
 #ifdef AMREX_USE_GPU
     int m_petsc_reinit_interval = 1000;

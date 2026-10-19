@@ -183,10 +183,7 @@ public:
      */
     virtual void InvalidatePreconditioner () {}
 
-    /**
-     * \brief Destroy and recreate the PETSc solver objects around a finalize and
-     *        re-initialize of PETSc. No-op for solvers that do not use PETSc.
-     */
+    //! Destroy and recreate the PETSc objects around a PETSc re-initialization (no-op otherwise)
     virtual void ReinitializePETSc () {}
 
     /**

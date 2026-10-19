@@ -67,8 +67,6 @@ class PETScSNES : public NonlinearSolver<Vec,Ops>
                     " is ignored; petsc_snes uses PETSc KSP as the linear solver.");
             }
 
-            m_U = &a_U;
-            m_op = a_op;
             m_solver = std::make_unique<warpx_petsc::SNES_impl>(a_U, a_op, this->m_params,
                                                                 m_newton_params);
 
@@ -126,16 +124,12 @@ class PETScSNES : public NonlinearSolver<Vec,Ops>
             m_solver->invalidatePreconditioner();
         }
 
-        /** \brief Destroy the PETSc objects, finalize and re-initialize PETSc, and recreate
-         *         the solver. Releases the host memory PETSc's GPU vector operations
-         *         accumulate in GMRES.
-         */
+        //! Destroy and recreate the PETSc objects around a finalize and re-initialize of PETSc
         void ReinitializePETSc () override
         {
-            m_solver.reset();
+            m_solver->destroyObjects();
             warpx::initialization::reinitialize_petsc();
-            m_solver = std::make_unique<warpx_petsc::SNES_impl>(*m_U, m_op, this->m_params,
-                                                                m_newton_params);
+            m_solver->createObjects();
         }
 
     private:
@@ -144,10 +138,6 @@ class PETScSNES : public NonlinearSolver<Vec,Ops>
         NewtonSolverParams m_newton_params;
 
         std::unique_ptr<warpx_petsc::SNES_impl> m_solver = nullptr;
-
-        //! The solution vector and operator given to Define(), which outlive this object
-        const Vec* m_U = nullptr;
-        Ops* m_op = nullptr;
 };
 
 #endif

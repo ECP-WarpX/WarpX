@@ -60,23 +60,15 @@ public:
     //! must be called before solve() can be called.
     void define (LinOp& a_linop) override
     {
-        m_linop = &a_linop;
         m_solver = std::make_unique<warpx_petsc::KSP_impl>(a_linop);
     }
 
-    /** \brief Destroy the PETSc objects, finalize and re-initialize PETSc, and recreate the
-     *         solver with the same settings; its PETSc objects are rebuilt on the next solve.
-     *         Releases the host memory PETSc's GPU vector operations accumulate in GMRES.
-     */
-    bool reinitializePETSc () override
+    //! Destroy the PETSc objects around a finalize and re-initialize of PETSc;
+    //! they are created again on the next solve
+    void reinitializePETSc () override
     {
-        m_solver.reset();
+        m_solver->destroyObjects();
         warpx::initialization::reinitialize_petsc();
-        m_solver = std::make_unique<warpx_petsc::KSP_impl>(*m_linop);
-        if (m_verbose >= 0) { m_solver->setVerbose(m_verbose); }
-        if (m_restart_length > 0) { m_solver->setRestartLength(m_restart_length); }
-        if (m_maxits > 0) { m_solver->setMaxIters(m_maxits); }
-        return true;
     }
 
     /**
@@ -108,17 +100,13 @@ public:
     void invalidatePreconditioner () override { m_solver->invalidatePreconditioner(); }
 
     //! Sets verbosity.
-    void setVerbose (int v) override { m_verbose = v; m_solver->setVerbose(v); }
+    void setVerbose (int v) override { m_solver->setVerbose(v); }
 
     //! Sets restart length. The default is 30.
-    void setRestartLength (int rl) override
-    {
-        m_restart_length = rl;
-        m_solver->setRestartLength(rl);
-    }
+    void setRestartLength (int rl) override { m_solver->setRestartLength(rl); }
 
     //! Sets the max number of iterations
-    void setMaxIters (int niters) override { m_maxits = niters; m_solver->setMaxIters(niters); }
+    void setMaxIters (int niters) override { m_solver->setMaxIters(niters); }
 
     //! Gets the number of iterations.
     [[nodiscard]] int getNumIters () const override { return m_solver->getNumIters(); }
@@ -135,11 +123,6 @@ public:
 private:
 
     std::unique_ptr<warpx_petsc::KSP_impl> m_solver = nullptr;
-    LinOp* m_linop = nullptr;
-    // Settings re-applied after a re-initialization (negative: never set)
-    int m_verbose = -1;
-    int m_restart_length = -1;
-    int m_maxits = -1;
 };
 
 #endif

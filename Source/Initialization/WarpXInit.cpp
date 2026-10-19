@@ -31,20 +31,8 @@
 #ifdef AMREX_USE_PETSC
 namespace
 {
-    // Copy of the command line, so that PETSc can be re-initialized with the same options
-    std::vector<std::string> petsc_args;
-    std::vector<char*> petsc_argv;
-
-    void petsc_initialize ()
-    {
-        petsc_argv.clear();
-        for (auto& arg : petsc_args) { petsc_argv.push_back(arg.data()); }
-        petsc_argv.push_back(nullptr);
-        int argc = static_cast<int>(petsc_args.size());
-        char** argv = petsc_argv.data();
-        PETSC_COMM_WORLD = amrex::ParallelContext::CommunicatorSub();
-        PetscInitialize(&argc, &argv, nullptr, "WarpX with PETSc");
-    }
+    // Whether WarpX, rather than AMReX, initialized PETSc and has to finalize it
+    bool petsc_initialized_by_warpx = false;
 }
 #endif
 
@@ -54,8 +42,13 @@ void warpx::initialization::initialize_external_libraries(int argc, char* argv[]
     warpx::initialization::amrex_init(argc, argv);
     ablastr::math::anyfft::setup();
 #ifdef AMREX_USE_PETSC
-    petsc_args.assign(argv, argv + argc);
-    petsc_initialize();
+    PETSC_COMM_WORLD = amrex::ParallelContext::CommunicatorSub();
+    PetscBool petsc_is_initialized = PETSC_FALSE;
+    PetscInitialized(&petsc_is_initialized);
+    if (!petsc_is_initialized) {
+        PetscInitialize(&argc, &argv, nullptr, "WarpX with PETSc");
+        petsc_initialized_by_warpx = true;
+    }
     amrex::Print() << "Initialized PETSc.\n";
 #endif
 }
@@ -63,18 +56,39 @@ void warpx::initialization::initialize_external_libraries(int argc, char* argv[]
 void warpx::initialization::reinitialize_petsc ()
 {
 #ifdef AMREX_USE_PETSC
+    // PETSc keeps a pointer to the command line it was initialized with, so the copy
+    // has to outlive this call
+    static std::vector<std::string> args;
+    static std::vector<char*> argv_copy;
+
+    int argc = 0;
+    char** argv = nullptr;
+    PetscGetArgs(&argc, &argv);
+    std::vector<std::string> new_args;
+    for (int i = 0; i < argc; ++i) { new_args.emplace_back(argv[i]); }
+    const MPI_Comm comm = PETSC_COMM_WORLD;
+
     // The options database is rebuilt below; do not report unused options now
     PetscOptionsSetValue(nullptr, "-options_left", "no");
     PetscFinalize();
-    petsc_initialize();
+
+    args = std::move(new_args);
+    argv_copy.clear();
+    for (auto& arg : args) { argv_copy.push_back(arg.data()); }
+    argv_copy.push_back(nullptr);
+    PETSC_COMM_WORLD = comm;
+    char** argv_ptr = argv_copy.data();
+    PetscInitialize(&argc, &argv_ptr, nullptr, "WarpX with PETSc");
 #endif
 }
 
 void warpx::initialization::finalize_external_libraries ()
 {
 #ifdef AMREX_USE_PETSC
-    PetscFinalize();
-    amrex::Print() << "Finalized PETSc.\n";
+    if (petsc_initialized_by_warpx) {
+        PetscFinalize();
+        amrex::Print() << "Finalized PETSc.\n";
+    }
 #endif
     ablastr::math::anyfft::cleanup();
     amrex::Finalize();
