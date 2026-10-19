@@ -1174,7 +1174,7 @@ void ImplicitSolver::SyncMassMatricesPCAndApplyBCs ()
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
-        for (amrex::MFIter mfi(*MM_PC[0], false); mfi.isValid(); ++mfi) {
+        for (amrex::MFIter mfi(*MM_PC[0], amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
             auto const Sxx = MM_xx->const_array(mfi);
             auto const Syy = MM_yy->const_array(mfi);
             auto const Szz = MM_zz->const_array(mfi);
@@ -1182,13 +1182,10 @@ void ImplicitSolver::SyncMassMatricesPCAndApplyBCs ()
             auto const Syy_pc = MM_PC[1]->array(mfi);
             auto const Szz_pc = MM_PC[2]->array(mfi);
 
-            // Include the same guard cells as the component-wise MultiFab::Add calls.
-            amrex::Box bx = amrex::convert(mfi.validbox(), MM_PC[0]->ixType());
-            amrex::Box by = amrex::convert(mfi.validbox(), MM_PC[1]->ixType());
-            amrex::Box bz = amrex::convert(mfi.validbox(), MM_PC[2]->ixType());
-            bx.grow(MM_xx->nGrowVect());
-            by.grow(MM_yy->nGrowVect());
-            bz.grow(MM_zz->nGrowVect());
+            // Include guard cells at grid-box edges without overlapping interior tiles.
+            const amrex::Box bx = mfi.tilebox(MM_PC[0]->ixType().toIntVect(), MM_xx->nGrowVect());
+            const amrex::Box by = mfi.tilebox(MM_PC[1]->ixType().toIntVect(), MM_yy->nGrowVect());
+            const amrex::Box bz = mfi.tilebox(MM_PC[2]->ixType().toIntVect(), MM_zz->nGrowVect());
 
             // Decode each PC component into its centered stencil offset in the source matrix.
             // All three diagonal blocks and all retained components share one kernel launch.
