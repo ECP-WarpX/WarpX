@@ -69,13 +69,15 @@ inline std::string bottomSolverName (amrex::BottomSolver s)
  * Cartesian geometry.  Kept between solves by the caller, so that MLMG keeps
  * its setup (the AlgMG hierarchy in particular).
  *
- * With MLMGOptions::tune_mlmg, the constructor times trial solves over the
- * maximum coarsening level, the agglomeration grid size, the bottom solver
- * (the configured one, default, algmg, smoother and, on CUDA and HIP, custom), a
- * single-box layout and, on GPUs, the stream synchronization mode, and keeps
- * the fastest operator and solver.  Every configuration gets one untimed
- * warm-up solve, so that its setup cost does not count: the solver is reused
- * and the setup is paid once.
+ * With MLMGOptions::tune_mlmg, the caller requests tuning once a solve at
+ * the layout needed iterations (@see requestTuning), and the next wrapper
+ * built for the layout times trial solves over the maximum coarsening
+ * level, the agglomeration grid size, the bottom solver (the configured one,
+ * default, algmg, smoother and, on CUDA and HIP, custom), a single-box layout
+ * and, on GPUs, the stream synchronization mode, and keeps the fastest
+ * operator and solver.  Every configuration gets one untimed warm-up solve,
+ * so that its setup cost does not count: the solver is reused and the setup
+ * is paid once.
  */
 class MLMGWrapper
 {
@@ -102,7 +104,9 @@ public:
      * \param[in] options the MLMG options
      * \param[in] ng 1 if phi has ghost nodes that MLMG must fill
      * \param[in] set_eb_dirichlet callable setting the EB potential on an operator
-     * \param[in] rho right-hand side of the trial solves (already scaled); nullptr: no tuning
+     * \param[in] tune whether to time trial solves, @see MLMGOptions::tune_mlmg
+     * \param[in] phi, rho initial guess (with the domain boundary values) and
+     *            right-hand side (already scaled) of the trial solves
      * \param[in] relative_tolerance, absolute_tolerance the tolerances of the trial solves
      */
     template <typename F>
@@ -118,13 +122,17 @@ public:
                  MLMGOptions const& options,
                  int ng,
                  F const& set_eb_dirichlet,
-                 amrex::MultiFab const* rho,
+                 bool tune,
+                 amrex::MultiFab const& phi,
+                 amrex::MultiFab const& rho,
                  amrex::Real relative_tolerance,
                  amrex::Real absolute_tolerance)
         : m_geom(geom), m_ng(ng)
     {
         m_parms.mcl = info.max_coarsening_level;
-        m_parms.ags = info.agg_grid_size;
+        // The explicit default is the same operator as the default marker.
+        m_parms.ags = (info.agg_grid_size > 0) ? info.agg_grid_size
+                      : amrex::LPInfo::getDefaultAgglomerationGridSize();
         m_parms.bottom_solver = options.bottom_solver;
 
         // Operator and solver on a layout, with given parameters
@@ -151,9 +159,9 @@ public:
             return Pair{std::move(linop), std::move(mlmg)};
         };
 
-        if (rho && options.tune_mlmg) {
-            tune(lev, grids, dmap, factory, info, options, make, *rho,
-                 relative_tolerance, absolute_tolerance);
+        if (tune) {
+            this->tune(lev, grids, dmap, factory, info, options, make, phi, rho,
+                       relative_tolerance, absolute_tolerance);
         }
 
         if (!m_mlmg) {
@@ -168,14 +176,14 @@ public:
 
     amrex::MLEBNodeFDLaplacian& getLinOp () { return *m_linop; }
 
-    Parms const& getParms () const { return m_parms; }
+    /** Ask for tuning on the next build for this layout
+     *
+     * Called after a solve that needed iterations: its right-hand side and
+     * boundary values make a meaningful trial problem.  Ignored once tuned.
+     */
+    void requestTuning () { if (!m_tuned) { m_tuning_requested = true; } }
 
-    //! Tuning was skipped because the trial solve needed no iteration; retry later.
-    [[nodiscard]] bool tuningSkipped () const { return m_tuning_skipped; }
-
-    //! Set the EB potential, a value or a callable, @see MLEBNodeFDLaplacian::setEBDirichlet
-    template <typename F>
-    void setEBDirichlet (F const& f) { m_linop->setEBDirichlet(f); }
+    [[nodiscard]] bool tuningRequested () const { return m_tuning_requested; }
 
     //! Apply the per-solve options (tolerances, verbosity, ...) without losing the tuned ones
     void applyOptions (MLMGOptions const& options)
@@ -211,7 +219,8 @@ private:
     std::unique_ptr<amrex::MLEBNodeFDLaplacian> m_linop;
     std::unique_ptr<amrex::MLMG> m_mlmg; //!< references m_linop, declared after it
     int m_ng = 0;
-    bool m_tuning_skipped = false;
+    bool m_tuned = false;             //!< the trial sweep ran; not repeated
+    bool m_tuning_requested = false;
 
     //! Elapsed time marking a configuration that failed and must not be selected
     static constexpr double t_failed = std::numeric_limits<double>::max();
@@ -221,9 +230,7 @@ private:
         std::string msg;
         if (p.single_box) { msg += "single_box=true "; }
         msg.append("max_coarsening_level=").append(std::to_string(p.mcl));
-        if (p.ags != -1) {
-            msg.append(" agglomeration_grid_size=").append(std::to_string(p.ags));
-        }
+        msg.append(" agglomeration_grid_size=").append(std::to_string(p.ags));
         msg.append(" bottom_solver=").append(bottomSolverName(p.bottom_solver));
 #ifdef AMREX_USE_GPU
         msg.append(" no_gpu_sync=").append(p.no_gpu_sync ? "true" : "false");
@@ -241,6 +248,7 @@ private:
                amrex::LPInfo const& info,
                MLMGOptions const& options,
                MakeF const& make,
+               amrex::MultiFab const& phi0,
                amrex::MultiFab const& rho,
                amrex::Real relative_tolerance,
                amrex::Real absolute_tolerance)
@@ -249,8 +257,15 @@ private:
         int const trial_verbosity = (verbosity > 2) ? verbosity - 2 : 0;
         Parms const base = m_parms;
 
+        // Trial solution: every solve starts from the real initial guess,
+        // whose boundary nodes carry the domain Dirichlet values.
         amrex::MultiFab phi(rho.boxArray(), rho.DistributionMap(), 1, 1,
                             amrex::MFInfo{}, rho.Factory());
+        amrex::IntVect const ng_copy = amrex::min(phi.nGrowVect(), phi0.nGrowVect());
+        auto const reset_phi = [&] () {
+            phi.setVal(0.0);
+            amrex::MultiFab::Copy(phi, phi0, 0, 0, 1, ng_copy);
+        };
 
         // Some of the configurations tried below might blow up.
         FPExceptGuard const fpe_guard{};
@@ -267,7 +282,7 @@ private:
             double t = t_failed;
             try {
                 for (int itry = 0; itry <= n_timed; ++itry) {
-                    phi.setVal(0.0);
+                    reset_phi();
                     amrex::Gpu::synchronize();
                     auto const t0 = amrex::second();
                     solve_fn();
@@ -321,11 +336,11 @@ private:
             }
         }
         if (tsolve < t_failed && niter0 == 0) {
-            // Nothing to time with this right-hand side, e.g. rho = 0 at initialization.
-            m_tuning_skipped = true;
+            // Nothing to time with this problem; a later request may retry.
             adopt(best);
             return;
         }
+        m_tuned = true;
         // A configuration needing far more iterations than the baseline is no candidate.
         int const trial_max_iters = std::min(options.max_iters, 2*niter0);
 
@@ -356,8 +371,8 @@ private:
             for (int const a : {d, 2*d, 4*d}) { push_unique(agg_grid_sizes, a); }
         }
         // The smoother alone cannot solve a large bottom problem.
-        auto const skip = [&] (amrex::BottomSolver b, int mcl) {
-            return (b == amrex::BottomSolver::smoother) && (mcl != mcl0);
+        auto const skip = [] (amrex::BottomSolver b, int mcl, int mcl_full) {
+            return (b == amrex::BottomSolver::smoother) && (mcl != mcl_full);
         };
         // Keep a trial pair if one of its configurations became the fastest
         auto const keep_if_best = [&] (Pair& tmp, double t_before) {
@@ -379,7 +394,9 @@ private:
             m_rho_tmp.define(amrex::convert(sb_ba, amrex::IntVect(1)), sb_dm, 1, 0);
 
             // With a single box, the agglomeration grid size does not matter.
-            for (int mcl = 0; mcl <= mcl0; ++mcl) {
+            // The full depth, tried first, can differ from the original grids'.
+            int sb_mcl0 = base.mcl;
+            auto const try_single_box = [&] (int mcl) {
                 Parms p = base;
                 p.single_box = true;
                 p.mcl = mcl;
@@ -387,7 +404,7 @@ private:
                 prepare_trial(tmp, trial_max_iters);
                 double const t_before = tsolve;
                 for (auto const b : bottom_solvers) {
-                    if (skip(b, mcl)) { continue; }
+                    if (skip(b, mcl, sb_mcl0)) { continue; }
                     p.bottom_solver = b;
                     tmp.second->setBottomSolver(b);
                     for (bool const nosync : sync_options) {
@@ -400,8 +417,12 @@ private:
                         }, tsolve));
                     }
                 }
+                int const depth = tmp.first->NMGLevels(0) - 1; // built by the first solve
                 keep_if_best(tmp, t_before);
-            }
+                return depth;
+            };
+            sb_mcl0 = try_single_box(base.mcl);
+            for (int mcl = 0; mcl < sb_mcl0; ++mcl) { try_single_box(mcl); }
         }
 
         // The original grids
@@ -416,7 +437,7 @@ private:
                 prepare_trial(tmp, trial_max_iters);
                 double const t_before = tsolve;
                 for (auto const b : bottom_solvers) {
-                    if (skip(b, mcl)) { continue; }
+                    if (skip(b, mcl, mcl0)) { continue; }
                     p.bottom_solver = b;
                     tmp.second->setBottomSolver(b);
                     for (bool const nosync : sync_options) {
@@ -585,6 +606,10 @@ inline bool sameGeometry (amrex::Geometry const& a, amrex::Geometry const& b)
  * whose coefficients change (a beta that varies between solves) gets a
  * solver per call and no tuning, since its matrix is not stable.
  *
+ * With MLMGOptions::tune_mlmg, a first solver for a layout is built as
+ * given; once it has requested tuning (@see MLMGWrapper::requestTuning),
+ * the next call rebuilds it with tuning.
+ *
  * Parameters are those of the MLMGWrapper constructor, plus
  * \param[out] reused true if the solver comes from the cache (its EB potential is stale)
  */
@@ -603,6 +628,7 @@ getEBPoissonSolver (
     MLMGOptions const& options,
     int ng,
     F const& set_eb_dirichlet,
+    amrex::MultiFab const& phi,
     amrex::MultiFab const& rho,
     amrex::Real relative_tolerance,
     amrex::Real absolute_tolerance,
@@ -622,27 +648,30 @@ getEBPoissonSolver (
         && c.lobc == lobc
         && c.hibc == hibc;
 
+    bool tune = false;
     if (same_layout && c.sigma == sigma) {
-        bool const retry_tuning = options.tune_mlmg && c.solver->tuningSkipped();
-        if (!retry_tuning) {
+        tune = options.tune_mlmg && c.solver->tuningRequested();
+        if (!tune) {
             reused = true;
             return c.solver;
         }
     } else if (same_layout) {
         c.unstable = true;
         c.solver.reset();
+    } else {
+        c.unstable = false; // a new layout starts over
     }
 
     if (c.unstable) {
         return std::make_shared<MLMGWrapper>(lev, geom, grids, dmap, factory, info, lobc, hibc,
-                                             sigma, options, ng, set_eb_dirichlet, nullptr,
-                                             relative_tolerance, absolute_tolerance);
+                                             sigma, options, ng, set_eb_dirichlet, false,
+                                             phi, rho, relative_tolerance, absolute_tolerance);
     }
 
     c.solver.reset(); // before building the next one, to limit the memory use
     c.solver = std::make_shared<MLMGWrapper>(lev, geom, grids, dmap, factory, info, lobc, hibc,
-                                             sigma, options, ng, set_eb_dirichlet, &rho,
-                                             relative_tolerance, absolute_tolerance);
+                                             sigma, options, ng, set_eb_dirichlet, tune,
+                                             phi, rho, relative_tolerance, absolute_tolerance);
     c.geom = geom;
     c.grids = grids;
     c.dmap = dmap;

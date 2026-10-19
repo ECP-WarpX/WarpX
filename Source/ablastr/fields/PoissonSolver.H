@@ -390,11 +390,16 @@ computePhi (
                     eb_solver = details::getEBPoissonSolver(
                         lev, geom[lev], grids[lev], dmap[lev], *eb_farray_box_factory.value()[lev],
                         info, lobc, hibc, sigma, mlmg_options, ng, set_eb_dirichlet,
-                        *rho[lev], mlmg_options.relative_tolerance, absolute_tolerance, reused);
+                        *phi[lev], *rho[lev], mlmg_options.relative_tolerance,
+                        absolute_tolerance, reused);
                     if (reused) { set_eb_dirichlet(eb_solver->getLinOp()); }
                     eb_solver->applyOptions(mlmg_options);
                     eb_solver->solve(*phi[lev], *rho[lev],
                                      mlmg_options.relative_tolerance, absolute_tolerance);
+                    // A solve that needed iterations is a meaningful trial problem
+                    if (mlmg_options.tune_mlmg && eb_solver->getMLMG().getNumIters() > 0) {
+                        eb_solver->requestTuning();
+                    }
                     linop = &eb_solver->getLinOp();
                     mlmg = &eb_solver->getMLMG();
                 }
