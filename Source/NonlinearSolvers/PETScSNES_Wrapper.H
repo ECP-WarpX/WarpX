@@ -125,11 +125,12 @@ class PETScSNES : public NonlinearSolver<Vec,Ops>
         }
 
         //! Destroy and recreate the PETSc objects around a finalize and re-initialize of PETSc
-        void ReinitializePETSc () override
+        bool ReinitializePETSc () override
         {
             m_solver->destroyObjects();
             warpx::initialization::reinitialize_petsc();
             m_solver->createObjects();
+            return true;
         }
 
     private:

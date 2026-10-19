@@ -183,8 +183,9 @@ public:
      */
     virtual void InvalidatePreconditioner () {}
 
-    //! Destroy and recreate the PETSc objects around a PETSc re-initialization (no-op otherwise)
-    virtual void ReinitializePETSc () {}
+    //! Destroy and recreate the PETSc objects around a PETSc re-initialization.
+    //! Returns false if the solver does not use PETSc.
+    virtual bool ReinitializePETSc () { return false; }
 
     /**
      * \brief Allow caller to dynamically change the verbosity flag. For

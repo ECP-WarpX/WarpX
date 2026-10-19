@@ -267,8 +267,9 @@ int ImplicitSolver::OneStep (const amrex::Real  start_time,
 void ImplicitSolver::ReinitializePETScIfDue (const int a_step, const bool verbose_step)
 {
     if (m_petsc_reinit_interval > 0 && (a_step + 1) % m_petsc_reinit_interval == 0) {
-        if (verbose_step) { amrex::Print() << "Re-initializing PETSc\n"; }
-        m_nlsolver->ReinitializePETSc();
+        if (m_nlsolver->ReinitializePETSc() && verbose_step) {
+            amrex::Print() << "Re-initialized PETSc\n";
+        }
     }
 }
 
@@ -704,6 +705,7 @@ void ImplicitSolver::parseNonlinearSolverParams ( const amrex::ParmParse&  pp )
 {
 
     pp.get("nonlinear_solver", m_nlsolver_type);
+    pp.query("petsc_reinit_interval", m_petsc_reinit_interval);
 
     if (m_nlsolver_type == NonlinearSolverType::picard) {
 
@@ -732,7 +734,6 @@ void ImplicitSolver::parseNonlinearSolverParams ( const amrex::ParmParse&  pp )
         pp.query("print_unconverged_particle_details", m_print_unconverged_particle_details);
         pp.query("suborbit_warning_threshold", m_suborbit_warning_threshold);
         pp.query("suborbit_statistics_interval", m_suborbit_statistics_interval);
-        pp.query("petsc_reinit_interval", m_petsc_reinit_interval);
         pp.query("use_mass_matrices_jacobian", m_use_mass_matrices_jacobian);
         pp.query("use_mass_matrices_pc", m_use_mass_matrices_pc);
         if (m_use_mass_matrices_jacobian || m_use_mass_matrices_pc) {

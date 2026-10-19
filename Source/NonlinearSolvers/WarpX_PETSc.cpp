@@ -333,10 +333,7 @@ Mat setupPC( KSP a_ksp, PETScSolver_impl& a_solver, const std::string& a_name )
 //! Constructor
 PETScSolver_impl::PETScSolver_impl()
 {
-    m_A = std::make_unique<MatObj>();
-    m_P = std::make_unique<MatObj>();
-    m_x = std::make_unique<VecObj>();
-    m_b = std::make_unique<VecObj>();
+    PETScSolver_impl::destroyObjects(); // creates the empty handles
 }
 
 //! Destructor

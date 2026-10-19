@@ -82,7 +82,7 @@ public:
         m_pc_initialized = false;
     }
 
-    void ReinitializePETSc () override { m_linear_solver->reinitializePETSc(); }
+    bool ReinitializePETSc () override { return m_linear_solver->reinitializePETSc(); }
 
     void PrintParams () const override
     {

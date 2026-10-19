@@ -65,10 +65,11 @@ public:
 
     //! Destroy the PETSc objects around a finalize and re-initialize of PETSc;
     //! they are created again on the next solve
-    void reinitializePETSc () override
+    bool reinitializePETSc () override
     {
         m_solver->destroyObjects();
         warpx::initialization::reinitialize_petsc();
+        return true;
     }
 
     /**
