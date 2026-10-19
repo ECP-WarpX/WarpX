@@ -131,7 +131,7 @@ void init_WarpXParticleContainer (py::module& m)
             {
                 return pc.GetChargeDensityOnLevel(lev, local, finalize);
             },
-            py::arg("lev"), py::arg("local"), py::arg("finalize")
+            py::arg("lev"), py::arg("local"), py::arg("finalize") = true
         )
         .def("deposit_current",
             [](WarpXParticleContainer& pc, std::string mf_name, int lev, double dt, double relative_time)
