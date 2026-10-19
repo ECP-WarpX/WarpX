@@ -126,6 +126,11 @@ for name, expression in (
         )
     )
 
+if args.source == "antenna" and not args.implicit and not is_rz:
+    # Keep the two charge time slices used by the continuity oracle below,
+    # but do not apply particle-only Gauss cleaning to this conducting medium.
+    warpx.get_bucket("macroscopic").dive_cleaning_vacuum_patches_only = 1
+
 if args.plasma:
     for particle_type in ("electron", "proton"):
         simulation.add_species(
