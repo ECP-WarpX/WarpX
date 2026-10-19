@@ -158,6 +158,28 @@ parseBottomSolver (std::string const & name)
     return amrex::BottomSolver::Default;
 }
 
+/** Name of a bottom solver, the inverse of parseBottomSolver
+ *
+ * \param[in] s the bottom solver
+ * \return its name
+ */
+inline std::string
+bottomSolverName (amrex::BottomSolver s)
+{
+    switch (s) {
+    case amrex::BottomSolver::smoother: return "smoother";
+    case amrex::BottomSolver::bicgstab: return "bicgstab";
+    case amrex::BottomSolver::cg:       return "cg";
+    case amrex::BottomSolver::bicgcg:   return "bicgcg";
+    case amrex::BottomSolver::cgbicg:   return "cgbicg";
+    case amrex::BottomSolver::hypre:    return "hypre";
+    case amrex::BottomSolver::petsc:    return "petsc";
+    case amrex::BottomSolver::custom:   return "custom";
+    case amrex::BottomSolver::algmg:    return "algmg";
+    default:                            return "default";
+    }
+}
+
 /** Apply the multigrid hierarchy related options to an `amrex::LPInfo` object
  *
  * \param[inout] info the LPInfo object used to define the linear operator

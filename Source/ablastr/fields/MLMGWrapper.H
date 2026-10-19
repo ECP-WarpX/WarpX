@@ -46,23 +46,6 @@
 namespace ablastr::fields
 {
 
-/** Name of a bottom solver, for messages */
-inline std::string bottomSolverName (amrex::BottomSolver s)
-{
-    switch (s) {
-    case amrex::BottomSolver::smoother: return "smoother";
-    case amrex::BottomSolver::bicgstab: return "bicgstab";
-    case amrex::BottomSolver::cg:       return "cg";
-    case amrex::BottomSolver::bicgcg:   return "bicgcg";
-    case amrex::BottomSolver::cgbicg:   return "cgbicg";
-    case amrex::BottomSolver::hypre:    return "hypre";
-    case amrex::BottomSolver::petsc:    return "petsc";
-    case amrex::BottomSolver::custom:   return "custom";
-    case amrex::BottomSolver::algmg:    return "algmg";
-    default:                            return "default";
-    }
-}
-
 /** Operator and solver of one level's Poisson solve with an embedded boundary
  *
  * An amrex::MLEBNodeFDLaplacian and its amrex::MLMG, kept between solves so
@@ -75,10 +58,10 @@ public:
     /** The MLMG parameters that the tuning chooses from */
     struct Parms {
         bool single_box = false; //!< solve on one box covering the whole domain
-        int mcl = 30;            //!< maximum coarsening level (AMReX default)
-        int ags = -1;            //!< agglomeration grid size, -1 for the AMReX default
+        int mcl = 0;             //!< maximum coarsening level, from the LPInfo
+        int ags = 0;             //!< agglomeration grid size, from the LPInfo
         bool no_gpu_sync = true; //!< GPU only: single stream, no stream synchronization
-        amrex::BottomSolver bottom_solver = amrex::BottomSolver::Default;
+        amrex::BottomSolver bottom_solver = amrex::BottomSolver::Default; //!< from the options
     };
 
     using BCArray = amrex::Array<amrex::LinOpBCType, AMREX_SPACEDIM>;
@@ -314,12 +297,13 @@ private:
                 best = std::move(tmp);
             }
         }
+        m_tuned = true;
         if (tsolve < t_failed && niter0 == 0) {
-            // Nothing to time with this problem; a later request may retry.
+            // Nothing to time with this problem; keep the baseline rather
+            // than rebuilding on every later request.
             adopt(best);
             return;
         }
-        m_tuned = true;
         // A configuration needing far more iterations than the baseline is no candidate.
         int const trial_max_iters = std::min(options.max_iters, 2*niter0);
 
@@ -349,9 +333,14 @@ private:
             int const d = amrex::LPInfo::getDefaultAgglomerationGridSize();
             for (int const a : {d, 2*d, 4*d}) { push_unique(agg_grid_sizes, a); }
         }
-        // The smoother alone cannot solve a large bottom problem.
-        auto const skip = [] (amrex::BottomSolver b, int mcl, int mcl_full) {
-            return (b == amrex::BottomSolver::smoother) && (mcl != mcl_full);
+        // The smoother alone cannot solve a large bottom problem: try it only
+        // at a pair's full depth.  A pair's depth is known once it has solved;
+        // before that, the requested depth is compared with the layout's.
+        auto const skip = [] (amrex::BottomSolver b, Pair const& tmp, int mcl, int mcl_full) {
+            if (b != amrex::BottomSolver::smoother) { return false; }
+            int const depth = tmp.first->NMGLevels(0) - 1;
+            bool const full = (depth > 0) ? (depth < mcl || mcl == mcl_full) : (mcl == mcl_full);
+            return !full;
         };
         // Keep a trial pair if one of its configurations became the fastest
         auto const keep_if_best = [&] (Pair& tmp, double t_before) {
@@ -386,7 +375,7 @@ private:
                 prepare_trial(tmp, trial_max_iters);
                 double const t_before = tsolve;
                 for (auto const b : bottom_solvers) {
-                    if (skip(b, mcl, sb_mcl0)) { continue; }
+                    if (skip(b, tmp, mcl, sb_mcl0)) { continue; }
                     p.bottom_solver = b;
                     tmp.second->setBottomSolver(b);
                     for (bool const nosync : sync_options) {
@@ -419,7 +408,7 @@ private:
                 prepare_trial(tmp, trial_max_iters);
                 double const t_before = tsolve;
                 for (auto const b : bottom_solvers) {
-                    if (skip(b, mcl, mcl0)) { continue; }
+                    if (skip(b, tmp, mcl, mcl0)) { continue; }
                     p.bottom_solver = b;
                     tmp.second->setBottomSolver(b);
                     for (bool const nosync : sync_options) {
