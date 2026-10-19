@@ -329,6 +329,7 @@ Overall simulation parameters
           Output that PETSc produces at finalization (for example with ``-log_view``) is produced at every re-initialization.
           Set the interval to 0 if the run holds PETSc objects outside WarpX's implicit solvers (for example petsc4py objects in a PICMI script), which a re-initialization would invalidate.
           PETSc option values that contain spaces are not preserved across a re-initialization.
+          The parameter is ignored if PETSc is built with Kokkos, which cannot be initialized twice.
 
         - ``implicit_evolve.use_mass_matrices_jacobian`` (``bool``, default: false).
           When ``true``, the plasma current density is computed using the mass matrices during the linear stage of PS-JFNK, replacing direct particle calculations. This can enable large speed ups for simulations with many particles.
