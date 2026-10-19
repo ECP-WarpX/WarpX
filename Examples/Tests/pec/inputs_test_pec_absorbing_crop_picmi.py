@@ -96,8 +96,9 @@ inject_steps = args.steps // 4
 
 
 def deposited_rho():
-    """Freshly deposited charge density (RZ volume scaling and guard sum included)."""
-    return species.get_charge_density(0, False)[...][:, :NZ]
+    """Freshly deposited physical charge density (guard sum, boundary folding and RZ
+    volume scaling included)."""
+    return species.get_charge_density(lev=0, local=False, finalize=True)[...][:, :NZ]
 
 
 def divergence():
