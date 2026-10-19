@@ -111,6 +111,41 @@ foreach(refined IN ITEMS 0 1)
     endforeach()
 endforeach()
 
+add_warpx_test(
+    test_3d_magnetic_cleaning_wave
+    3
+    1
+    inputs_base_3d_magnetic_cleaning_wave.py
+    OFF
+    OFF
+    OFF
+)
+
+foreach(refined IN ITEMS 0 1)
+    foreach(regular IN ITEMS 0 1)
+        foreach(pml IN ITEMS 0 1)
+            add_warpx_test(
+                test_3d_pml_magnetic_cleaning_${refined}_${regular}_${pml}
+                3
+                1
+                "inputs_base_3d_pml_magnetic_cleaning.py --refined ${refined} --regular ${regular} --pml ${pml}"
+                OFF
+                OFF
+                OFF
+            )
+        endforeach()
+    endforeach()
+    add_warpx_test(
+        test_3d_pml_magnetic_cleaning_gradient_${refined}
+        3
+        1
+        "inputs_base_3d_pml_magnetic_cleaning.py --refined ${refined} --regular 0 --pml 1 --seed-g"
+        OFF
+        OFF
+        OFF
+    )
+endforeach()
+
 if(WarpX_FFT)
     add_warpx_test(
         test_3d_pml_psatd_dive_divb_cleaning  # name

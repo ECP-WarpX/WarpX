@@ -14,6 +14,7 @@ foreach(D IN LISTS WarpX_DIMS)
         EvolveEPML.cpp
         EvolveF.cpp
         EvolveFPML.cpp
+        EvolveGPML.cpp
         EvolveG.cpp
         EvolveECTRho.cpp
         FiniteDifferenceSolver.cpp
