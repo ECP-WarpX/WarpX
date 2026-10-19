@@ -5,7 +5,7 @@
 #
 # License: BSD-3-Clause-LBNL
 
-"""Check independent regular-grid and PML magnetic cleaning with the Yee solver."""
+"""Check independent regular-grid and PML magnetic cleaning with Cartesian Yee and CKC solvers."""
 
 import argparse
 
@@ -18,6 +18,7 @@ parser.add_argument("--regular", type=int, required=True)
 parser.add_argument("--pml", type=int, required=True)
 parser.add_argument("--refined", type=int, required=True)
 parser.add_argument("--seed-g", action="store_true")
+parser.add_argument("--solver", choices=["yee", "ckc"], default="yee")
 args = parser.parse_args()
 geometry.dims = 3
 dt = 1e-12
@@ -72,7 +73,7 @@ libwarpx.initialize(
         "warpx.pml_delta=8",
         f"warpx.do_divb_cleaning={args.regular}",
         f"warpx.do_pml_divb_cleaning={args.pml}",
-        "algo.maxwell_solver=yee",
+        f"algo.maxwell_solver={args.solver}",
         "warpx.use_filter=0",
         "warpx.do_initial_div_cleaning=0",
         "warpx.B_ext_grid_init_style=parse_b_ext_grid_function",
@@ -110,7 +111,7 @@ for patch, level, h, delta, planes in patches:
             valid, fab = mfi.validbox(), mfi.fabbox()
             data = field.array(mfi).to_numpy(copy=True, order="F")
             assert np.isfinite(data).all(), (name, level)
-            # Exclude boundary stencils, where F meets the regular grid.
+            # Exclude boundary stencils, where G meets the regular grid.
             margin = 2 if args.seed_g else 1
             low = np.array(valid.small_end) + margin
             high = np.array(valid.big_end) - margin

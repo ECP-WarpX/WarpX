@@ -1133,8 +1133,9 @@ WarpX::ReadParameters ()
         if (do_pml_divb_cleaning && electromagnetic_solver_id != ElectromagneticSolverAlgo::PSATD)
         {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                evolve_scheme == EvolveScheme::Explicit && m_do_subcycling == 0,
-                "FDTD magnetic PML cleaning requires explicit evolution without subcycling");
+                evolve_scheme == EvolveScheme::Explicit && m_do_subcycling == 0 &&
+                    grid_type == GridType::Staggered,
+                "FDTD magnetic PML cleaning requires explicit staggered grids without subcycling");
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 electromagnetic_solver_id == ElectromagneticSolverAlgo::Yee ||
                 electromagnetic_solver_id == ElectromagneticSolverAlgo::CKC,
