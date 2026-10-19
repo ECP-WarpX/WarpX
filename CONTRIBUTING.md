@@ -7,8 +7,8 @@ Here is how to participate to the WarpX development.
 
 ## Git workflow
 
-The WarpX project uses [git](https://git-scm.com) for version control.
-If you are new to git, you can follow [this tutorial](https://swcarpentry.github.io/git-novice/).
+The WarpX project uses [Git](https://git-scm.com) for version control.
+If you are new to Git, you can follow [this tutorial](https://swcarpentry.github.io/git-novice/).
 
 ### What to do when
 
@@ -39,16 +39,16 @@ Thank you for contributing! 🥰
 First, let's setup your Git environment and GitHub account.
 
 1. Go to <https://github.com/settings/profile> and add your real name and affiliation
-2. Go to <https://github.com/settings/emails> and add & verify the professional e-mails you want to be associated with.
+2. Go to <https://github.com/settings/emails> and add & verify the professional email addresses you want to be associated with.
 3. Configure `git` on the machine you develop on to *use the same spelling of your name and email*:
 
    - `git config --global user.name "FIRSTNAME LASTNAME"`
    - `git config --global user.email EMAIL@EXAMPLE.com`
-4. Go to <https://github.com/settings/keys> and add the SSH public key of the machine you develop on. (Check out the GitHub guide to [generating SSH keys](https://docs.github.com/articles/generating-an-ssh-key/) or [troubleshoot common SSH problems](https://docs.github.com/ssh-issues/). )
+4. Go to <https://github.com/settings/keys> and add the SSH public key of the machine you develop on. (Check out the GitHub guide to [generating SSH keys](https://docs.github.com/articles/generating-an-ssh-key/) or [troubleshooting common SSH problems](https://docs.github.com/ssh-issues/). )
 
 ### Make your own fork
 
-First, fork the WarpX ["mainline" repo on GitHub](https://github.com/BLAST-WarpX/warpx) by pressing the *Fork* button on the top right of the page.
+First, fork the WarpX ["mainline" repository on GitHub](https://github.com/BLAST-WarpX/warpx) by pressing the *Fork* button on the top right of the page.
 A fork is a copy of WarpX on GitHub, which is under your full control.
 
 Then, we create local copies, for development:
@@ -59,20 +59,20 @@ Then, we create local copies, for development:
 git clone git@github.com:BLAST-WarpX/warpx.git
 cd WarpX
 
-# rename what we just cloned: call it "mainline"
+# Rename what we just cloned: call it "mainline"
 git remote rename origin mainline
 
-# Add your own fork. You can get this address on your fork's Github page.
+# Add your own fork. You can get this address on your fork's GitHub page.
 # Here is where you will publish new developments, so that they can be
 # reviewed and integrated into "mainline" later on.
-# "myGithubUsername" needs to be replaced with your user name on GitHub.
-git remote add myGithubUsername git@github.com:myGithubUsername/WarpX.git
+# "myGitHubUsername" needs to be replaced with your user name on GitHub.
+git remote add myGitHubUsername git@github.com:myGitHubUsername/WarpX.git
 ```
 
 Now you are free to play with your fork (for additional information, you can visit the
-[Github fork help page](https://help.github.com/en/articles/fork-a-repo)).
+[GitHub fork help page](https://help.github.com/en/articles/fork-a-repo)).
 
-> **Note:** We only need to do the above steps for the first time.
+> **Note:** We only need to do the above steps the first time.
 
 ### Let's Develop
 
@@ -80,7 +80,7 @@ You are all set!
 Now, the basic WarpX development workflow is:
 
 1. Implement your changes and push them on a new branch `branch_name` on your fork.
-2. Create a Pull Request from branch `branch_name` on your fork to branch `development` on the main WarpX repo.
+2. Create a Pull Request from branch `branch_name` on your fork to branch `development` on the main WarpX repository.
 
 Create a branch `branch_name` (the branch name should reflect the piece of code you want to add, like `fix-spectral-solver`) with
 
@@ -97,9 +97,9 @@ and do the coding you want.
 
 It is probably a good time to look at the [AMReX documentation](https://amrex-codes.github.io/amrex/docs_html/) and at the Doxygen reference pages:
 
-* WarpX Doxygen: <https://warpx.readthedocs.io/en/latest/_static/doxyhtml>
-* AMReX Doxygen: <https://amrex-codes.github.io/amrex/doxygen>
-* PICSAR Doxygen: (todo)
+* [WarpX Doxygen](https://warpx.readthedocs.io/en/latest/_static/doxyhtml)
+* [AMReX Doxygen](https://amrex-codes.github.io/amrex/doxygen)
+* PICSAR Doxygen (to do)
 
 Once you are done developing, add the files you created and/or modified to the `git` *staging area* with
 
@@ -134,11 +134,11 @@ The most important part is really that you find a descriptive title
 and add an empty newline after it.
 ```
 
-For the moment, commits are on your local repo only.
+For the moment, commits are on your local repository only.
 You can push them to your fork with
 
 ```sh
-git push -u myGithubUsername branch_name
+git push -u myGitHubUsername branch_name
 ```
 
 If you want to synchronize your branch with the `development` branch (this is useful when the `development` branch is being modified while you are working on `branch_name`), you can use
@@ -152,7 +152,7 @@ and fix any conflict that may occur.
 ### Submit a Pull Request
 
 A Pull Request (PR) is the way to efficiently visualize the changes you made and to propose your new feature/improvement/fix to the WarpX project.
-Right after you push changes, a banner should appear on the Github page of your fork, with your `<branch_name>`.
+Right after you push changes, a banner should appear on the GitHub page of your fork, with your `<branch_name>`.
 
 - Click on the `compare & pull request` button to prepare your PR.
 - It is time to communicate your changes: write a title and a description for your PR.
@@ -174,16 +174,16 @@ If you want to implement a feature and are not too sure how to split it, just op
 Generally, write helper functionality first, test it and then write implementation code.
 Submit tests, documentation changes and implementation of a feature together for pull request review.
 
-Even before your work is ready to merge, it can be convenient to create a PR (so you can use Github tools to visualize your changes).
+Even before your work is ready to merge, it can be convenient to create a PR (so you can use GitHub tools to visualize your changes).
 In this case, please put the `[WIP]` tag (for Work-In-Progress) at the beginning of the PR title.
 You can also use the GitHub project tab in your fork to organize the work into separate tasks/PRs and share it with the WarpX community to get feedback.
 
-#### Include a test to your PR
+#### Include a test in your PR
 
 A new feature is great, a **working** new feature is even better!
 Please test your code and add your test to the automated test suite.
 It's the way to protect your work from adventurous developers.
-Instructions are given in the [testing section](#developers-testing) of our [developer's documentation](#developers-testing).
+Instructions are given in the [testing section](#developers-testing) of our [developer documentation](#developers-testing).
 
 #### Include documentation about your PR
 
@@ -217,10 +217,10 @@ Reviewers will interact with you if they have comments/questions.
 
 - Space before and after assignment operator (`=`)
 
-- To define a function, use a space between the name of the function and the paranthesis, e.g., `myfunction ()`.
+- To define a function, use a space between the name of the function and the parenthesis, e.g., `myfunction ()`.
   When calling a function, no space should be used, i.e., just use `myfunction()`.
   The reason this is beneficial is that when we do a `git grep` to search for `myfunction ()`, we can clearly see the locations where `myfunction ()` is defined and where `myfunction()` is called.
-  Also, using `git grep "myfunction ()"` searches for files only in the git repo, which is more efficient compared to the `grep "myfunction ()"` command that searches through all the files in a directory, including plotfiles for example.
+  Also, using `git grep "myfunction ()"` searches for files only in the Git repository, which is more efficient compared to the `grep "myfunction ()"` command that searches through all the files in a directory, including plotfiles for example.
 
 - To define a class, use `class` on the same line as the name of the class, e.g., `class MyClass`.
   The reason this is beneficial is that when we do a `git grep` to search for `class MyClass`, we can clearly see the locations where `class MyClass` is defined and where `MyClass` is called.
@@ -255,8 +255,8 @@ Reviewers will interact with you if they have comments/questions.
   This is particularly useful to avoid capturing member variables by value in a lambda function, which causes the whole object to be copied to GPU when running on a GPU-accelerated architecture.
   This convention should be used for all new piece of code, and it should be applied progressively to old code.
 
-- `#include` directives in C++ have a distinct order to avoid bugs, see [the WarpX repo structure](#developers-repo-structure) for details
+- `#include` directives in C++ have a distinct order to avoid bugs, see [the WarpX repository structure](#developers-repo-structure) for details.
 
-- For all new code, we should avoid relying on `using namespace amrex;` and all amrex types should be prefixed with *amrex::*.
+- For all new code, we should avoid relying on `using namespace amrex;` and all AMReX types should be prefixed with *amrex::*.
   Inside limited scopes, AMReX type literals can be included with `using namespace amrex::literals;`.
   Ideally, old code should be modified accordingly.

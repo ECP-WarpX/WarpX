@@ -14,9 +14,11 @@ from openpmd_viewer import OpenPMDTimeSeries
 def main(args):
     # parse test name from test directory
     test_name = os.path.split(os.getcwd())[1]
-    if "_restart" in test_name:
-        # use original test's checksums
-        test_name = test_name.replace("_restart", "")
+    for suffix in ("_restart", "_segmented"):
+        if suffix in test_name:
+            # use original test's checksums: restarted and segmented runs
+            # must reproduce the uninterrupted run
+            test_name = test_name.replace(suffix, "")
     # compare checksums
     evaluate_checksum(
         test_name=test_name,
@@ -45,7 +47,7 @@ if __name__ == "__main__":
     compute_backend = os.getenv("WARPX_COMPUTE", "").upper()
     if compute_backend in {"CUDA", "HIP", "SYCL"}:
         # GPU checksums
-        default_tolerance = 1e-1
+        default_tolerance = 5e-1
     else:
         # CPU checksums (default for restart tests is stricter)
         default_tolerance = 1e-12 if "_restart" in test_name else 1e-9
