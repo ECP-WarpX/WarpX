@@ -71,12 +71,12 @@ public:
     amrex::MultiFab& getmu_mf  () {return (*m_mu_mf);}
 
     /** Whether static material coefficients and their interpolation halo are vacuum. */
-    bool IsVacuumPatch () const noexcept
+    [[nodiscard]] bool IsVacuumPatch () const noexcept
     {
         return m_is_vacuum_patch;
     }
     /** Opt in to electric cleaning only on entirely vacuum fine/coarse patches. */
-    bool CleanVacuumPatchesOnly () const noexcept
+    [[nodiscard]] bool CleanVacuumPatchesOnly () const noexcept
     {
         return m_clean_vacuum_patches_only;
     }
