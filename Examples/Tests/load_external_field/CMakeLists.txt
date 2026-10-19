@@ -7,7 +7,7 @@ foreach(style IN ITEMS constant parser)
             test_3d_initial_field_${style}_level_${levels}  # name
             3  # dims
             1  # nprocs
-            "inputs_test_3d_initial_field_level.py --style ${style} --levels ${levels}"
+            "inputs_base_3d_initial_field_level.py --style ${style} --levels ${levels}"
             OFF  # analysis (assertions in the script)
             OFF  # checksum (analytic stationary-field oracle)
             OFF  # dependency
