@@ -26,6 +26,21 @@ using namespace amrex::literals;
 
 int main (int argc, char* argv[]) try
 {
+    std::string geometry_case = "interior";
+    for (int i = 1; i < argc; ++i) {
+        const std::string arg(argv[i]);
+        const std::string prefix = "test.geometry_case=";
+        if (arg.starts_with(prefix)) { geometry_case = arg.substr(prefix.size()); }
+    }
+    const bool roundoff = geometry_case == "boundary_roundoff";
+    const bool pending_boundary = geometry_case == "pending_boundary";
+    const bool contained_boundary = geometry_case == "contained_boundary";
+    const bool boundary = geometry_case == "boundary" || roundoff || pending_boundary
+        || contained_boundary;
+    const bool periodic_crossing = geometry_case == "periodic";
+    const bool spacing = geometry_case == "spacing";
+    const bool angles = geometry_case == "angles";
+    const bool nongridded = geometry_case == "nongridded";
     // Initialize a small, empty simulation, then insert only four markers
     // needed by the test. Force device memory on GPU builds.
     std::vector<std::string> args{argv[0], "max_step=0", "warpx.verbose=0",
@@ -59,7 +74,7 @@ int main (int argc, char* argv[]) try
         "boundary.field_lo=periodic", "boundary.field_hi=periodic",
         "test.num_particles_per_cell_each_dim=1"});
 #else
-    // The splitter displaces Cartesian x for the radial 1D geometries.
+    // Radial 1D geometries split the stored radius.
 #ifdef WARPX_DIM_RCYLINDER
     args.emplace_back("geometry.dims=RCYLINDER");
     args.emplace_back("test.num_particles_per_cell_each_dim=1 1");
@@ -71,6 +86,40 @@ int main (int argc, char* argv[]) try
         "geometry.prob_hi=1", "boundary.field_lo=none", "boundary.field_hi=pec",
         "boundary.particle_lo=none", "boundary.particle_hi=reflecting"});
 #endif
+    if (spacing) {
+#if defined(WARPX_DIM_3D)
+        args.emplace_back("test.num_particles_per_cell_each_dim=2 3 5");
+#elif defined(WARPX_DIM_RZ)
+        args.emplace_back("test.num_particles_per_cell_each_dim=2 7 5");
+#elif defined(WARPX_DIM_XZ)
+        args.emplace_back("test.num_particles_per_cell_each_dim=2 5");
+#elif defined(WARPX_DIM_1D_Z)
+        args.emplace_back("test.num_particles_per_cell_each_dim=5");
+#elif defined(WARPX_DIM_RCYLINDER)
+        args.emplace_back("test.num_particles_per_cell_each_dim=2 7");
+#else
+        args.emplace_back("test.num_particles_per_cell_each_dim=2 7 5");
+#endif
+    }
+    if (nongridded) { args.emplace_back("test.injection_style=none"); }
+    if (boundary) {
+#if defined(WARPX_DIM_3D)
+        args.insert(args.end(), {"boundary.field_lo=pec pec pec",
+            "boundary.field_hi=pec pec pec",
+            "boundary.particle_lo=reflecting reflecting reflecting",
+            "boundary.particle_hi=reflecting reflecting reflecting"});
+#elif defined(WARPX_DIM_XZ)
+        args.insert(args.end(), {"boundary.field_lo=pec pec", "boundary.field_hi=pec pec",
+            "boundary.particle_lo=reflecting reflecting",
+            "boundary.particle_hi=reflecting reflecting"});
+#elif defined(WARPX_DIM_1D_Z)
+        args.insert(args.end(), {"boundary.field_lo=pec", "boundary.field_hi=pec",
+            "boundary.particle_lo=reflecting", "boundary.particle_hi=reflecting"});
+#elif defined(WARPX_DIM_RZ)
+        args.insert(args.end(), {"boundary.field_lo=none pec", "boundary.field_hi=pec pec",
+            "boundary.particle_lo=none reflecting", "boundary.particle_hi=reflecting reflecting"});
+#endif
+    }
     for (int i = 1; i < argc; ++i) { args.emplace_back(argv[i]); }
     std::vector<char*> ptrs;
     ptrs.reserve(args.size() + 1);
@@ -95,14 +144,57 @@ int main (int argc, char* argv[]) try
             pc.AddIntComp("split_int", true);
         }
         pc.SplitParticles(0); // Empty containers are valid inputs.
-        amrex::Vector<amrex::ParticleReal> x{0.375_prt, 0.49_prt, 0.625_prt, 0.75_prt};
+        amrex::Vector<amrex::ParticleReal> x{0.375_prt, 0.499_prt, 0.625_prt, 0.75_prt};
         amrex::Vector<amrex::ParticleReal> y(4, 0.0_prt);
-        amrex::Vector<amrex::ParticleReal> z{0.375_prt, 0.49_prt, 0.625_prt, 0.75_prt};
+        amrex::Vector<amrex::ParticleReal> z{0.375_prt, 0.499_prt, 0.625_prt, 0.75_prt};
 #ifdef WARPX_DIM_3D
         y.assign(4, 0.375_prt);
-#elif defined(WARPX_DIM_RSPHERE)
-        // Keep the final marker inside r < 1 while retaining a nonzero polar angle.
-        x[3] = 0.5_prt;
+#endif
+        if (boundary || periodic_crossing) {
+            for (int i = 0; i < 2; ++i) {
+                const auto face = contained_boundary ? (i == 0 ? 0.0625_prt : 0.9375_prt)
+                                                     : (i == 0 ? 0.001_prt : 0.999_prt);
+                x[i] = face;
+                z[i] = face;
+#ifdef WARPX_DIM_3D
+                y[i] = face;
+#elif defined(WARPX_DIM_RZ)
+                if (periodic_crossing) { x[i] = i == 0 ? 0.375_prt : 0.625_prt; }
+#endif
+            }
+        }
+        if (roundoff) {
+            // AMReX deliberately excludes some physical-face-adjacent floating
+            // point values. Exercise its actual inclusive particle bounds.
+            for (int i = 0; i < 2; ++i) {
+                const auto face = i == 0 ? warpx.Geom(0).ProbLoArrayInParticleReal()
+                                        : warpx.Geom(0).ProbHiArrayInParticleReal();
+#if defined(WARPX_DIM_3D)
+                x[i] = face[0]; y[i] = face[1]; z[i] = face[2];
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+                x[i] = face[0]; z[i] = face[1];
+#elif defined(WARPX_DIM_1D_Z)
+                z[i] = face[0];
+#else
+                x[i] = face[0];
+#endif
+            }
+        }
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
+        for (int i = 0; i < 4; ++i) {
+            const auto radius = x[i];
+            const auto theta = angles ? (i%2 == 0 ? 0.7_prt : -1.2_prt) : 0.0_prt;
+            x[i] = radius*std::cos(theta);
+            y[i] = radius*std::sin(theta);
+#if defined(WARPX_DIM_RSPHERE)
+            const auto phi = angles ? (i%2 == 0 ? 0.4_prt : -0.6_prt) : 0.0_prt;
+            x[i] *= std::cos(phi);
+            y[i] *= std::cos(phi);
+            z[i] = radius*std::sin(phi);
+#elif defined(WARPX_DIM_RCYLINDER)
+            z[i] = 0.0_prt;
+#endif
+        }
 #endif
         amrex::Vector<amrex::ParticleReal> ux{1.0e5_prt, 4.0e5_prt, -2.0e5_prt, 3.0e5_prt};
         amrex::Vector<amrex::ParticleReal> uy{2.0e5_prt, -2.0e5_prt, 3.0e5_prt, -1.0e5_prt};
@@ -117,6 +209,10 @@ int main (int argc, char* argv[]) try
                 if (data.m_rdata[PIdx::w][i] >= 8.0_prt) {
                     amrex::ParticleIDWrapper{data.m_idcpu[i]} = amrex::LongParticleIds::DoSplitParticleID;
                     amrex::ParticleCPUWrapper{data.m_idcpu[i]} = 7;
+                    if (pending_boundary) {
+                        // Emulate a pushed parent that still awaits physical BC.
+                        data.pos(AMREX_SPACEDIM-1, i) = 1.001_prt;
+                    }
                 } else if (data.m_rdata[PIdx::w][i] == 2.0_prt) {
                     amrex::ParticleIDWrapper{data.m_idcpu[i]} = amrex::LongParticleIds::NoSplitParticleID;
                 }
@@ -130,6 +226,21 @@ int main (int argc, char* argv[]) try
         const auto weight_before = pc.sumParticleWeight(false);
         const auto energy_before = pc.sumParticleEnergy(false);
         pc.SplitParticles(0);
+        if (pending_boundary) {
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(pc.TotalNumberOfParticles() == 4,
+                "Parents awaiting physical BC must not be replaced by split children");
+            AMREX_ALWAYS_ASSERT(pc.sumParticleWeight(false) == weight_before);
+            AMREX_ALWAYS_ASSERT(pc.sumParticleEnergy(false) == energy_before);
+            // Reflect the two outside parents through the normal species handler.
+            pc.ApplyBoundaryConditions();
+            pc.Redistribute();
+            AMREX_ALWAYS_ASSERT(pc.TotalNumberOfParticles() == 4);
+            AMREX_ALWAYS_ASSERT(pc.sumParticleWeight(false) == weight_before);
+            amrex::Print() << "Pending-boundary parent preservation: PASS\n";
+            WarpX::Finalize();
+            warpx::initialization::finalize_external_libraries();
+            return 0;
+        }
         pc.Redistribute();
         const int children = split_type == 0 ? (1 << AMREX_SPACEDIM) : 2*AMREX_SPACEDIM;
         AMREX_ALWAYS_ASSERT_WITH_MESSAGE(pc.TotalNumberOfParticles() == 2*children + 2,
@@ -138,7 +249,11 @@ int main (int argc, char* argv[]) try
         AMREX_ALWAYS_ASSERT(std::abs(pc.sumParticleWeight(false) - weight_before) <= tol*weight_before);
         AMREX_ALWAYS_ASSERT(std::abs(pc.sumParticleEnergy(false) - energy_before) <= tol*energy_before);
         amrex::Real momentum[3]{0, 0, 0};
-        amrex::Real child_displacement[3]{0, 0, 0};
+        amrex::Real child_displacement[6]{};
+        amrex::Real cartesian_displacement[6]{};
+        std::vector<int> ppc;
+        pp.getarr("num_particles_per_cell_each_dim", ppc);
+        const auto& geom = warpx.Geom(0);
         for (WarpXParIter pti(pc, 0); pti.isValid(); ++pti) {
             auto const& soa = pti.GetStructOfArrays();
             const auto np = pti.numParticles();
@@ -152,7 +267,7 @@ int main (int argc, char* argv[]) try
             auto* pos = positions.data();
             const auto get_position = GetParticlePosition<PIdx>(pti);
             amrex::ParallelFor(np, [=] AMREX_GPU_DEVICE (int i) {
-                get_position(i, pos[3*i], pos[3*i+1], pos[3*i+2]);
+                get_position.AsStored(i, pos[3*i], pos[3*i+1], pos[3*i+2]);
             });
             amrex::Gpu::PinnedVector<amrex::ParticleReal> host_pos(3*np);
             amrex::Gpu::PinnedVector<std::uint64_t> ids(np);
@@ -172,15 +287,32 @@ int main (int argc, char* argv[]) try
                 center[0] = center[1] = 0;
 #elif defined(WARPX_DIM_XZ)
                 center[1] = 0;
-#elif defined(WARPX_DIM_RCYLINDER)
-                center[2] = 0;
+#elif defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
+                center[0] = std::hypot(x[parent], y[parent]);
+                center[1] = std::atan2(y[parent], x[parent]);
+#elif defined(WARPX_DIM_RSPHERE)
+                center[0] = std::sqrt(x[parent]*x[parent] + y[parent]*y[parent]
+                    + z[parent]*z[parent]);
+                center[1] = std::atan2(y[parent], x[parent]);
+                center[2] = std::atan2(z[parent], std::hypot(x[parent], y[parent]));
 #endif
                 int shifted_axes = 0;
                 for (int c = 0; c < 3; ++c) {
-                    const auto delta = host_pos[3*i+c] - center[c];
+                    auto delta = host_pos[3*i+c] - center[c];
                     AMREX_ALWAYS_ASSERT(std::isfinite(delta));
+                    if (periodic_crossing && std::abs(delta) > 0.5_prt) {
+                        delta -= std::round(delta); // Unwrap the unit periodic domain.
+                    }
                     if (parent < 2) {
-                        const auto offset = WarpX::CellSize(0)[c]/2;
+                        int ppc_axis = c;
+#if defined(WARPX_DIM_1D_Z)
+                        ppc_axis = 0;
+#elif defined(WARPX_DIM_XZ)
+                        ppc_axis = c/2;
+#endif
+                        const auto count = nongridded || ppc_axis >= static_cast<int>(ppc.size())
+                            ? 1 : ppc[ppc_axis];
+                        const auto offset = WarpX::CellSize(0)[c]/(2*count);
 #if defined(WARPX_DIM_1D_Z)
                         const bool active_axis = c == 2;
 #elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
@@ -191,24 +323,60 @@ int main (int argc, char* argv[]) try
                         const bool active_axis = true;
 #endif
                         if (active_axis && std::abs(delta) > tol) {
-                            AMREX_ALWAYS_ASSERT(std::abs(std::abs(delta)-offset) <= tol);
+                            if (boundary && !contained_boundary) {
+                                AMREX_ALWAYS_ASSERT(std::abs(delta) <= offset + tol);
+                            } else {
+                                AMREX_ALWAYS_ASSERT_WITH_MESSAGE(
+                                    std::abs(std::abs(delta)-offset) <= tol,
+                                    "Split spacing must use the physical axis particle count");
+                            }
                             ++shifted_axes;
                         } else {
-                            AMREX_ALWAYS_ASSERT(std::abs(delta) <= tol);
+                            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(std::abs(delta) <= tol,
+                                "Splitting must preserve inactive and angular coordinates");
                         }
-                        child_displacement[c] += delta;
+                        child_displacement[3*parent+c] += delta;
                     } else {
                         AMREX_ALWAYS_ASSERT(std::abs(delta) <= tol);
+                    }
+                }
+                for (int axis = 0; axis < AMREX_SPACEDIM; ++axis) {
+#if defined(WARPX_DIM_1D_Z)
+                    const int c = 2;
+#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
+                    const int c = 2*axis;
+#else
+                    const int c = axis;
+#endif
+                    AMREX_ALWAYS_ASSERT(host_pos[3*i+c] >= geom.ProbLo(axis));
+                    AMREX_ALWAYS_ASSERT(host_pos[3*i+c] < geom.ProbHi(axis));
+                }
+                if (parent < 2 && !periodic_crossing) {
+                    std::array<amrex::Real, 3> xyz{host_pos[3*i], host_pos[3*i+1], host_pos[3*i+2]};
+                    std::array<amrex::Real, 3> original{x[parent], y[parent], z[parent]};
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
+                    xyz[0] = host_pos[3*i]*std::cos(host_pos[3*i+1]);
+                    xyz[1] = host_pos[3*i]*std::sin(host_pos[3*i+1]);
+#if defined(WARPX_DIM_RSPHERE)
+                    xyz[0] *= std::cos(host_pos[3*i+2]);
+                    xyz[1] *= std::cos(host_pos[3*i+2]);
+                    xyz[2] = host_pos[3*i]*std::sin(host_pos[3*i+2]);
+#endif
+#elif defined(WARPX_DIM_1D_Z)
+                    original[0] = original[1] = 0;
+#elif defined(WARPX_DIM_XZ)
+                    original[1] = 0;
+#endif
+                    for (int c = 0; c < 3; ++c) {
+                        cartesian_displacement[3*parent+c] += xyz[c]-original[c];
                     }
                 }
                 if (parent < 2) {
                     AMREX_ALWAYS_ASSERT(std::abs(host[0][i] - weights[0][parent]/children)
                         <= tol*weights[0][parent]/children);
-#if AMREX_SPACEDIM == 1
-                    AMREX_ALWAYS_ASSERT(shifted_axes == 1);
-#else
-                    AMREX_ALWAYS_ASSERT(shifted_axes == (split_type == 0 ? AMREX_SPACEDIM : 1));
-#endif
+                    if (!roundoff) {
+                        AMREX_ALWAYS_ASSERT(shifted_axes == (split_type == 0 ? AMREX_SPACEDIM : 1));
+                    }
                     AMREX_ALWAYS_ASSERT(amrex::ConstParticleIDWrapper{ids[i]} ==
                         amrex::LongParticleIds::NoSplitParticleID);
                 } else {
@@ -231,9 +399,14 @@ int main (int argc, char* argv[]) try
             }
         }
         amrex::ParallelDescriptor::ReduceRealSum(momentum, 3);
-        amrex::ParallelDescriptor::ReduceRealSum(child_displacement, 3);
+        amrex::ParallelDescriptor::ReduceRealSum(child_displacement, 6);
+        amrex::ParallelDescriptor::ReduceRealSum(cartesian_displacement, 6);
+        for (int c = 0; c < 6; ++c) {
+            AMREX_ALWAYS_ASSERT_WITH_MESSAGE(std::abs(child_displacement[c]) <= tol*children,
+                "Children must preserve each parent's centroid");
+            AMREX_ALWAYS_ASSERT(std::abs(cartesian_displacement[c]) <= tol*children);
+        }
         for (int c = 0; c < 3; ++c) {
-            AMREX_ALWAYS_ASSERT(std::abs(child_displacement[c]) <= tol*2*children);
             const auto& u = c == 0 ? ux : (c == 1 ? uy : uz);
             amrex::Real expected = 0;
             for (int i = 0; i < 4; ++i) { expected += weights[0][i]*u[i]; }

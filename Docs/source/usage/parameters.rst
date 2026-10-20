@@ -1953,6 +1953,14 @@ Particle initialization
     (4 particles in 2D, 8 particles in 3D). When ``1``, particles are split
     along the simulation axes (4 particles in 2D, 6 particles in 3D).
 
+    In cylindrical and spherical geometries, radial splitting changes the radius
+    while preserving the angular coordinates. At nonperiodic domain faces,
+    symmetric displacements that would put children outside the domain are
+    reduced to preserve total particle weight, momentum, and the spatial centroid.
+    Fully contained split patterns retain their original spacing.
+    Parents already outside the domain are left for the normal particle boundary
+    conditions. Periodic crossings are handled by particle redistribution.
+
 .. pp:param:: <species_name>.do_not_deposit
     :type: ``0`` or ``1``
     :default: ``0``

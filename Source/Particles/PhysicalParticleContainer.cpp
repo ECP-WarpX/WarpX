@@ -1015,25 +1015,32 @@ PhysicalParticleContainer::SplitParticles (int lev)
 
     const bool diagonal = split_type == 0;
     const int num_children = diagonal ? (1 << AMREX_SPACEDIM) : 2*AMREX_SPACEDIM;
-    const auto& dx = WarpX::CellSize(lev);
-    amrex::GpuArray<amrex::Real, 3> split_offset{dx[0]/2, dx[1]/2, dx[2]/2};
-    // Non-gridded injection has no per-axis particle count.
-    if (!plasma_injectors.empty()) {
-        const auto& ppc = plasma_injectors[0]->num_particles_per_cell_each_dim;
-        if (ppc.size() == 3) {
-            for (int d = 0; d < 3; ++d) {
-                if (ppc[d] > 0) { split_offset[d] /= ppc[d]; }
+    const auto& geom = Geom(lev);
+    const auto dx = geom.CellSizeArray();
+    // Redistribution tests physical boundaries against the level-zero
+    // representable particle domain, which can be smaller than [ProbLo, ProbHi).
+    const auto lo = Geom(0).ProbLoArrayInParticleReal();
+    const auto hi = Geom(0).ProbHiArrayInParticleReal();
+    const auto periodic = geom.isPeriodicArray();
+    amrex::GpuArray<amrex::Real, AMREX_SPACEDIM> split_offset{};
+    for (int axis = 0; axis < AMREX_SPACEDIM; ++axis) {
+        split_offset[axis] = dx[axis]/2;
+        // Counts are compact in Cartesian geometry; RZ includes theta.
+#if defined(WARPX_DIM_RZ)
+        const int ppc_axis = 2*axis;
+#else
+        const int ppc_axis = axis;
+#endif
+        // Non-gridded injection has no positive per-axis particle count.
+        if (!plasma_injectors.empty()) {
+            const auto& ppc = plasma_injectors[0]->num_particles_per_cell_each_dim;
+            if (ppc_axis < static_cast<int>(ppc.size()) && ppc[ppc_axis] > 0) {
+                split_offset[axis] /= ppc[ppc_axis];
             }
         }
     }
     const int cpu = amrex::ParallelDescriptor::MyProc();
 
-    // Position setters use the iterator interface, which exposes mutable SoA
-    // storage through a const view. The destination is a tile, not an iterator.
-    struct TileView {
-        ParticleTileType* tile;
-        [[nodiscard]] auto& GetStructOfArrays () const { return tile->GetStructOfArrays(); }
-    };
     for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
     {
         WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
@@ -1042,12 +1049,27 @@ PhysicalParticleContainer::SplitParticles (int lev)
         const int np = static_cast<int>(pti.numParticles());
         if (np == 0) { continue; }
         auto& src_tile = pti.GetParticleTile();
-        auto* idcpu = src_tile.GetStructOfArrays().GetIdCPUData().data();
+        const auto src = src_tile.getParticleTileData();
+        auto* idcpu = src.m_idcpu;
+        const auto can_split = [=] AMREX_GPU_DEVICE (int i) -> bool {
+            if (amrex::ConstParticleIDWrapper{idcpu[i]} != LongParticleIds::DoSplitParticleID) {
+                return false;
+            }
+            // A pushed parent may still await physical boundary conditions.
+            // Leave it to the normal boundary handler, without replacing it.
+            for (int axis = 0; axis < AMREX_SPACEDIM; ++axis) {
+                const auto pos = src.pos(axis, i);
+                if (!periodic[axis] && (pos < lo[axis] || pos > hi[axis])) {
+                    return false;
+                }
+            }
+            return true;
+        };
         amrex::Gpu::DeviceVector<int> offsets(np);
         auto* offsets_data = offsets.data();
         const int num_parents = amrex::Scan::PrefixSum<int>(np,
             [=] AMREX_GPU_DEVICE (int i) -> int {
-                return amrex::ConstParticleIDWrapper{idcpu[i]} == LongParticleIds::DoSplitParticleID;
+                return can_split(i);
             },
             [=] AMREX_GPU_DEVICE (int i, int offset) { offsets_data[i] = offset; },
             amrex::Scan::Type::exclusive, amrex::Scan::retSum);
@@ -1059,42 +1081,47 @@ PhysicalParticleContainer::SplitParticles (int lev)
         auto& dst_tile = pctmp_split.DefineAndReturnParticleTile(
             lev, pti.index(), pti.LocalTileIndex());
         dst_tile.resize(static_cast<std::size_t>(num_parents)*num_children);
-        const auto src = src_tile.getParticleTileData();
         const auto dst = dst_tile.getParticleTileData();
-        const auto GetPosition = GetParticlePosition<PIdx>(src_tile);
-        const auto SetPosition = SetParticlePosition<PIdx>(TileView{&dst_tile});
         amrex::ParallelFor(np, [=] AMREX_GPU_DEVICE (int i) {
-            if (amrex::ConstParticleIDWrapper{idcpu[i]} != LongParticleIds::DoSplitParticleID) {
-                return;
-            }
-            amrex::ParticleReal xp, yp, zp;
-            GetPosition(i, xp, yp, zp);
-            for (int child = 0; child < num_children; ++child) {
-                amrex::GpuArray<amrex::Real, 3> shift{0, 0, 0};
-                for (int axis = 0; axis < AMREX_SPACEDIM; ++axis) {
-#if defined(WARPX_DIM_1D_Z)
-                    const int d = 2;
-#elif defined(WARPX_DIM_XZ) || defined(WARPX_DIM_RZ)
-                    const int d = 2*axis;
-#else
-                    const int d = axis;
-#endif
-                    if (diagonal) {
-                        const int sign = ((child >> (AMREX_SPACEDIM-1-axis)) & 1) ? 1 : -1;
-                        shift[d] = sign*split_offset[d];
-                    } else if (child % AMREX_SPACEDIM == axis) {
-                        shift[d] = (child < AMREX_SPACEDIM ? -1 : 1)*split_offset[d];
+            if (!can_split(i)) { return; }
+            auto offset = split_offset;
+            for (int axis = 0; axis < AMREX_SPACEDIM; ++axis) {
+                if (!periodic[axis]) {
+                    const auto pos = src.pos(axis, i);
+                    const auto lower = static_cast<amrex::ParticleReal>(pos-offset[axis]);
+                    const auto upper = static_cast<amrex::ParticleReal>(pos+offset[axis]);
+                    if (lower < lo[axis] || upper > hi[axis]) {
+                        // Splitting is not physical transport. Shrink only a
+                        // pattern that would leave the domain, preserving its
+                        // centroid and leaving a rounding margin. Fully
+                        // contained patterns retain their original spacing.
+                        const auto distance = static_cast<amrex::Real>(
+                            amrex::min(pos-lo[axis], hi[axis]-pos));
+                        offset[axis] = amrex::min(offset[axis], amrex::Real(0.25)*distance);
                     }
                 }
+            }
+            for (int child = 0; child < num_children; ++child) {
                 const int j = offsets_data[i]*num_children + child;
                 amrex::copyParticle(dst, src, i, j);
-                SetPosition(j, xp + shift[0], yp + shift[1], zp + shift[2]);
+                for (int axis = 0; axis < AMREX_SPACEDIM; ++axis) {
+                    amrex::Real shift = 0;
+                    if (diagonal) {
+                        const int sign = ((child >> (AMREX_SPACEDIM-1-axis)) & 1) ? 1 : -1;
+                        shift = sign*offset[axis];
+                    } else if (child % AMREX_SPACEDIM == axis) {
+                        shift = (child < AMREX_SPACEDIM ? -1 : 1)*offset[axis];
+                    }
+                    // Native positions are (r,z) in RZ and r in radial 1D.
+                    // copyParticle preserves angular coordinates exactly.
+                    dst.pos(axis, j) = src.pos(axis, i) + shift;
+                }
                 dst.m_rdata[PIdx::w][j] = src.m_rdata[PIdx::w][i]/num_children;
                 dst.m_idcpu[j] = amrex::SetParticleIDandCPU(LongParticleIds::NoSplitParticleID, cpu);
             }
             idcpu[i] = amrex::ParticleIdCpus::Invalid;
         });
-        // Keep offsets and tile views alive until child generation completes.
+        // Keep scan offsets alive until child generation completes.
         amrex::Gpu::streamSynchronize();
     }
     // Displacements can put children on another grid, rank, or AMR level.
