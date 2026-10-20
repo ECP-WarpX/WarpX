@@ -1431,9 +1431,9 @@ void ImplicitSolver::AssemblePCMatrix ()
         "ImplicitSolver::AssemblePCMatrix() DOF object is a nullptr");
 
     // Lazy initialization on first call
-    if (!m_pc_matrix_fields_initialized) {
-        InitializePCMatrixFields();
-        m_pc_matrix_fields_initialized = true;
+    if (!m_pc_matrix_assembly_initialized) {
+        InitializePCMatrixAssembly();
+        m_pc_matrix_assembly_initialized = true;
     }
     if (!m_sparse_jacobian) {
         m_sparse_jacobian = std::make_unique<SparseJacobianMatrix>();
