@@ -219,6 +219,11 @@ public:
     void FinishMassMatricesDeposition ();
 
     /**
+     * \brief Communicate Mass Matrices used for PC and apply boundary conditions
+     */
+    void SyncMassMatricesPCAndApplyBCs ();
+
+    /**
      * \brief Finish the implicit particle update after the converged time-centered solve
      */
     void FinishImplicitParticleUpdate (amrex::Real time, int step);
@@ -346,9 +351,9 @@ protected:
     amrex::Vector<amrex::Array<amrex::MultiFab*,3>> m_mmpc_mfarrvec;
 
     /**
-     * \brief Whether InitializePCMatrixFields() has been called
+     * \brief Whether InitializePCMatrixAssembly() has been called
      */
-    bool m_pc_matrix_fields_initialized = false;
+    bool m_pc_matrix_assembly_initialized = false;
 
     /**
      * \brief Sparse Jacobian matrix for the preconditioner (lazy-initialized)
@@ -388,11 +393,6 @@ protected:
                    bool        update_pc = true);
 
     /**
-     * \brief Communicate Mass Matrices used for PC and apply boundary conditions
-     */
-    void SyncMassMatricesPCAndApplyBCs ();
-
-    /**
      * \brief Scale mass matrices used for PC by c^2*mu0*theta*dt and add 1 to diagonal terms
      */
     void SetMassMatricesForPC ( amrex::Real a_theta_dt );
@@ -408,11 +408,10 @@ protected:
     void SaveE ();
 
     /**
-     * \brief Called once before the first sparse matrix assembly.
-     *        Derived classes override to allocate fields needed by the assembly
-     *        (e.g., curl-curl BC masks). Default is a no-op.
+     * \brief Perform one-time setup before assembling the preconditioner matrix.
+     *        Derived classes initialize required data, such as curl-curl BC masks.
      */
-    virtual void InitializePCMatrixFields () {}
+    virtual void InitializePCMatrixAssembly () {}
 
     /**
      * \brief Convert from WarpX FieldBoundaryType to amrex::LinOpBCType
