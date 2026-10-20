@@ -402,6 +402,10 @@ Overall simulation parameters
             - ``pc_algmg.nu2`` (``int``, default: 1 for "chebyshev", 2 otherwise) Smoother sweeps after the coarse correction.
             - ``pc_algmg.nu_bottom`` (``int``, default: 4 for "chebyshev", 8 otherwise) Smoother sweeps on the coarsest level when it has more than 1024 rows and is therefore not solved directly.
 
+        - ``precon_mat.verbose`` (``bool``, default: true)
+          Print information on the assembly of the sparse matrix used by ``pc_petsc`` and ``pc_algmg``.
+          This replaces ``pc_petsc.verbose``.
+
       - **References:** (WarpX includes relativistic extensions not discussed in references.)
 
         - `Angus et al., On numerical energy conservation for an implicit particle-in-cell method coupled with a binary Monte-Carlo algorithm for Coulomb collisions <https://doi.org/10.1016/j.jcp.2022.111030>`__.
