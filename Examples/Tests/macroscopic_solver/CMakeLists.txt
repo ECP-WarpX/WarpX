@@ -65,7 +65,7 @@ foreach(medium IN ITEMS vacuum backwardeuler laxwendroff)
             test_3d_after_e_push_callback_${medium}_${levels}levels
             3
             1
-            "inputs_test_3d_after_e_push_callback.py --medium ${medium} --levels ${levels}"
+            "inputs_base_3d_after_e_push_callback.py --medium ${medium} --levels ${levels}"
             OFF
             OFF
             OFF

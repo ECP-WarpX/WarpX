@@ -8,7 +8,7 @@ foreach(amplitude IN ITEMS 0 0.001)
             test_3d_current_controlled_port_initialization_b${amplitude}_i${current}
             3
             1
-            "inputs_test_initialization.py --amplitude ${amplitude} --current ${current}"
+            "inputs_base_initialization.py --amplitude ${amplitude} --current ${current}"
             OFF  # analysis (native contour and status checked before evolve)
             OFF  # checksum
             OFF  # dependency
