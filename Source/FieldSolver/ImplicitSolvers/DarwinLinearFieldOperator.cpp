@@ -145,11 +145,7 @@ void DarwinLinearFieldOperator::apply ( WarpXSolverVec& a_Ax, const WarpXSolverV
     // operator is one banded stencil on Z. Rather than exchanging guard cells
     // between the stages, each intermediate is evaluated over enough of its own
     // guard region to feed the next one (widths are set in define()), and the
-    // only communication is the single exchange on Zscratch below. Besides
-    // being cheaper, this removes a class of bug: an intermediate exchange
-    // reconciles the duplicated periodic-image cells of the nodal components
-    // independently at each stage, which is exactly what made the two-pass
-    // laplacian(laplacian(Z)) develop a parasitic sign-alternating mode.
+    // only communication is the single exchange on Zscratch below.
 
     const int lev = 0;
     const int ncomps = 1;
