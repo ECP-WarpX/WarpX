@@ -838,26 +838,6 @@ WarpX::InitData ()
         ::PrintDtDxDyDz(max_level, geom, dt);
         InitFromScratch();
         InitMacroscopicProperties();
-        for (auto& current_port : m_current_controlled_ports) {
-            for (int lev = 0; lev <= finest_level; ++lev) {
-                for (auto const patch_type : {PatchType::fine, PatchType::coarse}) {
-                    if (lev == 0 && patch_type == PatchType::coarse) {
-                        continue;
-                    }
-                    current_port->InitData(
-                        m_fields.get_alldirs(patch_type == PatchType::fine
-                                                 ? FieldType::Bfield_fp
-                                                 : FieldType::Bfield_cp,
-                                             lev),
-                        GetEBUpdateBFlag(patch_type)[lev], gett_new(lev), lev,
-                        patch_type);
-                }
-            }
-        }
-        if (!m_current_controlled_ports.empty()) {
-            FillBoundaryB(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
-            ApplyCompositeCurrentControlledPorts(gett_new(0));
-        }
         InitDiagnostics();
     }
     else
@@ -956,6 +936,29 @@ WarpX::InitData ()
         // net fields are the sum of the field solutions and any external fields.
         for (int lev = 0; lev <= max_level; ++lev) {
             AddExternalFields(lev);
+        }
+        // The port constrains the total initialized magnetic field. Build and
+        // apply it only after the initial field solves and external-field sum,
+        // so those operations cannot invalidate its current or cached status.
+        for (auto& current_port : m_current_controlled_ports) {
+            for (int lev = 0; lev <= finest_level; ++lev) {
+                for (auto const patch_type : {PatchType::fine, PatchType::coarse}) {
+                    if (lev == 0 && patch_type == PatchType::coarse) {
+                        continue;
+                    }
+                    current_port->InitData(
+                        m_fields.get_alldirs(patch_type == PatchType::fine
+                                                 ? FieldType::Bfield_fp
+                                                 : FieldType::Bfield_cp,
+                                             lev),
+                        GetEBUpdateBFlag(patch_type)[lev], gett_new(lev), lev,
+                        patch_type);
+                }
+            }
+        }
+        if (!m_current_controlled_ports.empty()) {
+            FillBoundaryB(guard_cells.ng_alloc_EB, WarpX::sync_nodal_points);
+            ApplyCompositeCurrentControlledPorts(gett_new(0));
         }
     }
     else {

@@ -1,6 +1,21 @@
 # Add tests (alphabetical order) ##############################################
 #
 
+# Include zero-field and zero-target controls for the initial native constraint.
+foreach(amplitude IN ITEMS 0 0.001)
+    foreach(current IN ITEMS 0 100)
+        add_warpx_test(
+            test_3d_current_controlled_port_initialization_b${amplitude}_i${current}
+            3
+            1
+            "inputs_test_initialization.py --amplitude ${amplitude} --current ${current}"
+            OFF  # analysis (native contour and status checked before evolve)
+            OFF  # checksum
+            OFF  # dependency
+        )
+    endforeach()
+endforeach()
+
 add_warpx_test(
     test_2d_current_controlled_port_picmi  # name
     2  # dims
