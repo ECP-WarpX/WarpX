@@ -58,3 +58,17 @@ if(3 IN_LIST WarpX_DIMS AND WarpX_PYTHON)
         PROPERTIES PASS_REGULAR_EXPRESSION "macroscopic.dive_cleaning_vacuum_patches_only=1"
     )
 endif()
+
+foreach(medium IN ITEMS vacuum backwardeuler laxwendroff)
+    foreach(levels IN ITEMS 1 2)
+        add_warpx_test(
+            test_3d_after_e_push_callback_${medium}_${levels}levels
+            3
+            1
+            "inputs_test_3d_after_e_push_callback.py --medium ${medium} --levels ${levels}"
+            OFF
+            OFF
+            OFF
+        )
+    endforeach()
+endforeach()

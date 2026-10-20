@@ -1226,6 +1226,9 @@ WarpX::MacroscopicEvolveE (amrex::Real a_dt, amrex::Real start_time)
     for (int lev = 0; lev <= finest_level; ++lev ) {
         MacroscopicEvolveE(lev, a_dt, start_time);
     }
+
+    // Match the vacuum and Hybrid-PIC electric-field advance callbacks.
+    ExecutePythonCallback("afterEpush");
 }
 
 void
