@@ -290,18 +290,19 @@ WarpX::InitFromCheckpoint ()
             }
         }
 
-        // Fixed-RK4 restarts must honor the input count, which may have been
-        // increased to stabilize the run. Restore the learned count only when
-        // RKF45 is configured, including intervals that skip the restart step.
-        if (m_hybrid_pic_model && m_hybrid_pic_model->m_rkf45_intervals.isActivated()) {
-            // Older checkpoints end here; retain the configured seed for those.
-            is >> std::ws;
-            if (!is.eof()) {
-                int substeps = 0;
-                is >> word >> substeps;
-                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                    word == "hybrid_pic_substeps" && substeps >= 2 && substeps % 2 == 0,
-                    "Invalid hybrid-PIC substep count in checkpoint header");
+        // Older checkpoints end here; retain the configured seed for those.
+        // Always read the optional entry when present, independently of RKF45.
+        is >> std::ws;
+        if (!is.eof()) {
+            int substeps = 0;
+            is >> word >> substeps;
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                word == "hybrid_pic_substeps" && substeps >= 2 && substeps % 2 == 0,
+                "Invalid hybrid-PIC substep count in checkpoint header");
+            // Fixed-RK4 restarts must honor the input count, which may have been
+            // increased to stabilize the run. Restore the learned count only when
+            // RKF45 is configured, including intervals that skip the restart step.
+            if (m_hybrid_pic_model && m_hybrid_pic_model->m_rkf45_intervals.isActivated()) {
                 m_hybrid_pic_model->m_substeps = substeps;
             }
         }
