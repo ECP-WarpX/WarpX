@@ -39,7 +39,6 @@ int main (int argc, char* argv[]) try
         || contained_boundary;
     const bool periodic_crossing = geometry_case == "periodic";
     const bool spacing = geometry_case == "spacing";
-    const bool angles = geometry_case == "angles";
     const bool nongridded = geometry_case == "nongridded";
     // Initialize a small, empty simulation, then insert only four markers
     // needed by the test. Force device memory on GPU builds.
@@ -181,6 +180,7 @@ int main (int argc, char* argv[]) try
             }
         }
 #if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
+        const bool angles = geometry_case == "angles";
         for (int i = 0; i < 4; ++i) {
             const auto radius = x[i];
             const auto theta = angles ? (i%2 == 0 ? 0.7_prt : -1.2_prt) : 0.0_prt;
@@ -304,11 +304,12 @@ int main (int argc, char* argv[]) try
                         delta -= std::round(delta); // Unwrap the unit periodic domain.
                     }
                     if (parent < 2) {
-                        int ppc_axis = c;
 #if defined(WARPX_DIM_1D_Z)
-                        ppc_axis = 0;
+                        const int ppc_axis = 0;
 #elif defined(WARPX_DIM_XZ)
-                        ppc_axis = c/2;
+                        const int ppc_axis = c/2;
+#else
+                        const int ppc_axis = c;
 #endif
                         const auto count = nongridded || ppc_axis >= static_cast<int>(ppc.size())
                             ? 1 : ppc[ppc_axis];
@@ -375,7 +376,11 @@ int main (int argc, char* argv[]) try
                     AMREX_ALWAYS_ASSERT(std::abs(host[0][i] - weights[0][parent]/children)
                         <= tol*weights[0][parent]/children);
                     if (!roundoff) {
+#if AMREX_SPACEDIM == 1
+                        AMREX_ALWAYS_ASSERT(shifted_axes == 1);
+#else
                         AMREX_ALWAYS_ASSERT(shifted_axes == (split_type == 0 ? AMREX_SPACEDIM : 1));
+#endif
                     }
                     AMREX_ALWAYS_ASSERT(amrex::ConstParticleIDWrapper{ids[i]} ==
                         amrex::LongParticleIds::NoSplitParticleID);
