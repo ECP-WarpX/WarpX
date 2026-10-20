@@ -107,6 +107,18 @@ if(WarpX_FFT)
     )
 endif()
 
+foreach(nprocs IN ITEMS 1 2)
+    add_warpx_test(
+        test_3d_pml_magnetic_cleaning_stepped_${nprocs}
+        3
+        ${nprocs}
+        inputs_base_3d_pml_magnetic_cleaning_stepped
+        "analysis_pml_magnetic_cleaning_stepped.py"
+        OFF
+        OFF
+    )
+endforeach()
+
 foreach(solver IN ITEMS yee ckc)
     foreach(refined IN ITEMS 0 1)
         foreach(regular IN ITEMS 0 1)
