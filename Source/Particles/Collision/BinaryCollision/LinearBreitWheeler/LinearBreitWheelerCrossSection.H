@@ -100,8 +100,7 @@ amrex::ParticleReal LBWDifferentialCrossSectionTransformed (
 
     const amrex::ParticleReal tanh_y = std::tanh(y);
     const amrex::ParticleReal cosh_y = std::cosh(y);
-    const amrex::ParticleReal sech2_y = 1._prt / (cosh_y * cosh_y);
     return (1._prt + tanh_y * tanh_y
-        + 2._prt * one_minus_beta2 * (1._prt - one_minus_beta2 / sech2_y)) / beta;
+        + 2._prt * one_minus_beta2 * (1._prt - one_minus_beta2 * cosh_y * cosh_y)) / beta;
 }
 #endif // LINEAR_BREIT_WHEELER_CROSS_SECTION_H

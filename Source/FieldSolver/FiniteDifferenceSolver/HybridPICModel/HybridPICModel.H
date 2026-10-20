@@ -371,12 +371,16 @@ public:
                                std::map<std::string, amrex::MultiFab*> const * Ti_dep_by_species = nullptr) const;
 
     /**
-     * \brief Fill hybrid_electron_pressure_fp from T_e and n_e using the
-     *        ideal-gas relation Pe = n_e * k_B * T_e. Called at the end of
-     *        each QDSMC step so the existing Ohm's-law E-solver consumes
-     *        the QDSMC-updated pressure without modification.
+     * \brief Fill hybrid_electron_pressure_fp from T_e and n_e = rho/q_e using
+     *        the ideal-gas relation Pe = n_e * k_B * T_e, with the boundary
+     *        treatment grad Pe needs. Called at the end of each QDSMC step so
+     *        the existing Ohm's-law E-solver consumes the QDSMC-updated
+     *        pressure without modification, and before each B half-step push
+     *        with the charge density of that push.
      */
-    void QDSMCFillElectronPressureFromTe (int lev) const;
+    void QDSMCFillElectronPressureFromTe (
+        ablastr::fields::MultiLevelScalarField const& rho) const;
+    void QDSMCFillElectronPressureFromTe (int lev, amrex::MultiFab const& rho) const;
 
     /**
      * \brief Top-level orchestrator for the QDSMC electron-energy step.
@@ -451,6 +455,11 @@ public:
 
     /** Check if rkf45 should be used */
     [[nodiscard]] bool DoRKF45(int step) const { return m_rkf45_intervals.contains(step); }
+
+    /** True after HybridPICInitializeRhoJandB() completes for this model.
+     *  Preserve the initialized state across repeated Evolve() calls, while
+     *  allowing the first deposition on a newly constructed restart instance. */
+    bool m_evolve_initialized = false;
 
     // Declare variables to hold hybrid-PIC model parameters
     /** Number of substeps to take when evolving B (also used as initial substep

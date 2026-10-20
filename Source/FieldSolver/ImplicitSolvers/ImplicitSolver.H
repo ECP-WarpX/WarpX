@@ -62,13 +62,23 @@ public:
 
     bool DoParticleSuborbits () const { return m_particle_suborbits; }
 
+    virtual void SetupStep(amrex::Real /* start_time */) {}
+
+    virtual int DoSolve(amrex::Real a_start_time, int a_step, bool verbose_step) = 0;
+
+    virtual void ResetStep(amrex::Real /* start_time */) {}
+
+    virtual void FinishStep(amrex::Real /* a_start_time */, int /* a_step */) {}
+
+    [[nodiscard]] ImplicitOptions const& GetImplicitOptions () const { return m_implicit_options; }
+
     /**
      * \brief Advance fields and particles by one time step using the specified implicit algorithm
      */
-    virtual int OneStep (amrex::Real  a_time,
+    virtual int OneStep (amrex::Real  start_time,
                          amrex::Real  a_dt,
                          int          a_step,
-                         bool verbose_step) = 0;
+                         bool verbose_step);
 
     //
     // the following routines are called by the linear and nonlinear solvers
@@ -86,16 +96,17 @@ public:
      * e.g., Ebar - E^n = cvac^2*0.5*dt*(curl(Bbar) - mu0*Jbar(Ebar,Bbar))
      * Here, U = Ebar, b = E^n, and the expression on the right is RHS(U).
      */
-    virtual void ComputeRHS ( WarpXSolverVec&  a_RHS,
-                        const WarpXSolverVec&  a_E,
-                              amrex::Real      a_time,
-                              int              a_nl_iter,
-                              bool             a_from_jacobian ) = 0;
+    virtual void ComputeRHS (WarpXSolverVec& a_RHS,
+                       const WarpXSolverVec& a_E,
+                             amrex::Real     a_time,
+                             int             a_nl_iter,
+                             bool            a_from_jacobian,
+                             bool            update_pc = true) = 0;
 
     /**
      * Prepare for the linear solve. This includes depositing the mass matrices and updating the PC.
      */
-    void PreLinearSolve ();
+    void PreLinearSolve (bool update_pc = true);
 
     [[nodiscard]] int numAMRLevels () const { return m_num_amr_levels; }
 
@@ -157,12 +168,29 @@ public:
         amrex::Real a_scale = 1.0,
         bool a_zero_out_first = false );
 
+    /**
+     * \brief Assert that ApplyMassMatrices(a_out, a_in, ...) reads a_in over the
+     * full stencil of the mass matrices, for every valid cell of a_out.
+     * ApplyMassMatrices silently clips the stencil at the edge of the guard
+     * cells of a_in. This is harmless when the mass matrices have not been
+     * summed over their guard cells, since the entries beyond the guard cells
+     * of a_in are then zero, but not when they have been (e.g. semi-implicit Darwin).
+     */
+    void AssertMassMatricesStencilNotClipped (
+        const ablastr::fields::MultiLevelVectorField& a_out,
+        const ablastr::fields::MultiLevelVectorField& a_in ) const;
+
     void ComputeJfromMassMatrices (bool a_J_from_MM_only);
 
     /**
      * \brief Finish filling the mass matrices after deposit
      */
-    void FinishMassMatrices ();
+    void FinishMassMatricesDeposition ();
+
+    /**
+     * \brief Communicate Mass Matrices used for PC and apply boundary conditions
+     */
+    void SyncMassMatricesPCAndApplyBCs ();
 
     /**
      * \brief Finish the implicit particle update after the converged time-centered solve
@@ -187,6 +215,11 @@ protected:
      * \brief Time step
      */
     mutable amrex::Real m_dt = 0.0;
+
+    /**
+     * \brief Number of substeps
+     */
+    int m_nsubsteps = 1;
 
     /**
      * \brief Time-biasing parameter for fields used on RHS to advance system.
@@ -231,6 +264,9 @@ protected:
      * the particle evolve loops
      */
     bool m_print_unconverged_particle_details = false;
+
+    // Stable particle options. PreRHSOp copies this before setting per-call values.
+    ImplicitOptions m_implicit_options;
 
     /**
      * \brief whether to skip the full Picard update of particles on the initial newton step
@@ -288,6 +324,8 @@ protected:
      */
     void parseNonlinearSolverParams ( const amrex::ParmParse&  pp );
 
+    void CopyVectorField (warpx::fields::FieldType dst, warpx::fields::FieldType src);
+
     void SaveEoldMultifab ();
 
     /**
@@ -295,19 +333,18 @@ protected:
      */
     void InitializeMassMatrices ();
 
+    void InitializeImplicitOptions ();
+
     void PrintBaseImplicitSolverParameters () const;
 
     /**
      * \brief Perform operations needed before computing the Right Hand Side
      */
-    void PreRHSOp ( amrex::Real  a_cur_time,
-                    int          a_nl_iter,
-                    bool         a_from_jacobian );
-
-    /**
-     * \brief Communicate Mass Matrices used for PC and apply boundary conditions
-     */
-    void SyncMassMatricesPCAndApplyBCs ();
+    void PreRHSOp (amrex::Real a_cur_time,
+                   int         a_nl_iter,
+                   bool        a_from_jacobian,
+                   amrex::Real a_dt_scale,
+                   bool        update_pc = true);
 
     /**
      * \brief Scale mass matrices used for PC by c^2*mu0*theta*dt and add 1 to diagonal terms

@@ -464,6 +464,28 @@ PhysicalParticleContainer::BackwardCompatibility ()
             WARPX_ABORT_WITH_MESSAGE(msg);
         }
     }
+
+    std::string mom_dist_s;
+    if (pp_species_name.query("momentum_distribution_type", mom_dist_s) &&
+        mom_dist_s == "maxwell_juttner") {
+        const std::string juttner_temp_msg =
+            "Maxwell-Juttner thermal spread is now specified with temperature_in_eV. "
+            "Use <species>.maxwell_juttner_temperature_in_eV_distribution_type = constant "
+            "(default), parser, or read_from_file, and provide <species>.temperature_in_eV, "
+            "<species>.temperature_in_eV_function(x,y,z), or "
+            "<species>.read_temperature_in_eV_from_path. "
+            "Requires species_type or mass.";
+        for (const std::string old_param :
+             {"theta", "theta_distribution_type", "theta_function(x,y,z)"}) {
+            if (pp_species_name.query(old_param, backward_string)) {
+                std::string msg = "<species>.";
+                msg += old_param;
+                msg += " is no longer supported. ";
+                msg += juttner_temp_msg;
+                WARPX_ABORT_WITH_MESSAGE(msg);
+            }
+        }
+    }
 }
 
 void PhysicalParticleContainer::InitData ()
@@ -864,7 +886,8 @@ PhysicalParticleContainer::Evolve (ablastr::fields::MultiFabRegister& fields,
 
 void
 PhysicalParticleContainer::DepositMassMatrices (ablastr::fields::MultiFabRegister& fields,
-                                                int lev, Real dt)
+                                                int lev, Real dt,
+                                                ImplicitOptions const& implicit_options)
 {
     using ablastr::fields::Direction;
     using warpx::fields::FieldType;
@@ -916,7 +939,8 @@ PhysicalParticleContainer::DepositMassMatrices (ablastr::fields::MultiFabRegiste
             amrex::MultiFab * Szz = fields.get(FieldType::MassMatrices_Z, Direction{2}, lev);
             WarpXParticleContainer::DepositMassMatrices(pti, wp, uxp, uyp, uzp,
                               Sxx, Sxy, Sxz, Syx, Syy, Syz, Szx, Szy, Szz,
-                              bxfab, byfab, bzfab, 0, np_to_deposit, thread_num, lev, lev, dt);
+                              bxfab, byfab, bzfab, 0, np_to_deposit, thread_num, lev, lev, dt,
+                              implicit_options);
 
             amrex::Gpu::synchronize();
         }
@@ -1203,7 +1227,8 @@ void
 PhysicalParticleContainer::PushP (int lev, Real dt,
                                   const MultiFab& Ex, const MultiFab& Ey, const MultiFab& Ez,
                                   const MultiFab& Bx, const MultiFab& By, const MultiFab& Bz,
-                                  MomentumPushType momentum_push_type)
+                                  MomentumPushType momentum_push_type,
+                                  std::optional<FieldGatherOrders> gather_orders)
 {
     ABLASTR_PROFILE("PhysicalParticleContainer::PushP()");
 
@@ -1247,6 +1272,9 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
 
             const bool galerkin_interpolation = WarpX::galerkin_interpolation;
             const int nox = WarpX::nox;
+            // Only used with explicitly set gather orders (split_gather below)
+            const FieldGatherOrders orders = gather_orders.value_or(
+                FieldGatherOrders{nox, galerkin_interpolation, nox});
             const int n_rz_azimuthal_modes = WarpX::n_rz_azimuthal_modes;
 
             amrex::Array4<const amrex::Real> const& ex_arr = exfab.array();
@@ -1286,9 +1314,18 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
 
             const int exteb_runtime_flag = getExternalEB.isNoOp() ? no_exteb : has_exteb;
 
-            amrex::ParallelFor(TypeList<CompileTimeOptions<no_exteb,has_exteb>>{},
-                               {exteb_runtime_flag},
-                               np, [=] AMREX_GPU_DEVICE (long ip, auto exteb_control)
+            // fused_gather: gather E and B together with the global order and Galerkin
+            // settings; split_gather: gather E and B separately with the orders given
+            // in gather_orders
+            enum gather_flags : int { fused_gather, split_gather };
+
+            const int gather_runtime_flag = gather_orders ? split_gather : fused_gather;
+
+            amrex::ParallelFor(TypeList<CompileTimeOptions<no_exteb,has_exteb>,
+                                        CompileTimeOptions<fused_gather,split_gather>>{},
+                               {exteb_runtime_flag, gather_runtime_flag},
+                               np, [=] AMREX_GPU_DEVICE (long ip, auto exteb_control,
+                                                         auto gather_control)
             {
                 amrex::ParticleReal xp, yp, zp;
                 getPosition(ip, xp, yp, zp);
@@ -1302,11 +1339,24 @@ PhysicalParticleContainer::PushP (int lev, Real dt,
 
                 if (!t_do_not_gather){
                     // first gather E and B to the particle positions
-                    doGatherShapeN(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
-                                   ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
-                                   ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
-                                   dinv, xyzmin, lo, n_rz_azimuthal_modes,
-                                   nox, galerkin_interpolation);
+                    if (gather_control == fused_gather) {
+                        doGatherShapeN(xp, yp, zp, Exp, Eyp, Ezp, Bxp, Byp, Bzp,
+                                       ex_arr, ey_arr, ez_arr, bx_arr, by_arr, bz_arr,
+                                       ex_type, ey_type, ez_type, bx_type, by_type, bz_type,
+                                       dinv, xyzmin, lo, n_rz_azimuthal_modes,
+                                       nox, galerkin_interpolation);
+                    } else {
+                        doDirectGatherVectorField(orders.e_shape, orders.e_galerkin,
+                                                  xp, yp, zp, Exp, Eyp, Ezp,
+                                                  ex_arr, ey_arr, ez_arr,
+                                                  ex_type, ey_type, ez_type,
+                                                  dinv, xyzmin, lo, n_rz_azimuthal_modes);
+                        doDirectGatherVectorField(orders.b_shape, false,
+                                                  xp, yp, zp, Bxp, Byp, Bzp,
+                                                  bx_arr, by_arr, bz_arr,
+                                                  bx_type, by_type, bz_type,
+                                                  dinv, xyzmin, lo, n_rz_azimuthal_modes);
+                    }
                 }
 
                 // Externally applied E and B-field in Cartesian co-ordinates
@@ -1734,13 +1784,14 @@ void PhysicalParticleContainer::resample (const amrex::Vector<amrex::Geometry>& 
                          blp_resample_actual);
 
     ABLASTR_PROFILE_VAR_START(blp_resample_synchronization);
-    const amrex::Real global_numparts = TotalNumberOfParticles();
+    amrex::Real global_numparts = TotalNumberOfParticles();
     ABLASTR_PROFILE_VAR_STOP(blp_resample_synchronization);
 
     ABLASTR_PROFILE_VAR_START(blp_resample_actual);
     if (m_resampler.triggered(timestep, global_numparts))
     {
         Redistribute();
+        global_numparts = TotalNumberOfParticles();
         for (int lev = 0; lev <= maxLevel(); lev++)
         {
             for (WarpXParIter pti(*this, lev); pti.isValid(); ++pti)
@@ -1750,10 +1801,15 @@ void PhysicalParticleContainer::resample (const amrex::Vector<amrex::Geometry>& 
         }
         deleteInvalidParticles();
         if (verbose) {
+            const amrex::Long new_global_numparts = TotalNumberOfParticles();
             amrex::Print() << Utils::TextMsg::Info(
                 "Resampled " + species_name + " at step " + std::to_string(timestep)
                 + ": macroparticle count decreased by "
-                + std::to_string(static_cast<int>(global_numparts - TotalNumberOfParticles()))
+                + std::to_string(static_cast<int>(global_numparts - new_global_numparts))
+                + " from "
+                + std::to_string(static_cast<int>(global_numparts))
+                + " to "
+                + std::to_string(new_global_numparts)
             );
         }
     }
