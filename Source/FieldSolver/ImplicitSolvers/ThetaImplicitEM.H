@@ -102,9 +102,9 @@ public:
 protected:
 
     /**
-     * \brief Allocate curl-curl BC mask fields needed by SparseJacobianMatrix assembly.
+     * \brief Initialize the curl-curl BC masks needed by the preconditioner matrix assembly.
      */
-    void InitializePCMatrixFields () override { InitializeCurlCurlBCMasks(); }
+    void InitializePCMatrixAssembly () override { InitializeCurlCurlBCMasks(); }
 
 private:
 

@@ -320,13 +320,9 @@ Mat setupPC( KSP a_ksp, PETScSolver_impl& a_solver, const std::string& a_name )
 #endif
 #else
     MatSetType( a_solver.m_P->obj, MATAIJ );
-    MatMPIAIJSetPreallocation( a_solver.m_P->obj, 1 /*a_ops->numPCMatBands()*/, NULL,
-                                                  1 /*a_ops->numPCMatBands()-1*/, NULL);
 #endif
-    MatSetOption(a_solver.m_P->obj, MAT_NEW_NONZERO_LOCATION_ERR, PETSC_FALSE);
-    MatSetOption(a_solver.m_P->obj, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_FALSE);
-    MatSetUp(a_solver.m_P->obj);
     MatSetFromOptions(a_solver.m_P->obj);
+    // preallocated with the exact row lengths at the first assembly, in assemblePCMatrix()
     return a_solver.m_P->obj;
 }
 
@@ -488,6 +484,37 @@ int PETScSolver_impl::assemblePCMatrix(LinOpType* const a_linop)
         amrex::Gpu::copy( amrex::Gpu::deviceToHost,
                           a_ij.begin(), a_ij.end(),
                           h_a_ij.begin() );
+
+        // Preallocate the diagonal and off-diagonal blocks exactly at the first assembly; without
+        // preallocation, PETSc assembles through a hash table, which fails intermittently (#7438)
+        PetscBool assembled = PETSC_FALSE;
+        PetscCall(MatAssembled(m_P->obj, &assembled));
+        if (!assembled) {
+            MPI_Comm comm = PetscObjectComm(reinterpret_cast<PetscObject>(m_P->obj));
+            const PetscInt nloc = static_cast<PetscInt>(m_ndofs_l);
+            PetscInt start = 0;
+            PetscCallMPI(MPI_Exscan(&nloc, &start, 1, MPIU_INT, MPI_SUM, comm));
+            PetscMPIInt rank = 0;
+            PetscCallMPI(MPI_Comm_rank(comm, &rank));
+            if (rank == 0) { start = 0; }
+            std::vector<PetscInt> d_nnz(nloc, 0);
+            std::vector<PetscInt> o_nnz(nloc, 0);
+            for (int i = 0; i < n; i++) {
+                const PetscInt row = h_r_indices_g[i] - start;
+                AMREX_ALWAYS_ASSERT(row >= 0 && row < nloc);
+                for (int k = 0; k < h_n_nz_cols[i]; k++) {
+                    const PetscInt col = h_c_indices_g[i*ncols_max + k];
+                    if (col < 0) { continue; }
+                    if (col >= start && col < start + nloc) { ++d_nnz[row]; }
+                    else { ++o_nnz[row]; }
+                }
+            }
+            PetscCall(MatXAIJSetPreallocation(m_P->obj, 1, d_nnz.data(), o_nnz.data(),
+                                              nullptr, nullptr));
+            PetscCall(MatSetOption(m_P->obj, MAT_NEW_NONZERO_LOCATION_ERR, PETSC_FALSE));
+            PetscCall(MatSetOption(m_P->obj, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_FALSE));
+        }
+
         for (int i = 0; i < n; i++) {
             PetscCall(MatSetValues( m_P->obj,
                                     1,
