@@ -1,17 +1,17 @@
 if(3 IN_LIST WarpX_DIMS AND WarpX_APP)
     foreach(patch IN ITEMS fp cp)
         if(patch STREQUAL "fp")
-            set(input inputs_test_3d_vector_guards)
+            set(options "")
             set(invalid_cells "4 16 16")
         else()
-            set(input inputs_test_3d_vector_guards_refined)
+            set(options "amr.max_level=1 warpx.fine_tag_lo=-0.25 -0.5 -0.5 warpx.fine_tag_hi=0.25 0.5 0.5")
             set(invalid_cells "16 16 16")
         endif()
         add_warpx_test(
             test_3d_vector_guards_${patch}_rejected
             3
             1
-            "${input} amr.n_cell=${invalid_cells}"
+            "inputs_base_3d_vector_guards ${options} amr.n_cell=${invalid_cells}"
             OFF OFF OFF
         )
         set_tests_properties(
@@ -23,7 +23,7 @@ if(3 IN_LIST WarpX_DIMS AND WarpX_APP)
             test_3d_vector_guards_${patch}_valid
             3
             1
-            "${input} amr.n_cell=32 32 32"
+            "inputs_base_3d_vector_guards ${options} amr.n_cell=32 32 32"
             OFF OFF OFF
         )
     endforeach()
@@ -33,7 +33,7 @@ if(3 IN_LIST WarpX_DIMS AND WarpX_APP)
         test_3d_vector_guards_current_rejected
         3
         1
-        "inputs_test_3d_vector_guards amr.n_cell=6 16 16 warpx.use_filter=1 warpx.filter_npass_each_dir=2 2 2"
+        "inputs_base_3d_vector_guards amr.n_cell=6 16 16 warpx.use_filter=1 warpx.filter_npass_each_dir=2 2 2"
         OFF OFF OFF
     )
     set_tests_properties(

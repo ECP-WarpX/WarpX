@@ -1,4 +1,0 @@
-FILE = inputs_test_3d_vector_guards
-amr.max_level = 1
-warpx.fine_tag_lo = -0.25 -0.5 -0.5
-warpx.fine_tag_hi = 0.25 0.5 0.5
