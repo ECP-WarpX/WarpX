@@ -41,4 +41,11 @@ if(3 IN_LIST WarpX_DIMS AND WarpX_APP)
         PROPERTIES PASS_REGULAR_EXPRESSION
             "current_fp.*the number of guard cells"
     )
+    add_warpx_test(
+        test_3d_vector_guards_no_field_solver
+        3
+        1
+        "inputs_base_3d_vector_guards amr.n_cell=6 9 1 amr.blocking_factor=1 algo.maxwell_solver=none warpx.const_dt=1e-12 guard_probe.do_not_push=1 guard_probe.do_not_deposit=1"
+        OFF OFF OFF
+    )
 endif()

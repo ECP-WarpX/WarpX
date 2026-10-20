@@ -184,6 +184,13 @@ namespace
         std::optional<ablastr::fields::Direction> dir = std::nullopt
     )
     {
+        // Do not impose a field-solver grid-size restriction when no field
+        // solver is active (for example, on collision-only grids).
+        if (dir && WarpX::electromagnetic_solver_id == ElectromagneticSolverAlgo::None &&
+            WarpX::electrostatic_solver_id == ElectrostaticSolverAlgo::None &&
+            WarpX::GetInstance().evolve_scheme == EvolveScheme::Explicit) {
+            return;
+        }
         if (!(dir ? fields.has(mf_name, *dir, lev) : fields.has(mf_name, lev))) { return; }
         auto & mf = *(dir ? fields.get(mf_name, *dir, lev) : fields.get(mf_name, lev));
 
