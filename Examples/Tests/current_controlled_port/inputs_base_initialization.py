@@ -60,7 +60,9 @@ parameters = [
 ]
 Path("initial_inputs").write_text("\n".join(parameters) + "\n")
 geometry.dims = 3
-libwarpx.initialize([sys.executable, "initial_inputs"])
+# CTest prefixes input-file lookups with the source directory. Pass the generated
+# parameters directly while retaining the deck above in this test's run directory.
+libwarpx.initialize([sys.executable, *parameters])
 
 
 def check_current(label):
