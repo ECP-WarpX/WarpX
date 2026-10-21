@@ -217,7 +217,7 @@ int SparseJacobianMatrix::Assemble (
         Gpu::Buffer<int> nnz_actual_d({nnz_max});
         auto* nnz_actual_ptr = nnz_actual_d.data();
 
-        const amrex::Array<bool,3>& blank_Efield = m_ops->GetBlankElectricField();
+        const amrex::Array<bool,3> blank_Efield = m_blank_electric_field;
 
         for (int dir = 0; dir < 3; dir++) {
 

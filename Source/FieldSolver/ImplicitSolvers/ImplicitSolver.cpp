@@ -1650,6 +1650,7 @@ void ImplicitSolver::AssemblePCMatrix ()
 
     const Real theta_dt = GetThetaForPC() * m_dt;
 
+    m_sparse_jacobian->SetBlankElectricField(m_blank_electric_field);
     m_sparse_jacobian->Update(
         dofs,
         geom,
