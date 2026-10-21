@@ -322,6 +322,15 @@ Overall simulation parameters
           - ``implicit_evolve.suborbit_statistics_interval`` (``int``, default: 100)
           - ``implicit_evolve.print_unconverged_particle_details`` (``bool``, default: false)
 
+        - ``implicit_evolve.petsc_reinit_interval`` (``integer``, default: 1000 on GPU builds, 0 otherwise)
+          With ``newton.linear_solver = petsc_ksp`` or ``implicit_evolve.nonlinear_solver = petsc_snes``, finalize and re-initialize PETSc every this many steps, recreating the PETSc solver objects.
+          This works around host memory that the GPU builds of PETSc (3.24 to 3.26, CUDA and HIP) accumulate in every GMRES iteration and release only in ``PetscFinalize``, which otherwise grows without bound in long runs.
+          The leak is a few kB per GMRES iteration, so the default interval bounds it to tens of MB per rank; 0 never re-initializes PETSc.
+          Output that PETSc produces at finalization (for example with ``-log_view``) is produced at every re-initialization.
+          Set the interval to 0 if the run holds PETSc objects outside WarpX's implicit solvers (for example petsc4py objects in a PICMI script), which a re-initialization would invalidate.
+          PETSc option values that contain spaces are not preserved across a re-initialization.
+          The parameter is ignored if PETSc is built with Kokkos, which cannot be initialized twice.
+
         - ``implicit_evolve.use_mass_matrices_jacobian`` (``bool``, default: false).
           When ``true``, the plasma current density is computed using the mass matrices during the linear stage of PS-JFNK, replacing direct particle calculations. This can enable large speed ups for simulations with many particles.
           In 3D, this option is currently only implemented for ``algo.current_deposition = direct``.

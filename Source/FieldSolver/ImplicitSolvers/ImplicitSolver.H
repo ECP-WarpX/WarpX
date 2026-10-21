@@ -73,6 +73,12 @@ public:
 
     virtual void FinishStep(amrex::Real /* a_start_time */, int /* a_step */) {}
 
+    /**
+     * \brief Finalize and re-initialize PETSc after the steps given by
+     *        implicit_evolve.petsc_reinit_interval
+     */
+    void ReinitializePETScIfDue (int a_step, bool verbose_step);
+
     [[nodiscard]] ImplicitOptions const& GetImplicitOptions () const { return m_implicit_options; }
 
     /**
@@ -285,6 +291,16 @@ protected:
 
     // Stable particle options. PreRHSOp copies this before setting per-call values.
     ImplicitOptions m_implicit_options;
+
+    /**
+     * \brief Finalize and re-initialize PETSc every this many steps (0: never), to release
+     *        the host memory PETSc's GPU vector operations leak until PetscFinalize
+     */
+#ifdef AMREX_USE_GPU
+    int m_petsc_reinit_interval = 1000;
+#else
+    int m_petsc_reinit_interval = 0;
+#endif
 
     /**
      * \brief whether to skip the full Picard update of particles on the initial newton step
