@@ -429,6 +429,9 @@ void WarpX::OneStep (
                       << "Nonlinear solver failed to converge: exit status = " << exit_status;
             WARPX_ABORT_WITH_MESSAGE(solverMsg.str());
         }
+        if (a_step + 1 < max_step) { // not worth it on the last step
+            m_implicit_solver->ReinitializePETScIfDue(a_step, verbose_step);
+        }
     }
     // explicit solver
     else {
