@@ -1,4 +1,4 @@
-/* Copyright 2024 Justin Angus, Debojyoti Ghosh
+/* Copyright 2024-2026 Justin Angus, Debojyoti Ghosh
  *
  * This file is part of WarpX.
  *
@@ -10,16 +10,19 @@
 #include "ImplicitSolver_fwd.H"
 
 #include "FieldSolver/ImplicitSolvers/ImplicitOptions.H"
+#include "FieldSolver/ImplicitSolvers/SparseJacobianMatrix.H"
 
 #include "FieldSolver/ImplicitSolvers/WarpXSolverVec.H"
 #include "NonlinearSolvers/NonlinearSolverLibrary.H"
 
 #include <AMReX_Array.H>
+#include <AMReX_GpuContainers.H>
 #include <AMReX_INT.H>
 #include <AMReX_REAL.H>
 #include <AMReX_LO_BCTYPES.H>
 
 #include <map>
+#include <memory>
 #include <string>
 
 /**
@@ -151,6 +154,21 @@ public:
     [[nodiscard]] virtual amrex::Real  GetThetaForPC () const = 0;
 
     /**
+     * \brief Assemble the sparse Jacobian matrix for the preconditioner.
+     *        Creates the SparseJacobianMatrix on first call (lazy init).
+     */
+    void AssemblePCMatrix ();
+
+    /**
+     * \brief Copy the assembled sparse matrix data to caller-provided device vectors.
+     */
+    void GetPCMatrix (amrex::Gpu::DeviceVector<int>& a_r_indices_g,
+                      amrex::Gpu::DeviceVector<int>& a_num_nz,
+                      amrex::Gpu::DeviceVector<int>& a_c_indices_g,
+                      amrex::Gpu::DeviceVector<amrex::Real>& a_a_ij,
+                      int& a_n, int& a_ncols_max);
+
+    /**
      * \brief Apply deposited mass matrices to a vector field.
      * Computes a_out += a_scale * S * (a_in - a_in_ref) [+ a_baseline],
      * where S is the mass matrix, accumulating into a_out.
@@ -194,6 +212,11 @@ public:
      */
     void CopyMassMatrixXZToZX ();
 #endif
+
+    /**
+     * \brief Communicate Mass Matrices used for PC and apply boundary conditions
+     */
+    void SyncMassMatricesPCAndApplyBCs ();
 
     /**
      * \brief Finish the implicit particle update after the converged time-centered solve
@@ -335,9 +358,22 @@ protected:
      */
     amrex::Vector<amrex::Array<amrex::MultiFab*,3>> m_mmpc_mfarrvec;
 
+    /**
+     * \brief Whether InitializePCMatrixAssembly() has been called
+     */
+    bool m_pc_matrix_assembly_initialized = false;
+
+    /**
+     * \brief Sparse Jacobian matrix for the preconditioner (lazy-initialized)
+     */
+    std::unique_ptr<SparseJacobianMatrix> m_sparse_jacobian;
+
     void parseBaseImplicitSolverParams ();
 
-    void parseNonlinearSolverParams (const amrex::ParmParse& pp);
+    /**
+     * \brief parse nonlinear solver parameters (if one is used)
+     */
+    void parseNonlinearSolverParams ( const amrex::ParmParse&  pp );
 
     void CopyVectorField (warpx::fields::FieldType dst, warpx::fields::FieldType src);
 
@@ -362,11 +398,6 @@ protected:
                    bool        update_pc = true);
 
     /**
-     * \brief Communicate Mass Matrices used for PC and apply boundary conditions
-     */
-    void SyncMassMatricesPCAndApplyBCs ();
-
-    /**
      * \brief Scale mass matrices used for PC by c^2*mu0*theta*dt and add 1 to diagonal terms
      */
     void SetMassMatricesForPC ( amrex::Real a_theta_dt );
@@ -380,6 +411,12 @@ protected:
      * \brief Save E at start of each Newton step
      */
     void SaveE ();
+
+    /**
+     * \brief Perform one-time setup before assembling the preconditioner matrix.
+     *        Derived classes initialize required data, such as curl-curl BC masks.
+     */
+    virtual void InitializePCMatrixAssembly () {}
 
     /**
      * \brief Convert from WarpX FieldBoundaryType to amrex::LinOpBCType

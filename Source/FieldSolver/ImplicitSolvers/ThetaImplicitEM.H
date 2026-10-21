@@ -109,6 +109,13 @@ public:
      */
     void InitializeCurlCurlBCMasks ();
 
+protected:
+
+    /**
+     * \brief Initialize the curl-curl BC masks needed by the preconditioner matrix assembly.
+     */
+    void InitializePCMatrixAssembly () override { InitializeCurlCurlBCMasks(); }
+
 private:
 
     /**

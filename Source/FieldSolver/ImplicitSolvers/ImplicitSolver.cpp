@@ -1,11 +1,15 @@
 #include "ImplicitSolver.H"
+#include "SparseJacobianMatrix.H"
 #include "Fields.H"
 #include "WarpX.H"
 #include "Particles/MultiParticleContainer.H"
 #include "Utils/WarpXAlgorithmSelection.H"
 
+#include <AMReX_Array.H>
 #include <AMReX_GpuAtomic.H>
 #include <AMReX_GpuContainers.H>
+#include <AMReX_GpuLaunch.H>
+#include <AMReX_MFIter.H>
 #include <AMReX_ParallelDescriptor.H>
 #include <AMReX_Print.H>
 
@@ -1218,27 +1222,27 @@ void ImplicitSolver::SyncMassMatricesPCAndApplyBCs ()
 
     const int diag_comp_xx = (AMREX_D_TERM(m_ncomp_xx[0],*m_ncomp_xx[1],*m_ncomp_xx[2])-1)/2;
     const int diag_comp_zz = (AMREX_D_TERM(m_ncomp_zz[0],*m_ncomp_zz[1],*m_ncomp_zz[2])-1)/2;
-    int MM_ncomp_xx[3] = {1, 1, 1};
-    int MM_ncomp_yy[3] = {1, 1, 1};
-    int MM_ncomp_zz[3] = {1, 1, 1};
-    int MM_PC_ncomp_xx[3] = {1, 1, 1};
-    int MM_PC_ncomp_zz[3] = {1, 1, 1};
-    int MM_PC_width_xx[3] = {0, 0, 0};
-    int MM_PC_width_zz[3] = {0, 0, 0};
+    amrex::GpuArray<int,3> MM_ncomp_xx = {1, 1, 1};
+    amrex::GpuArray<int,3> MM_ncomp_zz = {1, 1, 1};
+    amrex::GpuArray<int,3> MM_PC_ncomp_xx = {1, 1, 1};
 #if !defined(WARPX_EM_TEY)
     const int diag_comp_yy = (AMREX_D_TERM(m_ncomp_yy[0],*m_ncomp_yy[1],*m_ncomp_yy[2])-1)/2;
-    int MM_PC_ncomp_yy[3] = {1, 1, 1};
-    int MM_PC_width_yy[3] = {0, 0, 0};
+    amrex::GpuArray<int,3> MM_ncomp_yy = {1, 1, 1};
+    amrex::GpuArray<int,3> MM_PC_ncomp_yy = {1, 1, 1};
+    amrex::GpuArray<int,3> MM_PC_width_yy = {0, 0, 0};
 #endif
+    amrex::GpuArray<int,3> MM_PC_ncomp_zz = {1, 1, 1};
+    amrex::GpuArray<int,3> MM_PC_width_xx = {0, 0, 0};
+    amrex::GpuArray<int,3> MM_PC_width_zz = {0, 0, 0};
     for (int dir = 0; dir < AMREX_SPACEDIM; dir++) {
         MM_ncomp_xx[dir]     = m_ncomp_xx[dir];
-        MM_ncomp_yy[dir]     = m_ncomp_yy[dir];
         MM_ncomp_zz[dir]     = m_ncomp_zz[dir];
         MM_PC_ncomp_xx[dir]  = m_ncomp_pc_xx[dir];
         MM_PC_ncomp_zz[dir]  = m_ncomp_pc_zz[dir];
         MM_PC_width_xx[dir]  = (m_ncomp_pc_xx[dir] - 1)/2;
         MM_PC_width_zz[dir]  = (m_ncomp_pc_zz[dir] - 1)/2;
 #if !defined(WARPX_EM_TEY)
+        MM_ncomp_yy[dir]     = m_ncomp_yy[dir];
         MM_PC_ncomp_yy[dir]  = m_ncomp_pc_yy[dir];
         MM_PC_width_yy[dir]  = (m_ncomp_pc_yy[dir] - 1)/2;
 #endif
@@ -1252,46 +1256,55 @@ void ImplicitSolver::SyncMassMatricesPCAndApplyBCs ()
         const amrex::MultiFab* MM_zz = m_WarpX->m_fields.get(FieldType::MassMatrices_Z, Direction{2}, lev);
         ablastr::fields::VectorField MM_PC = m_WarpX->m_fields.get_alldirs(FieldType::MassMatrices_PC, lev);
 
-        const int diag_comp_pc_xx = (MM_PC[0]->nComp() - 1)/2;
-        for (int comp2 = 0; comp2 < MM_PC_ncomp_xx[2]; comp2++) {
-            const int kk0 = comp2 - MM_PC_width_xx[2];
-            for (int comp1 = 0; comp1 < MM_PC_ncomp_xx[1]; comp1++) {
-                const int jj0 = comp1 - MM_PC_width_xx[1]; // -2 -1, 0, 1, 2
-                const int mm_comp_start    = diag_comp_xx    - MM_PC_width_xx[0]
-                                           + MM_ncomp_xx[0]*(jj0 + MM_ncomp_xx[1]*kk0);
-                const int mm_pc_comp_start = diag_comp_pc_xx - MM_PC_width_xx[0]
-                                           + MM_PC_ncomp_xx[0]*(jj0 + MM_PC_ncomp_xx[1]*kk0);
-                amrex::MultiFab::Add(*MM_PC[0], *MM_xx, mm_comp_start, mm_pc_comp_start,
-                                     MM_PC_ncomp_xx[0], MM_xx->nGrowVect());
-            }
-        }
-#if !defined(WARPX_EM_TEY)
-        const int diag_comp_pc_yy = (MM_PC[1]->nComp() - 1)/2;
-        for (int comp2 = 0; comp2 < MM_PC_ncomp_yy[2]; comp2++) {
-            const int kk0 = comp2 - MM_PC_width_yy[2];
-            for (int comp1 = 0; comp1 < MM_PC_ncomp_yy[1]; comp1++) {
-                const int jj0 = comp1 - MM_PC_width_yy[1]; // -2 -1, 0, 1, 2
-                const int mm_comp_start    = diag_comp_yy    - MM_PC_width_yy[0]
-                                           + MM_ncomp_yy[0]*(jj0 + MM_ncomp_yy[1]*kk0);
-                const int mm_pc_comp_start = diag_comp_pc_yy - MM_PC_width_yy[0]
-                                           + MM_PC_ncomp_yy[0]*(jj0 + MM_PC_ncomp_yy[1]*kk0);
-                amrex::MultiFab::Add(*MM_PC[1], *MM_yy, mm_comp_start, mm_pc_comp_start,
-                                     MM_PC_ncomp_yy[0], MM_yy->nGrowVect());
-            }
-        }
+#ifdef AMREX_USE_OMP
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
 #endif
-        const int diag_comp_pc_zz = (MM_PC[2]->nComp() - 1)/2;
-        for (int comp2 = 0; comp2 < MM_PC_ncomp_zz[2]; comp2++) {
-            const int kk0 = comp2 - MM_PC_width_zz[2];
-            for (int comp1 = 0; comp1 < MM_PC_ncomp_zz[1]; comp1++) {
-                const int jj0 = comp1 - MM_PC_width_zz[1]; // -2 -1, 0, 1, 2
-                const int mm_comp_start    = diag_comp_zz    - MM_PC_width_zz[0]
-                                           + MM_ncomp_zz[0]*(jj0 + MM_ncomp_zz[1]*kk0);
-                const int mm_pc_comp_start = diag_comp_pc_zz - MM_PC_width_zz[0]
-                                           + MM_PC_ncomp_zz[0]*(jj0 + MM_PC_ncomp_zz[1]*kk0);
-                amrex::MultiFab::Add(*MM_PC[2], *MM_zz, mm_comp_start, mm_pc_comp_start,
-                                     MM_PC_ncomp_zz[0], MM_zz->nGrowVect());
-            }
+        for (amrex::MFIter mfi(*MM_PC[0], amrex::TilingIfNotGPU()); mfi.isValid(); ++mfi) {
+            auto const Sxx = MM_xx->const_array(mfi);
+            auto const Szz = MM_zz->const_array(mfi);
+#if !defined(WARPX_EM_TEY)
+            auto const Syy = MM_yy->const_array(mfi);
+            auto const Syy_pc = MM_PC[1]->array(mfi);
+#endif
+            auto const Sxx_pc = MM_PC[0]->array(mfi);
+            auto const Szz_pc = MM_PC[2]->array(mfi);
+
+            // Include guard cells at grid-box edges without overlapping interior tiles.
+            const amrex::Box bx = mfi.tilebox(MM_PC[0]->ixType().toIntVect(), MM_xx->nGrowVect());
+#if !defined(WARPX_EM_TEY)
+            const amrex::Box by = mfi.tilebox(MM_PC[1]->ixType().toIntVect(), MM_yy->nGrowVect());
+#endif
+            const amrex::Box bz = mfi.tilebox(MM_PC[2]->ixType().toIntVect(), MM_zz->nGrowVect());
+
+            // Decode each PC component into its centered stencil offset in the source matrix.
+            // All three diagonal blocks and all retained components share one kernel launch.
+            amrex::ParallelFor(
+                bx, MM_PC[0]->nComp(), [=] AMREX_GPU_DEVICE (int i, int j, int k, int n)
+                {
+                    const int ii = n % MM_PC_ncomp_xx[0] - MM_PC_width_xx[0];
+                    const int jj = (n / MM_PC_ncomp_xx[0]) % MM_PC_ncomp_xx[1] - MM_PC_width_xx[1];
+                    const int kk = n / (MM_PC_ncomp_xx[0]*MM_PC_ncomp_xx[1]) - MM_PC_width_xx[2];
+                    const int src_comp = diag_comp_xx + ii + MM_ncomp_xx[0]*(jj + MM_ncomp_xx[1]*kk);
+                    Sxx_pc(i,j,k,n) += Sxx(i,j,k,src_comp);
+                },
+#if !defined(WARPX_EM_TEY)
+                by, MM_PC[1]->nComp(), [=] AMREX_GPU_DEVICE (int i, int j, int k, int n)
+                {
+                    const int ii = n % MM_PC_ncomp_yy[0] - MM_PC_width_yy[0];
+                    const int jj = (n / MM_PC_ncomp_yy[0]) % MM_PC_ncomp_yy[1] - MM_PC_width_yy[1];
+                    const int kk = n / (MM_PC_ncomp_yy[0]*MM_PC_ncomp_yy[1]) - MM_PC_width_yy[2];
+                    const int src_comp = diag_comp_yy + ii + MM_ncomp_yy[0]*(jj + MM_ncomp_yy[1]*kk);
+                    Syy_pc(i,j,k,n) += Syy(i,j,k,src_comp);
+                },
+#endif
+                bz, MM_PC[2]->nComp(), [=] AMREX_GPU_DEVICE (int i, int j, int k, int n)
+                {
+                    const int ii = n % MM_PC_ncomp_zz[0] - MM_PC_width_zz[0];
+                    const int jj = (n / MM_PC_ncomp_zz[0]) % MM_PC_ncomp_zz[1] - MM_PC_width_zz[1];
+                    const int kk = n / (MM_PC_ncomp_zz[0]*MM_PC_ncomp_zz[1]) - MM_PC_width_zz[2];
+                    const int src_comp = diag_comp_zz + ii + MM_ncomp_zz[0]*(jj + MM_ncomp_zz[1]*kk);
+                    Szz_pc(i,j,k,n) += Szz(i,j,k,src_comp);
+                });
         }
 
 #if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
@@ -1589,4 +1602,73 @@ void ImplicitSolver::PrintBaseImplicitSolverParameters () const
             amrex::Print() << "    ncomp_zz:  " << m_ncomp_zz << ";  ncomp_pc_zz:  " << m_ncomp_pc_zz << "\n";
         }
     }
+}
+
+void ImplicitSolver::AssemblePCMatrix ()
+{
+    BL_PROFILE("ImplicitSolver::AssemblePCMatrix()");
+
+    // The DOF object is shared by every solver vector.
+    const auto* dofs = WarpXSolverVec::getDOFsObject().get();
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        dofs != nullptr,
+        "ImplicitSolver::AssemblePCMatrix() DOF object is a nullptr");
+
+    // Lazy initialization on first call
+    if (!m_pc_matrix_assembly_initialized) {
+        InitializePCMatrixAssembly();
+        m_pc_matrix_assembly_initialized = true;
+    }
+    if (!m_sparse_jacobian) {
+        m_sparse_jacobian = std::make_unique<SparseJacobianMatrix>();
+        m_sparse_jacobian->Define(
+            static_cast<int>(dofs->m_nDoFs_l),
+            static_cast<int>(dofs->m_nDoFs_g));
+    }
+
+    // Gather geometry
+    Vector<Geometry> geom(m_num_amr_levels);
+    for (int lev = 0; lev < m_num_amr_levels; lev++) {
+        geom[lev] = GetGeometry(lev);
+    }
+
+    // Gather BC masks
+    Vector<Array<const MultiFab*,3>> bc_masks(m_num_amr_levels);
+    for (int lev = 0; lev < m_num_amr_levels; lev++) {
+        for (int dir = 0; dir < 3; dir++) {
+            bc_masks[lev][dir] = GetCurl2BCmask(lev, dir);
+        }
+    }
+
+    // Gather mass matrix ncomp info
+    Array<IntVect,3> mm_ncomp;
+    for (int field_dir = 0; field_dir < 3; field_dir++) {
+        for (int d = 0; d < AMREX_SPACEDIM; d++) {
+            mm_ncomp[field_dir][d] = GetMassMatricesPCnComp(field_dir, d);
+        }
+    }
+
+    const Real theta_dt = GetThetaForPC() * m_dt;
+
+    m_sparse_jacobian->Update(
+        dofs,
+        geom,
+        theta_dt,
+        bc_masks,
+        GetMassMatricesCoeff(),
+        mm_ncomp);
+}
+
+void ImplicitSolver::GetPCMatrix (
+    Gpu::DeviceVector<int>& a_r_indices_g,
+    Gpu::DeviceVector<int>& a_num_nz,
+    Gpu::DeviceVector<int>& a_c_indices_g,
+    Gpu::DeviceVector<Real>& a_a_ij,
+    int& a_n, int& a_ncols_max)
+{
+    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+        m_sparse_jacobian != nullptr,
+        "ImplicitSolver::GetPCMatrix() called before AssemblePCMatrix()");
+    m_sparse_jacobian->GetMatrix(a_r_indices_g, a_num_nz, a_c_indices_g,
+                                 a_a_ij, a_n, a_ncols_max);
 }
