@@ -712,11 +712,26 @@ WarpX::ReadParameters ()
 
         ReadBoostedFrameParameters(gamma_boost, beta_boost, boost_direction);
 
-        // Relative permittivity for Ampere's law
+        // Relative permittivity for Ampere's law. The light-speed factor is an
+        // alternative input for the same model, without changing physical c.
         {
-            utils::parser::queryWithParser(pp_warpx, "epsilon_r", epsilon_r);
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(epsilon_r >= 1.0,
-                "warpx.epsilon_r must be >= 1.0");
+            epsilon_r = 1.0_rt;
+            amrex::Real c_light_factor = 1.0_rt;
+            bool const has_epsilon_r =
+                utils::parser::queryWithParser(pp_warpx, "epsilon_r", epsilon_r);
+            bool const has_c_light_factor =
+                utils::parser::queryWithParser(pp_warpx, "c_light_factor", c_light_factor);
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!(has_epsilon_r && has_c_light_factor),
+                "Specify only one of warpx.epsilon_r and warpx.c_light_factor.");
+            if (has_c_light_factor) {
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                    std::isfinite(c_light_factor) && c_light_factor >= 1.0_rt &&
+                    c_light_factor <= std::sqrt(std::numeric_limits<amrex::Real>::max()),
+                    "warpx.c_light_factor must be finite, >= 1, and have a representable square.");
+                epsilon_r = c_light_factor * c_light_factor;
+            }
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(std::isfinite(epsilon_r) && epsilon_r >= 1.0_rt,
+                "warpx.epsilon_r must be finite and >= 1.0");
             if (epsilon_r > 1.0) {
                 WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                     evolve_scheme == EvolveScheme::Explicit,
