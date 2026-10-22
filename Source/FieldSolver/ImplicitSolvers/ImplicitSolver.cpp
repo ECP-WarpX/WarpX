@@ -739,7 +739,7 @@ void ImplicitSolver::parseNonlinearSolverParams ( const amrex::ParmParse&  pp )
             pp.query("skip_particle_picard_init", m_skip_particle_picard_init);
         }
         if (m_use_mass_matrices_pc) {
-            m_mass_matrices_pc_width = 0;
+            m_mass_matrices_pc_width = 1;
             pp.query("mass_matrices_pc_width", m_mass_matrices_pc_width);
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 m_mass_matrices_pc_width >= 0,
@@ -865,7 +865,8 @@ void ImplicitSolver::InitializeMassMatrices ()
             else if (m_use_mass_matrices_pc && m_mass_matrices_pc_width > 0) {
                 WARPX_ABORT_WITH_MESSAGE(
                     "ImplicitSolver: Mass matrices pc width > 0 with the "
-                    "Villasenor deposition in 3D is not yet supported.");
+                    "Villasenor deposition in 3D is not yet supported. "
+                    "Set implicit_evolve.mass_matrices_pc_width = 0.");
             }
 #else
             const int max_grid_crossings = WarpX::particle_max_grid_crossings;
