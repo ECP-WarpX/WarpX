@@ -787,10 +787,10 @@ void ImplicitSolver::SaveEoldMultifab ()
     CopyVectorField(FieldType::E_old, FieldType::Efield_fp);
 }
 
-std::unique_ptr<MatrixSolverOps<WarpXSolverVec>> ImplicitSolver::MakePCMatrixOps ()
+std::unique_ptr<MatrixSolverOps<WarpXSolverVec>> ImplicitSolver::MakePCMatrixOps (ImplicitSolver* a_ops)
 {
     auto ops = std::make_unique<MassMatrixSolverOps<WarpXSolverVec,ImplicitSolver>>();
-    ops->Define(this);
+    ops->Define(a_ops);
     return ops;
 }
 
@@ -803,7 +803,7 @@ std::unique_ptr<MatrixSolverOps<WarpXSolverVec>> ImplicitSolver::MakeJacobianMat
             GetThetaForPC() <= amrex::Real(0.0),
             "weighted_jacobi.use_pcmat = true requires algo.evolve_scheme = semi_implicit_em; "
             "use weighted_jacobi.use_pcmat = false");
-        return MakePCMatrixOps();
+        return MakePCMatrixOps(this);
     }
     auto ops = std::make_unique<MFMatrixSolverOps<WarpXSolverVec,ImplicitSolver>>();
     ops->Define(std::move(a_matvec), this);

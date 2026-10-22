@@ -162,9 +162,9 @@ public:
     [[nodiscard]] const amrex::Vector<amrex::Array<amrex::MultiFab*,3>>* GetCurlCurlDiag ();
 
     /**
-     * \brief Create the matrix ops for the assembled preconditioner matrix
+     * \brief Create the matrix ops for the assembled preconditioner matrix of a_ops
      */
-    [[nodiscard]] std::unique_ptr<MatrixSolverOps<WarpXSolverVec>> MakePCMatrixOps ();
+    [[nodiscard]] static std::unique_ptr<MatrixSolverOps<WarpXSolverVec>> MakePCMatrixOps (ImplicitSolver* a_ops);
 
     /**
      * \brief Create the matrix ops for the Jacobian: the assembled PC matrix if
