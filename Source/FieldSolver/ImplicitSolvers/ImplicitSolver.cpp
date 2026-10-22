@@ -1,4 +1,5 @@
 #include "ImplicitSolver.H"
+#include "MassMatrixSolverOps.H"
 #include "SparseJacobianMatrix.H"
 #include "Fields.H"
 #include "WarpX.H"
@@ -780,6 +781,13 @@ void ImplicitSolver::SaveEoldMultifab ()
     // E_old multifab is needed for diagnostics and saving at checkpoints
     using warpx::fields::FieldType;
     CopyVectorField(FieldType::E_old, FieldType::Efield_fp);
+}
+
+std::unique_ptr<MatrixSolverOps<WarpXSolverVec>> ImplicitSolver::MakePCMatrixOps ()
+{
+    auto ops = std::make_unique<MassMatrixSolverOps<WarpXSolverVec,ImplicitSolver>>();
+    ops->Define(this);
+    return ops;
 }
 
 void ImplicitSolver::InitializeMassMatrices ()
