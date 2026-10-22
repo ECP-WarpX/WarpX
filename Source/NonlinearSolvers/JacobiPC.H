@@ -129,7 +129,7 @@ void JacobiPC<T,Ops>::Update ()
 
     if (m_solver.isVerbose()) {
         amrex::Print() << "Updating " << amrex::getEnumNameString(PreconditionerType::pc_jacobi)
-                       << ": theta*dt = " << m_ops->GetThetaForPC()*this->m_dt
+                       << ": dt = " << this->m_dt
                        << ", omega = " << m_solver.getOmega() << "\n";
     }
 }
