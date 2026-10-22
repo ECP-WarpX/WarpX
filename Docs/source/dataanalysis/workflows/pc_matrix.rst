@@ -30,7 +30,7 @@ The header holds metadata as ``% key: value`` comment lines, for example:
    % step: 0
    % update_in_step: 0
    % omega: 0.830000
-   % matrix_ops: MultiFabMatrixSolverOps (stencil)
+   % matrix_ops: MassMatrixSolverOps (stencil)
    % operator: A = I + M, M = PC mass matrices
    % stencil_size_comp0: 5 5 1
    % diagonal_min: 1.0213

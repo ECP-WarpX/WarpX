@@ -394,18 +394,18 @@ auto MassMatrixSolverOps<T,Ops>::computeResidualNormInternal (
 }
 
 template <class T, class Ops>
-void MultiFabMatrixSolverOps<T,Ops>::PrintMatrix (const std::string& a_filename,
+void MassMatrixSolverOps<T,Ops>::PrintMatrix (const std::string& a_filename,
                                                   const std::vector<std::string>& a_header)
 {
-    BL_PROFILE("MultiFabMatrixSolverOps::PrintMatrix()");
+    BL_PROFILE("MassMatrixSolverOps::PrintMatrix()");
     using namespace amrex;
 
     const auto* dofs = T::getDOFsObject().get();
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(dofs != nullptr,
-        "MultiFabMatrixSolverOps::PrintMatrix(): DOF object is a nullptr");
+        "MassMatrixSolverOps::PrintMatrix(): DOF object is a nullptr");
 
     std::vector<std::string> header = a_header;
-    header.emplace_back("matrix_ops: MultiFabMatrixSolverOps (stencil)");
+    header.emplace_back("matrix_ops: MassMatrixSolverOps (stencil)");
     header.emplace_back(m_bcoefs != nullptr ? "operator: A = I + M, M = PC mass matrices"
                                             : "operator: A = I (no PC mass matrices)");
 
