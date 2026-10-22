@@ -14,7 +14,7 @@
 #include "WeightedJacobiImpl.H"
 
 #include "MatrixSolverOps.H"
-#include "FieldSolver/ImplicitSolvers/MultiFabMatrixSolverOps.H"
+#include "FieldSolver/ImplicitSolvers/MassMatrixSolverOps.H"
 #include "FieldSolver/ImplicitSolvers/SparseMatrixSolverOps.H"
 
 #include <AMReX.H>
@@ -29,18 +29,6 @@
  *
  *  Approximately solves A x = b via damped Jacobi iterations,
  *  delegating the iteration logic to WeightedJacobiImpl<T>.
- *
- *  Two operating modes, selected automatically:
- *
- *  1) Stencil path (semi-implicit, GetThetaForPC()==0):
- *     A = I + M where M is the mass matrix stored as MultiFab stencil
- *     coefficients. When diagonal-only (mass_matrices_pc_width=0), the
- *     solve is exact in one step.
- *
- *  2) CSR path (theta-implicit, GetThetaForPC()>0):
- *     A = I + curl(alpha*curl[]) + M assembled as a sparse CSR matrix
- *     by SparseJacobianMatrix. Operations (sweep, residual) are performed
- *     on flat device vectors in local-extended DOF space.
  */
 
 template <class T, class Ops>
@@ -126,7 +114,7 @@ void JacobiPC<T,Ops>::Define ( const T& a_U,
         sp_ops->Define(m_ops);
         m_matrix_ops = std::move(sp_ops);
     } else {
-        auto mf_ops = std::make_unique<MultiFabMatrixSolverOps<T,Ops>>();
+        auto mf_ops = std::make_unique<MassMatrixSolverOps<T,Ops>>();
         mf_ops->Define(m_ops);
         m_matrix_ops = std::move(mf_ops);
     }

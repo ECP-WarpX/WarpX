@@ -12,7 +12,7 @@
 #include "WeightedJacobiImpl.H"
 #include "Utils/TextMsg.H"
 #include "FieldSolver/ImplicitSolvers/MFMatrixSolverOps.H"
-#include "FieldSolver/ImplicitSolvers/MultiFabMatrixSolverOps.H"
+#include "FieldSolver/ImplicitSolvers/MassMatrixSolverOps.H"
 #include "FieldSolver/ImplicitSolvers/SparseMatrixSolverOps.H"
 
 #include <AMReX_ParmParse.H>
@@ -59,7 +59,7 @@ public:
                 sp_ops->Define(ops);
                 m_matrix_ops = std::move(sp_ops);
             } else {
-                auto mf_ops = std::make_unique<MultiFabMatrixSolverOps<Vec, OpsType>>();
+                auto mf_ops = std::make_unique<MassMatrixSolverOps<Vec, OpsType>>();
                 mf_ops->Define(ops);
                 m_matrix_ops = std::move(mf_ops);
             }
