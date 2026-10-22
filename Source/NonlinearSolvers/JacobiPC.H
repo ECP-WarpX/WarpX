@@ -14,7 +14,7 @@
 #include "WeightedJacobiImpl.H"
 
 #include "MatrixSolverOps.H"
-#include "FieldSolver/ImplicitSolvers/MultiFabMatrixSolverOps.H"
+#include "FieldSolver/ImplicitSolvers/MassMatrixSolverOps.H"
 
 #include <AMReX.H>
 #include <AMReX_ParmParse.H>
@@ -28,10 +28,6 @@
  *
  *  Approximately solves A x = b via damped Jacobi iterations,
  *  delegating the iteration logic to WeightedJacobiImpl<T>.
- *
- *  A = I + M, where M is the mass matrix stored as MultiFab stencil
- *  coefficients (MultiFabMatrixSolverOps). When diagonal-only
- *  (mass_matrices_pc_width=0), the solve is exact in one step.
  */
 
 template <class T, class Ops>
@@ -110,7 +106,7 @@ void JacobiPC<T,Ops>::Define ( const T& a_U,
     m_ops = a_ops;
     m_num_amr_levels = m_ops->numAMRLevels();
 
-    auto mf_ops = std::make_unique<MultiFabMatrixSolverOps<T,Ops>>();
+    auto mf_ops = std::make_unique<MassMatrixSolverOps<T,Ops>>();
     mf_ops->Define(m_ops);
     m_matrix_ops = std::move(mf_ops);
 
