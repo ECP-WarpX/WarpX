@@ -129,9 +129,9 @@ public:
     }
 
     /**
-     * \brief Create the matrix ops for the assembled preconditioner matrix
+     * \brief Create the matrix ops for the assembled preconditioner matrix of a_ops
      */
-    [[nodiscard]] std::unique_ptr<MatrixSolverOps<WarpXSolverVec>> MakePCMatrixOps ();
+    [[nodiscard]] static std::unique_ptr<MatrixSolverOps<WarpXSolverVec>> MakePCMatrixOps (ImplicitSolver* a_ops);
 
     /**
      * \brief Return reference to the multifabs for curl curl mask

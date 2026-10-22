@@ -783,10 +783,10 @@ void ImplicitSolver::SaveEoldMultifab ()
     CopyVectorField(FieldType::E_old, FieldType::Efield_fp);
 }
 
-std::unique_ptr<MatrixSolverOps<WarpXSolverVec>> ImplicitSolver::MakePCMatrixOps ()
+std::unique_ptr<MatrixSolverOps<WarpXSolverVec>> ImplicitSolver::MakePCMatrixOps (ImplicitSolver* a_ops)
 {
     auto ops = std::make_unique<MassMatrixSolverOps<WarpXSolverVec,ImplicitSolver>>();
-    ops->Define(this);
+    ops->Define(a_ops);
     return ops;
 }
 
