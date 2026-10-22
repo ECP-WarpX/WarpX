@@ -1513,8 +1513,7 @@ void WarpX::ApplyFilterMF (
 
 #if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
 amrex::IntVect WarpX::ApplyVolumeWeightedFilter (amrex::MultiFab& dst, const amrex::MultiFab& src_mf,
-                                       const int lev,
-                                       const int scomp, const int dcomp, const int ncomp)
+                                       const int lev, const int scomp, const int dcomp, const int ncomp)
 {
     using namespace amrex::literals;
     constexpr int NODE = amrex::IndexType::NODE;
