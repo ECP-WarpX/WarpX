@@ -4,8 +4,8 @@
  *
  * License: BSD-3-Clause-LBNL
  */
-#ifndef MULTIFAB_MATRIX_SOLVER_OPS_H_
-#define MULTIFAB_MATRIX_SOLVER_OPS_H_
+#ifndef MASS_MATRIX_SOLVER_OPS_H_
+#define MASS_MATRIX_SOLVER_OPS_H_
 
 #include "MatrixMarketWriter.H"
 #include "WarpXSolverDOF.H"
@@ -26,22 +26,25 @@
 #include <vector>
 
 /**
- * \brief Stencil-based matrix ops for A = I + M, with M the PC mass matrices.
+ * \brief Matrix ops for A = I + M, with M the preconditioner mass matrices.
+ *
+ *  Specific to the mass-matrix storage: for each E component, the components of the MultiFab
+ *  are the offsets of a tensor-product stencil, so the diagonal is component (nComp-1)/2.
  */
 template <class T, class Ops>
-class MultiFabMatrixSolverOps : public MatrixSolverOps<T>
+class MassMatrixSolverOps : public MatrixSolverOps<T>
 {
 public:
 
     using RT = typename T::value_type;
 
-    MultiFabMatrixSolverOps () = default;
-    ~MultiFabMatrixSolverOps () override = default;
+    MassMatrixSolverOps () = default;
+    ~MassMatrixSolverOps () override = default;
 
-    MultiFabMatrixSolverOps (const MultiFabMatrixSolverOps&) = delete;
-    MultiFabMatrixSolverOps& operator= (const MultiFabMatrixSolverOps&) = delete;
-    MultiFabMatrixSolverOps (MultiFabMatrixSolverOps&&) noexcept = delete;
-    MultiFabMatrixSolverOps& operator= (MultiFabMatrixSolverOps&&) noexcept = delete;
+    MassMatrixSolverOps (const MassMatrixSolverOps&) = delete;
+    MassMatrixSolverOps& operator= (const MassMatrixSolverOps&) = delete;
+    MassMatrixSolverOps (MassMatrixSolverOps&&) noexcept = delete;
+    MassMatrixSolverOps& operator= (MassMatrixSolverOps&&) noexcept = delete;
 
     /** \brief Set the Ops pointer and read mass matrix coefficients. */
     void Define (Ops* a_ops);
@@ -82,7 +85,7 @@ private:
 };
 
 template <class T, class Ops>
-void MultiFabMatrixSolverOps<T,Ops>::Define (Ops* a_ops)
+void MassMatrixSolverOps<T,Ops>::Define (Ops* a_ops)
 {
     m_ops = a_ops;
     m_num_amr_levels = m_ops->numAMRLevels();
@@ -91,7 +94,7 @@ void MultiFabMatrixSolverOps<T,Ops>::Define (Ops* a_ops)
 }
 
 template <class T, class Ops>
-void MultiFabMatrixSolverOps<T,Ops>::Update ()
+void MassMatrixSolverOps<T,Ops>::Update ()
 {
     using namespace amrex;
 
@@ -130,7 +133,7 @@ void MultiFabMatrixSolverOps<T,Ops>::Update ()
 }
 
 template <class T, class Ops>
-void MultiFabMatrixSolverOps<T,Ops>::InitialGuess (T& a_x, const T& a_b)
+void MassMatrixSolverOps<T,Ops>::InitialGuess (T& a_x, const T& a_b)
 {
     using namespace amrex;
 
@@ -162,7 +165,7 @@ void MultiFabMatrixSolverOps<T,Ops>::InitialGuess (T& a_x, const T& a_b)
 }
 
 template <class T, class Ops>
-void MultiFabMatrixSolverOps<T,Ops>::JacobiSweep (T& a_x, const T& a_b, RT a_omega)
+void MassMatrixSolverOps<T,Ops>::JacobiSweep (T& a_x, const T& a_b, RT a_omega)
 {
     using namespace amrex;
 
@@ -241,7 +244,7 @@ void MultiFabMatrixSolverOps<T,Ops>::JacobiSweep (T& a_x, const T& a_b, RT a_ome
 }
 
 template <class T, class Ops>
-auto MultiFabMatrixSolverOps<T,Ops>::ResidualNorm (const T& a_x, const T& a_b) -> RT
+auto MassMatrixSolverOps<T,Ops>::ResidualNorm (const T& a_x, const T& a_b) -> RT
 {
     auto& x_mfarrvec = a_x.getArrayVec();
     if (m_has_offdiag) {
@@ -251,7 +254,7 @@ auto MultiFabMatrixSolverOps<T,Ops>::ResidualNorm (const T& a_x, const T& a_b) -
 }
 
 template <class T, class Ops>
-auto MultiFabMatrixSolverOps<T,Ops>::EstimateOmega () const -> RT
+auto MassMatrixSolverOps<T,Ops>::EstimateOmega () const -> RT
 {
     using namespace amrex;
 
@@ -299,7 +302,7 @@ auto MultiFabMatrixSolverOps<T,Ops>::EstimateOmega () const -> RT
 }
 
 template <class T, class Ops>
-void MultiFabMatrixSolverOps<T,Ops>::copyToGhostAndFill (
+void MassMatrixSolverOps<T,Ops>::copyToGhostAndFill (
     const amrex::Vector<amrex::Array<amrex::MultiFab*,3>>& a_x_mfarrvec)
 {
     for (int n = 0; n < m_num_amr_levels; n++) {
@@ -314,7 +317,7 @@ void MultiFabMatrixSolverOps<T,Ops>::copyToGhostAndFill (
 }
 
 template <class T, class Ops>
-auto MultiFabMatrixSolverOps<T,Ops>::computeResidualNormInternal (
+auto MassMatrixSolverOps<T,Ops>::computeResidualNormInternal (
     const T& a_x, const T& a_b) const -> RT
 {
     using namespace amrex;
