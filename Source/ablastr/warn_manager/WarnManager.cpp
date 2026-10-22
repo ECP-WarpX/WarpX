@@ -108,7 +108,7 @@ void WarnManager::RecordWarning(
 std::string WarnManager::PrintLocalWarnings(const std::string& when) const
 {
     auto all_warnings = m_p_logger->get_msgs_with_counter();
-    ranges::sort(all_warnings, {}, &msg_with_counter::msg);
+    std::ranges::sort(all_warnings, {}, &msg_with_counter::msg);
 
     std::stringstream ss;
 
@@ -138,7 +138,7 @@ std::string WarnManager::PrintGlobalWarnings(const std::string& when) const
         return "[see I/O rank message]";
     }
 
-    ranges::sort(all_warnings, {}, &msg_with_counter::msg);
+    std::ranges::sort(all_warnings, {}, &msg_with_counter::msg);
 
     std::stringstream ss;
 
