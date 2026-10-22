@@ -30,7 +30,7 @@ namespace utils::algorithms
     bool is_in(const std::vector<TV>& vect,
                const TE& elem)
     {
-        return (std::find(vect.begin(), vect.end(), elem) != vect.end());
+        return (std::ranges::find(vect, elem) != vect.end());
     }
 
 
