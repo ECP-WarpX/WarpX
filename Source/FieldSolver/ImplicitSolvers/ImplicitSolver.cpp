@@ -788,24 +788,25 @@ void ImplicitSolver::SaveEoldMultifab ()
     CopyVectorField(FieldType::E_old, FieldType::Efield_fp);
 }
 
-std::unique_ptr<MatrixSolverOps<WarpXSolverVec>> ImplicitSolver::MakePCMatrixOps ()
+std::unique_ptr<MatrixSolverOps<WarpXSolverVec>> ImplicitSolver::MakePCMatrixOps (ImplicitSolver* a_ops)
 {
-    if (GetThetaForPC() > amrex::Real(0.0)) {
+    if (a_ops->GetThetaForPC() > amrex::Real(0.0)) {
         auto ops = std::make_unique<SparseMatrixSolverOps<WarpXSolverVec,ImplicitSolver>>();
-        ops->Define(this);
+        ops->Define(a_ops);
         return ops;
     }
     auto ops = std::make_unique<MassMatrixSolverOps<WarpXSolverVec,ImplicitSolver>>();
-    ops->Define(this);
+    ops->Define(a_ops);
     return ops;
 }
 
 std::unique_ptr<MatrixSolverOps<WarpXSolverVec>> ImplicitSolver::MakeJacobianMatrixOps (
-    std::function<void(WarpXSolverVec&, const WarpXSolverVec&)> a_matvec, const bool a_use_pc_matrix)
+    ImplicitSolver* a_ops, std::function<void(WarpXSolverVec&, const WarpXSolverVec&)> a_matvec,
+    const bool a_use_pc_matrix)
 {
-    if (a_use_pc_matrix) { return MakePCMatrixOps(); }
+    if (a_use_pc_matrix) { return MakePCMatrixOps(a_ops); }
     auto ops = std::make_unique<MFMatrixSolverOps<WarpXSolverVec,ImplicitSolver>>();
-    ops->Define(std::move(a_matvec), this);
+    ops->Define(std::move(a_matvec), a_ops);
     return ops;
 }
 
