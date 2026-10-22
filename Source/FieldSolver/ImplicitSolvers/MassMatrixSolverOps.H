@@ -58,6 +58,7 @@ public:
                       const std::vector<std::string>& a_header) override;
     [[nodiscard]] bool HasOffDiag () const override { return m_has_offdiag; }
     [[nodiscard]] bool IsDefined () const override { return m_is_defined; }
+    [[nodiscard]] std::string Name () const override { return "MassMatrixSolverOps (stencil)"; }
 
     /** \brief Compute ||b - A*x||_2 on owned cells (MPI-reduced). */
     RT computeResidualNormInternal (const T& a_x, const T& a_b) const;
@@ -405,7 +406,7 @@ void MassMatrixSolverOps<T,Ops>::PrintMatrix (const std::string& a_filename,
         "MassMatrixSolverOps::PrintMatrix(): DOF object is a nullptr");
 
     std::vector<std::string> header = a_header;
-    header.emplace_back("matrix_ops: MassMatrixSolverOps (stencil)");
+    header.emplace_back("matrix_ops: " + Name());
     header.emplace_back(m_bcoefs != nullptr ? "operator: A = I + M, M = PC mass matrices"
                                             : "operator: A = I (no PC mass matrices)");
 

@@ -53,6 +53,7 @@ public:
                       const std::vector<std::string>& a_header) override;
     [[nodiscard]] bool HasOffDiag () const override { return true; }
     [[nodiscard]] bool IsDefined () const override { return m_is_defined; }
+    [[nodiscard]] std::string Name () const override { return "SparseMatrixSolverOps (CSR)"; }
 
 private:
 
@@ -146,7 +147,7 @@ void SparseMatrixSolverOps<T,Ops>::PrintMatrix (const std::string& a_filename,
                                                 const std::vector<std::string>& a_header)
 {
     std::vector<std::string> header = a_header;
-    header.emplace_back("matrix_ops: SparseMatrixSolverOps (CSR)");
+    header.emplace_back("matrix_ops: " + Name());
     m_ops->GetSparseJacobian()->PrintMatrix(a_filename, header, *T::getDOFsObject());
 }
 

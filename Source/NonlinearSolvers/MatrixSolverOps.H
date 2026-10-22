@@ -58,6 +58,9 @@ public:
     [[nodiscard]] virtual bool HasOffDiag () const = 0;
 
     [[nodiscard]] virtual bool IsDefined () const = 0;
+
+    /** Name of the implementation and its storage, for output */
+    [[nodiscard]] virtual std::string Name () const = 0;
 };
 
 #endif

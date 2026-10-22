@@ -85,6 +85,7 @@ public:
     [[nodiscard]] bool HasOffDiag () const override { return true; }
 
     [[nodiscard]] bool IsDefined () const override { return m_is_defined; }
+    [[nodiscard]] std::string Name () const override { return "MFMatrixSolverOps (matrix-free)"; }
 
 private:
 
@@ -294,7 +295,7 @@ void MFMatrixSolverOps<T,Ops>::PrintMatrix (const std::string& a_filename,
     std::ostringstream ss;
     ss.precision(10);
     std::vector<std::string> header = a_header;
-    header.emplace_back("matrix_ops: MFMatrixSolverOps (matrix-free)");
+    header.emplace_back("matrix_ops: " + Name());
     header.emplace_back("operator: Jacobian, applied by matrix-free products");
     header.emplace_back("diagonal: 1 + pc_factor * M_diag + curlcurl_factor * CC_diag");
     header.emplace_back(std::string("mass_matrix_diagonal: ") + (has_mm ? "yes" : "no"));
