@@ -9,24 +9,21 @@
 
 #include "LinearSolver.H"
 #include "MatrixPrintControl.H"
+#include "MatrixSolverOps.H"
 #include "ChebyshevImpl.H"
-#include "FieldSolver/ImplicitSolvers/MFMatrixSolverOps.H"
-#include "FieldSolver/ImplicitSolvers/MassMatrixSolverOps.H"
-#include "FieldSolver/ImplicitSolvers/SparseMatrixSolverOps.H"
 
 #include <AMReX_ParmParse.H>
 
 #include <memory>
 #include <sstream>
 #include <string>
-#include <type_traits>
 
 /**
  * \brief LinearSolver wrapper for Chebyshev semi-iterative method.
  *
- *  When use_pcmat=true (default), the assembled PC matrix (stencil or CSR)
- *  is used. When use_pcmat=false, the matrix-vector product is provided
- *  by JacobianFunctionMF::apply().
+ *  When use_pcmat=true (default), Chebyshev iterates on the assembled PC matrix.
+ *  When use_pcmat=false, it iterates on the Jacobian, with the matrix-vector
+ *  product provided by JacobianFunctionMF::apply().
  */
 template <typename Vec, typename LinOp>
 class ChebyshevSolver : public LinearSolver<Vec, LinOp>
@@ -51,30 +48,10 @@ public:
         const amrex::ParmParse pp("chebyshev");
         pp.query("use_pcmat", m_use_pcmat);
 
-        if (m_use_pcmat) {
-            // Stencil/CSR ops (same dispatch as ChebyshevPC)
-            using OpsType = std::remove_pointer_t<decltype(ops)>;
-            if (ops->GetThetaForPC() > amrex::Real(0.0)) {
-                auto sp_ops = std::make_unique<SparseMatrixSolverOps<Vec, OpsType>>();
-                sp_ops->Define(ops);
-                m_matrix_ops = std::move(sp_ops);
-            } else {
-                auto mf_ops = std::make_unique<MassMatrixSolverOps<Vec, OpsType>>();
-                mf_ops->Define(ops);
-                m_matrix_ops = std::move(mf_ops);
-            }
-        } else {
-            // Matrix-free ops wrapping JacobianFunctionMF::apply()
-            auto matvec = [linop = m_linop](Vec& y, const Vec& x) {
-                linop->apply(y, x);
-            };
-            auto* bcoefs = ops->GetMassMatricesJacDiag();
-            auto* curlcurl_diag = ops->GetCurlCurlDiag();
-            const int n_levels = ops->numAMRLevels();
-            auto mf_ops = std::make_unique<MFMatrixSolverOps<Vec>>();
-            mf_ops->Define(std::move(matvec), bcoefs, curlcurl_diag, n_levels);
-            m_matrix_ops = std::move(mf_ops);
-        }
+        auto matvec = [linop = m_linop](Vec& y, const Vec& x) {
+            linop->apply(y, x);
+        };
+        m_matrix_ops = ops->MakeJacobianMatrixOps(std::move(matvec), m_use_pcmat);
 
         m_solver.Define(m_matrix_ops.get(), "chebyshev");
         m_print.Define("chebyshev");
@@ -82,15 +59,8 @@ public:
 
     void update () override
     {
-        if (!m_use_pcmat) {
-            m_matrix_ops->SetPCFactor(
-                static_cast<RT>(m_linop->getOps()->GetMassMatrixDiagScale()));
-            m_matrix_ops->SetCurlCurlFactor(
-                static_cast<RT>(m_linop->getOps()->GetCurlCurlDiagScale()));
-        } else if (!m_matrix_stale) {
-            // The assembled PC matrix follows the PC update schedule
-            return;
-        }
+        // The assembled PC matrix follows the PC update schedule
+        if (m_use_pcmat && !m_matrix_stale) { return; }
         // Eigenvalue bounds are re-estimated on the PC update schedule
         m_solver.Update(m_matrix_stale);
         m_matrix_stale = false;

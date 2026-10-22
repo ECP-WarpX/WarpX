@@ -7,14 +7,11 @@
 #ifndef CHEBYSHEV_PC_H_
 #define CHEBYSHEV_PC_H_
 
-#include "Fields.H"
 #include "MatrixPrintControl.H"
 #include "Preconditioner.H"
 #include "ChebyshevImpl.H"
 
 #include "MatrixSolverOps.H"
-#include "FieldSolver/ImplicitSolvers/MassMatrixSolverOps.H"
-#include "FieldSolver/ImplicitSolvers/SparseMatrixSolverOps.H"
 
 #include <AMReX.H>
 #include <AMReX_ParmParse.H>
@@ -81,8 +78,9 @@ void ChebyshevPC<T,Ops>::printParameters () const
     auto pc_name = amrex::getEnumNameString(PreconditionerType::pc_chebyshev);
     m_solver.printParameters(pc_name);
     m_print.printParameters();
-    const bool use_csr = (m_ops != nullptr && m_ops->GetThetaForPC() > amrex::Real(0.0));
-    amrex::Print() << pc_name << " use CSR path:         " << (use_csr?"true":"false") << "\n";
+    if (m_matrix_ops) {
+        amrex::Print() << pc_name << " matrix ops:           " << m_matrix_ops->Name() << "\n";
+    }
 }
 
 template <class T, class Ops>
@@ -98,22 +96,12 @@ void ChebyshevPC<T,Ops>::Define (const T& a_U,
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         (a_ops != nullptr),
         "ChebyshevPC::Define(): a_ops is nullptr");
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        a_U.getArrayVecType()==warpx::fields::FieldType::Efield_fp,
-        "ChebyshevPC::Define() must be called with Efield_fp type");
+    amrex::ignore_unused(a_U);
 
     m_ops = a_ops;
     m_num_amr_levels = m_ops->numAMRLevels();
 
-    if (m_ops->GetThetaForPC() > Real(0.0)) {
-        auto sp_ops = std::make_unique<SparseMatrixSolverOps<T,Ops>>();
-        sp_ops->Define(m_ops);
-        m_matrix_ops = std::move(sp_ops);
-    } else {
-        auto mf_ops = std::make_unique<MassMatrixSolverOps<T,Ops>>();
-        mf_ops->Define(m_ops);
-        m_matrix_ops = std::move(mf_ops);
-    }
+    m_matrix_ops = m_ops->MakePCMatrixOps();
 
     m_solver.Define(m_matrix_ops.get(),
                     getEnumNameString(PreconditionerType::pc_chebyshev));
@@ -147,12 +135,6 @@ void ChebyshevPC<T,Ops>::Apply (T& a_x, const T& a_b)
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         IsDefined(),
         "ChebyshevPC::Apply() called on undefined object");
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        a_x.getArrayVecType()==warpx::fields::FieldType::Efield_fp,
-        "ChebyshevPC::Apply() - a_x must be Efield_fp type");
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        a_b.getArrayVecType()==warpx::fields::FieldType::Efield_fp,
-        "ChebyshevPC::Apply() - a_b must be Efield_fp type");
 
     m_solver.Solve(a_x, a_b);
 
