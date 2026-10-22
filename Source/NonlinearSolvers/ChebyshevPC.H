@@ -101,7 +101,7 @@ void ChebyshevPC<T,Ops>::Define (const T& a_U,
     m_ops = a_ops;
     m_num_amr_levels = m_ops->numAMRLevels();
 
-    m_matrix_ops = m_ops->MakePCMatrixOps();
+    m_matrix_ops = Ops::MakePCMatrixOps(m_ops);
 
     m_solver.Define(m_matrix_ops.get(),
                     getEnumNameString(PreconditionerType::pc_chebyshev));
