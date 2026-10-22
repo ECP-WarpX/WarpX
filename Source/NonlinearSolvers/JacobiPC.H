@@ -7,15 +7,11 @@
 #ifndef JACOBI_PC_H_
 #define JACOBI_PC_H_
 
-#include "Fields.H"
-#include "Utils/WarpXConst.H"
 #include "MatrixPrintControl.H"
 #include "Preconditioner.H"
 #include "WeightedJacobiImpl.H"
 
 #include "MatrixSolverOps.H"
-#include "FieldSolver/ImplicitSolvers/MassMatrixSolverOps.H"
-#include "FieldSolver/ImplicitSolvers/SparseMatrixSolverOps.H"
 
 #include <AMReX.H>
 #include <AMReX_ParmParse.H>
@@ -102,22 +98,12 @@ void JacobiPC<T,Ops>::Define ( const T& a_U,
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         (a_ops != nullptr),
         "JacobiPC::Define(): a_ops is nullptr" );
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        a_U.getArrayVecType()==warpx::fields::FieldType::Efield_fp,
-        "JacobiPC::Define() must be called with Efield_fp type");
+    amrex::ignore_unused(a_U);
 
     m_ops = a_ops;
     m_num_amr_levels = m_ops->numAMRLevels();
 
-    if (m_ops->GetThetaForPC() > Real(0.0)) {
-        auto sp_ops = std::make_unique<SparseMatrixSolverOps<T,Ops>>();
-        sp_ops->Define(m_ops);
-        m_matrix_ops = std::move(sp_ops);
-    } else {
-        auto mf_ops = std::make_unique<MassMatrixSolverOps<T,Ops>>();
-        mf_ops->Define(m_ops);
-        m_matrix_ops = std::move(mf_ops);
-    }
+    m_matrix_ops = m_ops->MakePCMatrixOps();
 
     m_solver.Define(m_matrix_ops.get(),
                     getEnumNameString(PreconditionerType::pc_jacobi));
@@ -162,12 +148,6 @@ void JacobiPC<T,Ops>::Apply (T& a_x, const T& a_b)
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
         IsDefined(),
         "JacobiPC::Apply() called on undefined object" );
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        a_x.getArrayVecType()==warpx::fields::FieldType::Efield_fp,
-        "JacobiPC::Apply() - a_x must be Efield_fp type");
-    WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-        a_b.getArrayVecType()==warpx::fields::FieldType::Efield_fp,
-        "JacobiPC::Apply() - a_b must be Efield_fp type");
 
     m_solver.Solve(a_x, a_b);
 }
