@@ -167,11 +167,12 @@ public:
     [[nodiscard]] static std::unique_ptr<MatrixSolverOps<WarpXSolverVec>> MakePCMatrixOps (ImplicitSolver* a_ops);
 
     /**
-     * \brief Create the matrix ops for the Jacobian: the assembled PC matrix if
+     * \brief Create the matrix ops for the Jacobian of a_ops: the assembled PC matrix if
      *        a_use_pc_matrix, otherwise matrix-free with a_matvec computing J*x
      */
-    [[nodiscard]] std::unique_ptr<MatrixSolverOps<WarpXSolverVec>> MakeJacobianMatrixOps (
-        std::function<void(WarpXSolverVec&, const WarpXSolverVec&)> a_matvec, bool a_use_pc_matrix);
+    [[nodiscard]] static std::unique_ptr<MatrixSolverOps<WarpXSolverVec>> MakeJacobianMatrixOps (
+        ImplicitSolver* a_ops, std::function<void(WarpXSolverVec&, const WarpXSolverVec&)> a_matvec,
+        bool a_use_pc_matrix);
 
     /**
      * \brief Return reference to the multifabs for curl curl mask
