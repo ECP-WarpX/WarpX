@@ -16,6 +16,7 @@
 
 #include <memory>
 #include <string>
+#include <type_traits>
 
 /**
  * \brief LinearSolver wrapper for weighted Jacobi.
@@ -50,7 +51,8 @@ public:
         auto matvec = [linop = m_linop](Vec& y, const Vec& x) {
             linop->apply(y, x);
         };
-        m_matrix_ops = ops->MakeJacobianMatrixOps(std::move(matvec), m_use_pcmat);
+        using OpsType = std::remove_pointer_t<decltype(ops)>;
+        m_matrix_ops = OpsType::MakeJacobianMatrixOps(ops, std::move(matvec), m_use_pcmat);
 
         m_solver.Define(m_matrix_ops.get(), "weighted_jacobi");
         m_print.Define("weighted_jacobi");
