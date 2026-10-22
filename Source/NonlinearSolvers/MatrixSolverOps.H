@@ -14,9 +14,6 @@
 
 /**
  * \brief Abstract interface for matrix operations used by iterative solvers.
- *
- *  Implementations: MultiFabMatrixSolverOps (stencil), SparseMatrixSolverOps (CSR),
- *  MFMatrixSolverOps (matrix-free).
  */
 template <class T>
 class MatrixSolverOps
