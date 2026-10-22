@@ -60,16 +60,13 @@ public:
     virtual void PrintMatrix (const std::string& a_filename,
                               const std::vector<std::string>& a_header) = 0;
 
-    /** Set scaling for mass matrix diagonal (MFMatrixSolverOps only). */
-    virtual void SetPCFactor ([[maybe_unused]] RT) {}
-
-    /** Set scaling for curl-curl diagonal (MFMatrixSolverOps only). */
-    virtual void SetCurlCurlFactor ([[maybe_unused]] RT) {}
-
     /** False when A is diagonal (initial guess is exact) */
     [[nodiscard]] virtual bool HasOffDiag () const = 0;
 
     [[nodiscard]] virtual bool IsDefined () const = 0;
+
+    /** Name of the implementation and its storage, for output */
+    [[nodiscard]] virtual std::string Name () const = 0;
 };
 
 #endif

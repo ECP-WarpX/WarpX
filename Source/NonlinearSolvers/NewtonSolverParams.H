@@ -121,15 +121,15 @@ struct NewtonSolverParams
             pc_type = PreconditionerType::none;
         }
 
-        // Jacobi and Chebyshev may read MassMatrices_PC directly. A scheduled PC update can
-        // clear these coefficients during residual evaluation and leave them unfinished if
-        // Newton converges before PreLinearSolve(). Restrict the Newton interval when lagging
-        // across time steps, until the PC deposition is moved to PreLinearSolve().
-        const bool reads_mass_matrices_pc =
+        // These solvers read the assembled PC matrix directly. A scheduled PC update can reset
+        // it during the residual evaluation and leave it incomplete if Newton converges before
+        // PreLinearSolve(). Restrict the Newton interval when lagging across time steps, until
+        // the PC matrix is assembled in PreLinearSolve().
+        const bool reads_pc_matrix =
             pc_type == PreconditionerType::pc_jacobi ||
             pc_type == PreconditionerType::pc_chebyshev ||
             (!IsKrylov() && use_pcmat);
-        if (reads_mass_matrices_pc && pc_update_time_step_interval > 1) {
+        if (reads_pc_matrix && pc_update_time_step_interval > 1) {
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 pc_update_newton_interval == 0,
                 "newton.pc_update_newton_interval must be 0 when using pc_type = pc_jacobi "

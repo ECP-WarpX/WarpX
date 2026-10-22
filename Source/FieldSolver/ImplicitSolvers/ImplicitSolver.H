@@ -14,6 +14,7 @@
 #include "FieldSolver/ImplicitSolvers/SparseJacobianMatrix.H"
 
 #include "FieldSolver/ImplicitSolvers/WarpXSolverVec.H"
+#include "NonlinearSolvers/MatrixSolverOps.H"
 #include "NonlinearSolvers/NonlinearSolverLibrary.H"
 
 #include <AMReX_Array.H>
@@ -22,6 +23,7 @@
 #include <AMReX_REAL.H>
 #include <AMReX_LO_BCTYPES.H>
 
+#include <functional>
 #include <map>
 #include <memory>
 #include <string>
@@ -158,6 +160,20 @@ public:
      *        The diagonal is computed on the first call.
      */
     [[nodiscard]] const amrex::Vector<amrex::Array<amrex::MultiFab*,3>>* GetCurlCurlDiag ();
+
+    /**
+     * \brief Create the matrix ops for the assembled preconditioner matrix: A = I + M with the
+     *        mass matrices M as stencil coefficients, or, when GetThetaForPC() > 0,
+     *        A = I + curl(alpha*curl[]) + M as a sparse CSR matrix (SparseJacobianMatrix)
+     */
+    [[nodiscard]] std::unique_ptr<MatrixSolverOps<WarpXSolverVec>> MakePCMatrixOps ();
+
+    /**
+     * \brief Create the matrix ops for the Jacobian: the assembled PC matrix if
+     *        a_use_pc_matrix, otherwise matrix-free with a_matvec computing J*x
+     */
+    [[nodiscard]] std::unique_ptr<MatrixSolverOps<WarpXSolverVec>> MakeJacobianMatrixOps (
+        std::function<void(WarpXSolverVec&, const WarpXSolverVec&)> a_matvec, bool a_use_pc_matrix);
 
     /**
      * \brief Return reference to the multifabs for curl curl mask

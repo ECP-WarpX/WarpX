@@ -1,4 +1,7 @@
 #include "ImplicitSolver.H"
+#include "MassMatrixSolverOps.H"
+#include "MFMatrixSolverOps.H"
+#include "SparseMatrixSolverOps.H"
 #include "SparseJacobianMatrix.H"
 #include "SparseMatrixUtils.H"
 #include "Fields.H"
@@ -783,6 +786,27 @@ void ImplicitSolver::SaveEoldMultifab ()
     // E_old multifab is needed for diagnostics and saving at checkpoints
     using warpx::fields::FieldType;
     CopyVectorField(FieldType::E_old, FieldType::Efield_fp);
+}
+
+std::unique_ptr<MatrixSolverOps<WarpXSolverVec>> ImplicitSolver::MakePCMatrixOps ()
+{
+    if (GetThetaForPC() > amrex::Real(0.0)) {
+        auto ops = std::make_unique<SparseMatrixSolverOps<WarpXSolverVec,ImplicitSolver>>();
+        ops->Define(this);
+        return ops;
+    }
+    auto ops = std::make_unique<MassMatrixSolverOps<WarpXSolverVec,ImplicitSolver>>();
+    ops->Define(this);
+    return ops;
+}
+
+std::unique_ptr<MatrixSolverOps<WarpXSolverVec>> ImplicitSolver::MakeJacobianMatrixOps (
+    std::function<void(WarpXSolverVec&, const WarpXSolverVec&)> a_matvec, const bool a_use_pc_matrix)
+{
+    if (a_use_pc_matrix) { return MakePCMatrixOps(); }
+    auto ops = std::make_unique<MFMatrixSolverOps<WarpXSolverVec,ImplicitSolver>>();
+    ops->Define(std::move(a_matvec), this);
+    return ops;
 }
 
 void ImplicitSolver::InitializeMassMatrices ()
