@@ -372,7 +372,7 @@ Overall simulation parameters
           In 3D, ``algo.current_deposition = villasenor`` is supported only for PC-only use
           (``implicit_evolve.use_mass_matrices_jacobian = false``) with ``implicit_evolve.mass_matrices_pc_width = 0``.
 
-        - ``implicit_evolve.mass_matrices_pc_width`` (``integer``, default: 0).
+        - ``implicit_evolve.mass_matrices_pc_width`` (``integer``, default: 1).
           Specifies the non-negative spatial half-width of the mass-matrix stencil retained in the preconditioner.
           This applies whenever ``implicit_evolve.use_mass_matrices_pc = true``, independently of whether mass matrices are also used for the Jacobian.
           A width of 0 retains only the local diagonal entries; larger widths retain neighboring couplings, up to the full stencil extent.
