@@ -12,7 +12,7 @@
 #include "WeightedJacobiImpl.H"
 #include "Utils/TextMsg.H"
 #include "FieldSolver/ImplicitSolvers/MFMatrixSolverOps.H"
-#include "FieldSolver/ImplicitSolvers/MultiFabMatrixSolverOps.H"
+#include "FieldSolver/ImplicitSolvers/MassMatrixSolverOps.H"
 
 #include <AMReX_ParmParse.H>
 
@@ -58,7 +58,7 @@ public:
                 "use weighted_jacobi.use_pcmat = false");
             // Stencil ops on the PC mass matrices, as in JacobiPC
             using OpsType = std::remove_pointer_t<decltype(ops)>;
-            auto mf_ops = std::make_unique<MultiFabMatrixSolverOps<Vec, OpsType>>();
+            auto mf_ops = std::make_unique<MassMatrixSolverOps<Vec, OpsType>>();
             mf_ops->Define(ops);
             m_matrix_ops = std::move(mf_ops);
         } else {
