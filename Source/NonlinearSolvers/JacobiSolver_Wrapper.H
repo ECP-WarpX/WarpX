@@ -9,23 +9,20 @@
 
 #include "LinearSolver.H"
 #include "MatrixPrintControl.H"
+#include "MatrixSolverOps.H"
 #include "WeightedJacobiImpl.H"
-#include "Utils/TextMsg.H"
-#include "FieldSolver/ImplicitSolvers/MFMatrixSolverOps.H"
-#include "FieldSolver/ImplicitSolvers/MassMatrixSolverOps.H"
 
 #include <AMReX_ParmParse.H>
 
 #include <memory>
 #include <string>
-#include <type_traits>
 
 /**
  * \brief LinearSolver wrapper for weighted Jacobi.
  *
- *  When use_pcmat=true (default), the PC matrix A = I + M (mass-matrix
- *  stencil) is used. When use_pcmat=false, the matrix-vector product is provided
- *  by JacobianFunctionMF::apply().
+ *  When use_pcmat=true (default), Jacobi iterates on the assembled PC matrix.
+ *  When use_pcmat=false, it iterates on the Jacobian, with the matrix-vector
+ *  product provided by JacobianFunctionMF::apply().
  */
 template <typename Vec, typename LinOp>
 class JacobiSolver : public LinearSolver<Vec, LinOp>
@@ -50,29 +47,10 @@ public:
         const amrex::ParmParse pp("weighted_jacobi");
         pp.query("use_pcmat", m_use_pcmat);
 
-        if (m_use_pcmat) {
-            // The stencil matrix I + M has no curl curl term
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                ops->GetThetaForPC() <= amrex::Real(0.0),
-                "weighted_jacobi.use_pcmat = true requires algo.evolve_scheme = semi_implicit_em; "
-                "use weighted_jacobi.use_pcmat = false");
-            // Stencil ops on the PC mass matrices, as in JacobiPC
-            using OpsType = std::remove_pointer_t<decltype(ops)>;
-            auto mf_ops = std::make_unique<MassMatrixSolverOps<Vec, OpsType>>();
-            mf_ops->Define(ops);
-            m_matrix_ops = std::move(mf_ops);
-        } else {
-            // Matrix-free ops wrapping JacobianFunctionMF::apply()
-            auto matvec = [linop = m_linop](Vec& y, const Vec& x) {
-                linop->apply(y, x);
-            };
-            auto* bcoefs = ops->GetMassMatricesJacDiag();
-            auto* curlcurl_diag = ops->GetCurlCurlDiag();
-            const int n_levels = ops->numAMRLevels();
-            auto mf_ops = std::make_unique<MFMatrixSolverOps<Vec>>();
-            mf_ops->Define(std::move(matvec), bcoefs, curlcurl_diag, n_levels);
-            m_matrix_ops = std::move(mf_ops);
-        }
+        auto matvec = [linop = m_linop](Vec& y, const Vec& x) {
+            linop->apply(y, x);
+        };
+        m_matrix_ops = ops->MakeJacobianMatrixOps(std::move(matvec), m_use_pcmat);
 
         m_solver.Define(m_matrix_ops.get(), "weighted_jacobi");
         m_print.Define("weighted_jacobi");
@@ -80,15 +58,8 @@ public:
 
     void update () override
     {
-        if (!m_use_pcmat) {
-            m_matrix_ops->SetPCFactor(
-                static_cast<RT>(m_linop->getOps()->GetMassMatrixDiagScale()));
-            m_matrix_ops->SetCurlCurlFactor(
-                static_cast<RT>(m_linop->getOps()->GetCurlCurlDiagScale()));
-        } else if (!m_matrix_stale) {
-            // The assembled PC matrix follows the PC update schedule
-            return;
-        }
+        // The assembled PC matrix follows the PC update schedule
+        if (m_use_pcmat && !m_matrix_stale) { return; }
         m_solver.Update();
         m_matrix_stale = false;
 

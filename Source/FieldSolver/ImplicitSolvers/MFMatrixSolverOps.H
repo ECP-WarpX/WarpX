@@ -37,12 +37,13 @@
  *  term is absent when light waves are not treated implicitly.
  *
  *  The matrix-vector product (J*v) is provided as a std::function callable,
- *  typically bound to JacobianFunctionMF::apply().
+ *  typically bound to JacobianFunctionMF::apply(). The coefficients and the
+ *  scalings come from the implicit solver (Ops).
  *
  *  EstimateOmega() returns 1.0 since no spectral information is available
  *  from the matrix-free product.
  */
-template <class T>
+template <class T, class Ops>
 class MFMatrixSolverOps : public MatrixSolverOps<T>
 {
 public:
@@ -59,19 +60,15 @@ public:
     MFMatrixSolverOps& operator= (MFMatrixSolverOps&&) noexcept = delete;
 
     /**
-     * \brief Define with a matvec callable and the diagonal coefficients.
+     * \brief Define with a matvec callable and the implicit solver.
      *
-     * \param[in] a_matvec          callable computing y = J*x
-     * \param[in] a_bcoefs          mass matrix stencil MultiFab pointers (may be nullptr)
-     * \param[in] a_curlcurl_diag   curl-curl diagonal MultiFab pointers (may be nullptr)
-     * \param[in] a_num_amr_levels  number of AMR levels
+     * \param[in] a_matvec  callable computing y = J*x
+     * \param[in] a_ops     implicit solver, providing the diagonal coefficients and scalings
      */
-    void Define (MatvecFn a_matvec,
-                 const amrex::Vector<amrex::Array<amrex::MultiFab*,3>>* a_bcoefs,
-                 const amrex::Vector<amrex::Array<amrex::MultiFab*,3>>* a_curlcurl_diag,
-                 int a_num_amr_levels);
+    void Define (MatvecFn a_matvec, Ops* a_ops);
 
-    void Update () override {}
+    /** \brief Read the diagonal scalings for the current time step. */
+    void Update () override;
     void InitialGuess (T& a_x, const T& a_b) override;
     void JacobiSweep (T& a_x, const T& a_b, RT a_omega) override;
     [[nodiscard]] RT ResidualNorm (const T& a_x, const T& a_b) override;
@@ -89,10 +86,6 @@ public:
 
     [[nodiscard]] bool IsDefined () const override { return m_is_defined; }
 
-    void SetPCFactor (RT a_pc_factor) override { m_pc_factor = a_pc_factor; }
-
-    void SetCurlCurlFactor (RT a_curlcurl_factor) override { m_curlcurl_factor = a_curlcurl_factor; }
-
 private:
 
     /** \brief Define the matvec workspace on first use. */
@@ -108,6 +101,7 @@ private:
     bool m_work_defined = false;
 
     MatvecFn m_matvec;
+    Ops* m_ops = nullptr;
     const amrex::Vector<amrex::Array<amrex::MultiFab*,3>>* m_bcoefs = nullptr;
     const amrex::Vector<amrex::Array<amrex::MultiFab*,3>>* m_curlcurl_diag = nullptr;
     int m_num_amr_levels = 0;
@@ -119,22 +113,26 @@ private:
 
 // Implementation
 
-template <class T>
-void MFMatrixSolverOps<T>::Define (
-    MatvecFn a_matvec,
-    const amrex::Vector<amrex::Array<amrex::MultiFab*,3>>* a_bcoefs,
-    const amrex::Vector<amrex::Array<amrex::MultiFab*,3>>* a_curlcurl_diag,
-    int a_num_amr_levels)
+template <class T, class Ops>
+void MFMatrixSolverOps<T,Ops>::Define (MatvecFn a_matvec, Ops* a_ops)
 {
     m_matvec = std::move(a_matvec);
-    m_bcoefs = a_bcoefs;
-    m_curlcurl_diag = a_curlcurl_diag;
-    m_num_amr_levels = a_num_amr_levels;
+    m_ops = a_ops;
+    m_bcoefs = m_ops->GetMassMatricesJacDiag();
+    m_curlcurl_diag = m_ops->GetCurlCurlDiag();
+    m_num_amr_levels = m_ops->numAMRLevels();
     m_is_defined = true;
 }
 
-template <class T>
-void MFMatrixSolverOps<T>::InitialGuess (T& a_x, const T& a_b)
+template <class T, class Ops>
+void MFMatrixSolverOps<T,Ops>::Update ()
+{
+    m_pc_factor = static_cast<RT>(m_ops->GetMassMatrixDiagScale());
+    m_curlcurl_factor = static_cast<RT>(m_ops->GetCurlCurlDiagScale());
+}
+
+template <class T, class Ops>
+void MFMatrixSolverOps<T,Ops>::InitialGuess (T& a_x, const T& a_b)
 {
     using namespace amrex;
 
@@ -180,8 +178,8 @@ void MFMatrixSolverOps<T>::InitialGuess (T& a_x, const T& a_b)
     }
 }
 
-template <class T>
-void MFMatrixSolverOps<T>::JacobiSweep (T& a_x, const T& a_b, RT a_omega)
+template <class T, class Ops>
+void MFMatrixSolverOps<T,Ops>::JacobiSweep (T& a_x, const T& a_b, RT a_omega)
 {
     using namespace amrex;
 
@@ -229,8 +227,8 @@ void MFMatrixSolverOps<T>::JacobiSweep (T& a_x, const T& a_b, RT a_omega)
     }
 }
 
-template <class T>
-auto MFMatrixSolverOps<T>::ResidualNorm (const T& a_x, const T& a_b) -> RT
+template <class T, class Ops>
+auto MFMatrixSolverOps<T,Ops>::ResidualNorm (const T& a_x, const T& a_b) -> RT
 {
     // Compute Jx = J * x
     defineWork(a_x);
@@ -242,8 +240,8 @@ auto MFMatrixSolverOps<T>::ResidualNorm (const T& a_x, const T& a_b) -> RT
     return m_Jx.norm2();
 }
 
-template <class T>
-void MFMatrixSolverOps<T>::PrintMatrix (const std::string& a_filename,
+template <class T, class Ops>
+void MFMatrixSolverOps<T,Ops>::PrintMatrix (const std::string& a_filename,
                                        const std::vector<std::string>& a_header)
 {
     BL_PROFILE("MFMatrixSolverOps::PrintMatrix()");

@@ -23,6 +23,7 @@
 #include <AMReX_REAL.H>
 #include <AMReX_LO_BCTYPES.H>
 
+#include <functional>
 #include <map>
 #include <memory>
 #include <string>
@@ -164,6 +165,13 @@ public:
      * \brief Create the matrix ops for the assembled preconditioner matrix
      */
     [[nodiscard]] std::unique_ptr<MatrixSolverOps<WarpXSolverVec>> MakePCMatrixOps ();
+
+    /**
+     * \brief Create the matrix ops for the Jacobian: the assembled PC matrix if
+     *        a_use_pc_matrix, otherwise matrix-free with a_matvec computing J*x
+     */
+    [[nodiscard]] std::unique_ptr<MatrixSolverOps<WarpXSolverVec>> MakeJacobianMatrixOps (
+        std::function<void(WarpXSolverVec&, const WarpXSolverVec&)> a_matvec, bool a_use_pc_matrix);
 
     /**
      * \brief Return reference to the multifabs for curl curl mask

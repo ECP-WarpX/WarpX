@@ -1,5 +1,6 @@
 #include "ImplicitSolver.H"
 #include "MassMatrixSolverOps.H"
+#include "MFMatrixSolverOps.H"
 #include "SparseJacobianMatrix.H"
 #include "SparseMatrixUtils.H"
 #include "Fields.H"
@@ -790,6 +791,22 @@ std::unique_ptr<MatrixSolverOps<WarpXSolverVec>> ImplicitSolver::MakePCMatrixOps
 {
     auto ops = std::make_unique<MassMatrixSolverOps<WarpXSolverVec,ImplicitSolver>>();
     ops->Define(this);
+    return ops;
+}
+
+std::unique_ptr<MatrixSolverOps<WarpXSolverVec>> ImplicitSolver::MakeJacobianMatrixOps (
+    std::function<void(WarpXSolverVec&, const WarpXSolverVec&)> a_matvec, const bool a_use_pc_matrix)
+{
+    if (a_use_pc_matrix) {
+        // The stencil matrix I + M has no curl curl term
+        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+            GetThetaForPC() <= amrex::Real(0.0),
+            "weighted_jacobi.use_pcmat = true requires algo.evolve_scheme = semi_implicit_em; "
+            "use weighted_jacobi.use_pcmat = false");
+        return MakePCMatrixOps();
+    }
+    auto ops = std::make_unique<MFMatrixSolverOps<WarpXSolverVec,ImplicitSolver>>();
+    ops->Define(std::move(a_matvec), this);
     return ops;
 }
 
