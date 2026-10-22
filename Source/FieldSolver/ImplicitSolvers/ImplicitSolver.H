@@ -14,6 +14,7 @@
 #include "FieldSolver/ImplicitSolvers/SparseJacobianMatrix.H"
 
 #include "FieldSolver/ImplicitSolvers/WarpXSolverVec.H"
+#include "NonlinearSolvers/MatrixSolverOps.H"
 #include "NonlinearSolvers/NonlinearSolverLibrary.H"
 
 #include <AMReX_Array.H>
@@ -158,6 +159,11 @@ public:
      *        The diagonal is computed on the first call.
      */
     [[nodiscard]] const amrex::Vector<amrex::Array<amrex::MultiFab*,3>>* GetCurlCurlDiag ();
+
+    /**
+     * \brief Create the matrix ops for the assembled preconditioner matrix
+     */
+    [[nodiscard]] std::unique_ptr<MatrixSolverOps<WarpXSolverVec>> MakePCMatrixOps ();
 
     /**
      * \brief Return reference to the multifabs for curl curl mask
