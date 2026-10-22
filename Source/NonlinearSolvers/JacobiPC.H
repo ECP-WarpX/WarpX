@@ -159,7 +159,7 @@ void JacobiPC<T,Ops>::Update ()
     if (m_solver.isVerbose()) {
         const bool use_csr = (m_ops->GetThetaForPC() > Real(0.0));
         amrex::Print() << "Updating " << amrex::getEnumNameString(PreconditionerType::pc_jacobi)
-                       << ": theta*dt = " << m_ops->GetThetaForPC()*this->m_dt
+                       << ": dt = " << this->m_dt
                        << ", path = " << (use_csr ? "CSR" : "stencil")
                        << ", omega = " << m_solver.getOmega() << "\n";
     }
