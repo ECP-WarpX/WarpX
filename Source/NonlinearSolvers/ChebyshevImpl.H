@@ -157,7 +157,7 @@ void ChebyshevImpl<T>::Update (bool a_new_operator)
 template <class T>
 typename ChebyshevImpl<T>::RT ChebyshevImpl<T>::PowerMethod (RT a_shift)
 {
-    // Pseudo-random start, so that no eigenvector (e.g. curl-free modes) is missed
+    // Pseudo-random start, so that no eigenvector is missed
     m_w1.setValPseudoRandom();
     m_w1.scale(RT(1.0) / m_w1.norm2());
 
