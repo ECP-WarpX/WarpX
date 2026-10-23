@@ -512,7 +512,8 @@ MultiParticleContainer::Evolve (ablastr::fields::MultiFabRegister& fields,
         }
     }
     for (auto& pc : allcontainers) {
-        pc->Evolve(fields, lev, current_fp_string, t, dt, subcycling_half, skip_deposition, position_push_type, momentum_push_type, implicit_options);
+        pc->Evolve(fields, lev, current_fp_string, t, dt, subcycling_half, skip_deposition,
+                   position_push_type, momentum_push_type, implicit_options);
     }
 }
 
