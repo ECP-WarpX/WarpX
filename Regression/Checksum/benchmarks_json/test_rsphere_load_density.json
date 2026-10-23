@@ -3,12 +3,12 @@
     "particle_momentum_x": 0.0,
     "particle_momentum_y": 0.0,
     "particle_momentum_z": 0.0,
-    "particle_position_x": 0.25781822667151877,
-    "particle_position_y": 0.26500489314858566,
-    "particle_position_z": 1.1008000000000004,
-    "particle_weight": 1185170529304.9824
+    "particle_position_x": 0.0036575260240621753,
+    "particle_position_y": 0.0034847563102536993,
+    "particle_position_z": 0.0031999999999999997,
+    "particle_weight": 1014397649809.6747
   },
   "lev=0": {
-    "rho_0_real": 815126530.3661927
+    "rho": 7660926.627550472
   }
 }
