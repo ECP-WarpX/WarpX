@@ -9,6 +9,9 @@
 
 #include <AMReX.H>
 
+#include <string>
+#include <vector>
+
 /**
  * \brief Abstract interface for matrix operations used by iterative solvers.
  */
@@ -46,10 +49,18 @@ public:
     /** False when EstimateOmega() has no spectral information */
     [[nodiscard]] virtual bool HasOmegaEstimate () const { return true; }
 
+    /** Write A in MatrixMarket format (global DOF indices), with a_header
+     *  as metadata lines. Collective over all ranks. */
+    virtual void PrintMatrix (const std::string& a_filename,
+                              const std::vector<std::string>& a_header) = 0;
+
     /** False when A is diagonal (initial guess is exact) */
     [[nodiscard]] virtual bool HasOffDiag () const = 0;
 
     [[nodiscard]] virtual bool IsDefined () const = 0;
+
+    /** Name of the implementation and its storage, for output */
+    [[nodiscard]] virtual std::string Name () const = 0;
 };
 
 #endif
