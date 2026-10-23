@@ -371,7 +371,7 @@ namespace detail
                                           {openPMD::UnitDimension::I,  1},
                                           {openPMD::UnitDimension::T,  1},
                                   });
-        } else if (field_name.substr(0,2) == "T_"){ // temperature (stored in eV, see unitSI)
+        } else if (field_name.starts_with("T_")){ // temperature (stored in eV, see unitSI)
             mesh.setUnitDimension({
                                           {openPMD::UnitDimension::theta, 1},
                                   });
@@ -1384,7 +1384,7 @@ WarpXOpenPMDPlot::SetupMeshComp (openPMD::Mesh& mesh,
     mesh_comp.resetDataset(dataset);
 
     ::detail::setOpenPMDUnit( mesh, field_name );
-    if (field_name.substr(0,2) == "T_") {
+    if (field_name.starts_with("T_")) {
         // Temperature is stored in eV and readers multiply by unitSI to get K
         mesh_comp.setUnitSI(PhysConst::q_e / PhysConst::kb);
     }
