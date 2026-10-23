@@ -5142,6 +5142,9 @@ class ReducedDiagnostic(
         "ChargeOnEB": {
             "weighting_function": "weighting_function(x,y,z)",
         },
+        "ChargeFluxEB": {
+            "weighting_function": "weighting_function(x,y,z)",
+        },
     }
     _expression_fields: ClassVar[tuple[str, ...]] = (
         "histogram_function",
@@ -5172,6 +5175,7 @@ class ReducedDiagnostic(
         "FieldProbe",
         "FieldReduction",
         "ChargeOnEB",
+        "ChargeFluxEB",
     ] = Field(
         description="The type of reduced diagnostic. See the link above for all the different types of reduced diagnostics available."
     )
