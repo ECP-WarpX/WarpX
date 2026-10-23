@@ -17,10 +17,10 @@
 #include "Utils/WarpXConst.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXUtil.H"
-#include "Utils/WarpXProfilerWrapper.H"
 #include "Parallelization/WarpXComm_K.H"
 
 #include <ablastr/fields/MultiFabRegister.H>
+#include <ablastr/profiler/ProfilerWrapper.H>
 #include <ablastr/utils/Communication.H>
 #include <ablastr/warn_manager/WarnManager.H>
 #include <ablastr/fields/VectorPoissonSolver.H>
@@ -61,7 +61,7 @@ using namespace amrex;
 void
 WarpX::ComputeMagnetostaticField()
 {
-    WARPX_PROFILE("WarpX::ComputeMagnetostaticField");
+    ABLASTR_PROFILE("WarpX::ComputeMagnetostaticField");
     // Fields have been reset in Electrostatic solver for this time step, these fields
     // are added into the B fields after electrostatic solve
 
@@ -77,7 +77,7 @@ WarpX::AddMagnetostaticFieldLabFrame()
     using ablastr::fields::Direction;
     using warpx::fields::FieldType;
 
-    WARPX_PROFILE("WarpX::AddMagnetostaticFieldLabFrame");
+    ABLASTR_PROFILE("WarpX::AddMagnetostaticFieldLabFrame");
 
     // Store the boundary conditions for the field solver if they haven't been
     // stored yet
@@ -118,6 +118,7 @@ WarpX::AddMagnetostaticFieldLabFrame()
 #endif
 
     SyncCurrent("current_fp");
+    FinalizeJ();
 
     // set the boundary and current density potentials
     setVectorPotentialBC(m_fields.get_mr_levels_alldirs(FieldType::vector_potential_fp_nodal, finest_level));
@@ -126,22 +127,11 @@ WarpX::AddMagnetostaticFieldLabFrame()
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE( !IsPythonCallbackInstalled("poissonsolver"),
         "Python Level Poisson Solve not supported for Magnetostatic implementation.");
 
-    // const amrex::Real magnetostatic_absolute_tolerance = self_fields_absolute_tolerance*PhysConst::c;
-    // temporary fix!!!
-    const amrex::Real absolute_tolerance = 0.0;
-    amrex::Real required_precision;
-    if constexpr (std::is_same_v<Real, float>) {
-        required_precision = 1e-5;
-    }
-    else {
-        required_precision = 1e-11;
-    }
-
     computeVectorPotential(
         m_fields.get_mr_levels_alldirs(FieldType::current_fp, finest_level),
         m_fields.get_mr_levels_alldirs(FieldType::vector_potential_fp_nodal, finest_level),
-        required_precision, absolute_tolerance, magnetostatic_solver_max_iters,
-        magnetostatic_solver_verbosity
+        magnetostatic_solver_required_precision, magnetostatic_solver_absolute_tolerance,
+        magnetostatic_solver_max_iters, magnetostatic_solver_verbosity
     );
 }
 
@@ -151,7 +141,7 @@ WarpX::AddMagnetostaticFieldLabFrame()
 
     More specifically, this solves the equation
     \f[
-        \vec{\nabla}^2 r \vec{A} = - r \mu_0 \vec{J}
+        \nabla^2 r \boldsymbol{A} = - r \mu_0 \boldsymbol{J}
  \f]
 
    \param[in] curr The current density
@@ -301,8 +291,18 @@ void MagnetostaticSolver::VectorPoissonBoundaryHandler::defineVectorPotentialBCs
         WarpX& warpx = WarpX::GetInstance();
         auto geom = warpx.Geom(0);
         if (geom.ProbLo(0) == 0){
-            lobc[adim][0] = LinOpBCType::Neumann;
-            dirichlet_flag[adim][0] = false;
+#if defined(WARPX_DIM_RZ)
+            // For the m=0 mode, regularity on the axis requires A_r = A_t = 0
+            // there, which is also the boundary condition that goes with the
+            // -1/r^2 term of the vector Laplacian (see setAlpha below). A_z has
+            // no such term and keeps a Neumann axis.
+            const bool axis_dirichlet = (adim < 2);
+#else
+            const bool axis_dirichlet = false;
+#endif
+            lobc[adim][0] = axis_dirichlet ? LinOpBCType::Dirichlet
+                                           : LinOpBCType::Neumann;
+            dirichlet_flag[adim][0] = axis_dirichlet;
             dim_start = 1;
 
             // handle the r_max boundary explicitly

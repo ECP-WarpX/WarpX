@@ -15,8 +15,47 @@ void init_MultiFabRegister (py::module & m)
 {
     using namespace ablastr::fields;
 
-    py::class_<ablastr::fields::Direction>(m, "Direction")
-        .def(py::init<int>());
+    py::class_<ablastr::fields::Direction> pyDirection(m, "Direction");
+    pyDirection
+        .def(py::init<int>())
+        .def(py::init<std::string>())
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
+        .def_property_readonly_static("r", [](py::object /* self */) {
+            return ablastr::fields::Direction::r;
+        })
+#endif
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
+        .def_property_readonly_static("theta", [](py::object /* self */) {
+            return ablastr::fields::Direction::theta;
+        })
+#endif
+
+#if defined(WARPX_DIM_RSPHERE)
+        .def_property_readonly_static("phi", [](py::object /* self */) {
+            return ablastr::fields::Direction::phi;
+        })
+#endif
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_XZ) || defined(WARPX_DIM_1D_Z)
+        .def_property_readonly_static("x", [](py::object /* self */) {
+            return ablastr::fields::Direction::x;
+        })
+#endif
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_XZ) || defined(WARPX_DIM_1D_Z)
+        .def_property_readonly_static("y", [](py::object /* self */) {
+            return ablastr::fields::Direction::y;
+        })
+#endif
+#if !defined(WARPX_DIM_RSPHERE)
+        .def_property_readonly_static("z", [](py::object /* self */) {
+            return ablastr::fields::Direction::z;
+        })
+#endif
+    ;
+    py::implicitly_convertible<std::string, ablastr::fields::Direction>();
+
+    // A vector field on all MR levels: one entry per level, each holding the
+    // three MultiFabs of the field.
+    py::class_<ablastr::fields::MultiLevelVectorField>(m, "MultiLevelVectorField");
 
     py::class_<ablastr::fields::MultiFabRegister>(m, "MultiFabRegister")
 
@@ -30,6 +69,7 @@ void init_MultiFabRegister (py::module & m)
                  amrex::IntVect const &,
                  std::optional<const amrex::Real>,
                  bool,
+                 bool,
                  bool
              >(&MultiFabRegister::alloc_init<std::string>),
              py::return_value_policy::reference_internal,
@@ -41,7 +81,8 @@ void init_MultiFabRegister (py::module & m)
              py::arg("ngrow"),
              py::arg("initial_value"),
              py::arg("redistribute"),
-             py::arg("redistribute_on_remake")
+             py::arg("redistribute_on_remake"),
+             py::arg("checkpoint_restart") = false
         )
 
         .def("alloc_init",
@@ -55,6 +96,7 @@ void init_MultiFabRegister (py::module & m)
                  amrex::IntVect const &,
                  std::optional<const amrex::Real>,
                  bool,
+                 bool,
                  bool
              >(&MultiFabRegister::alloc_init<std::string>),
              py::return_value_policy::reference_internal,
@@ -67,7 +109,8 @@ void init_MultiFabRegister (py::module & m)
              py::arg("ngrow"),
              py::arg("initial_value"),
              py::arg("redistribute"),
-             py::arg("redistribute_on_remake")
+             py::arg("redistribute_on_remake"),
+             py::arg("checkpoint_restart") = false
         )
 
         .def("alias_init",
@@ -120,7 +163,7 @@ void init_MultiFabRegister (py::module & m)
              py::arg("level")
         )
 
-        .def("get",
+        .def("_get",
              py::overload_cast<
                  std::string,
                  int
@@ -130,7 +173,7 @@ void init_MultiFabRegister (py::module & m)
              py::arg("level")
         )
 
-        .def("get",
+        .def("_get",
              py::overload_cast<
                  std::string,
                  ablastr::fields::Direction,
@@ -142,10 +185,21 @@ void init_MultiFabRegister (py::module & m)
              py::arg("level")
         )
 
-        //.def("list",
-        //     &MultiFabRegister::list
-        //     // "..."
-        //)
+        .def("mr_levels_alldirs",
+             py::overload_cast<
+                 std::string,
+                 int,
+                 bool
+             >(&MultiFabRegister::get_mr_levels_alldirs<std::string>),
+             py::arg("name"),
+             py::arg("finest_level"),
+             py::arg("skip_level_0") = false
+        )
+
+        .def("list",
+             &MultiFabRegister::list,
+             "List the internal names of all registered fields"
+        )
 
         .def("erase",
              py::overload_cast<

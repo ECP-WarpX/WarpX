@@ -4,7 +4,7 @@ string(JSON warpx_version GET "${dependencies_data}" version_warpx)
 
 # Preamble ####################################################################
 #
-cmake_minimum_required(VERSION 3.24.0)
+cmake_minimum_required(VERSION 3.25.0)
 project(WarpX VERSION ${warpx_version})
 
 include(${WarpX_SOURCE_DIR}/cmake/WarpXFunctions.cmake)
@@ -18,27 +18,11 @@ if(CMAKE_BINARY_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 endif()
 
 
-# CMake policies ##############################################################
-#
-# Setting a cmake_policy to OLD is deprecated by definition and will raise a
-# verbose warning
-if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
-    set(CMAKE_WARN_DEPRECATED OFF CACHE BOOL "" FORCE)
-endif()
-
-# AMReX 21.06+ supports CUDA_ARCHITECTURES with CMake 3.20+
-# CMake 3.18+: CMAKE_CUDA_ARCHITECTURES
-# https://cmake.org/cmake/help/latest/policy/CMP0104.html
-if(POLICY CMP0104)
-    cmake_policy(SET CMP0104 OLD)
-endif()
-
-
 # C++ Standard in Superbuilds #################################################
 #
-# This is the easiest way to push up a C++17 requirement for AMReX, PICSAR and
+# This is the easiest way to push up a C++20 requirement for AMReX, PICSAR and
 # openPMD-api until they increase their requirement.
-set_cxx17_superbuild()
+set_cxx20_superbuild()
 
 
 # CCache Support ##############################################################
@@ -73,10 +57,12 @@ option(WarpX_APP           "Build the WarpX executable application"     ON)
 option(WarpX_ASCENT        "Ascent in situ diagnostics"                 OFF)
 option(WarpX_CATALYST      "Catalyst in situ diagnostics"               OFF)
 option(WarpX_EB            "Embedded boundary support"                  ON)
+option(WarpX_PETSC         "PETSc linear/nonlinear solvers via AMReX"   OFF)
 option(WarpX_LIB           "Build WarpX as a library"                   OFF)
 option(WarpX_MPI           "Multi-node support (message-passing)"       ON)
 option(WarpX_SIMD          "CPU SIMD Acceleration"                      OFF)
 option(WarpX_OPENPMD       "openPMD I/O (HDF5, ADIOS)"                  ON)
+option(WarpX_FASTMATH      "Enable fast-math optimizations"             OFF)
 option(WarpX_FFT           "FFT-based solvers"                          OFF)
 option(WarpX_PYTHON        "Python bindings"                            OFF)
 option(WarpX_SENSEI        "SENSEI in situ diagnostics"                 OFF)
@@ -198,6 +184,11 @@ option(ABLASTR_POSITION_INDEPENDENT_CODE
        "Build ABLASTR with position independent code" ON)
 mark_as_advanced(ABLASTR_POSITION_INDEPENDENT_CODE)
 
+option(ABLASTR_FASTMATH "Enable fast-math optimizations" ${WarpX_FASTMATH})
+if(WarpX_FASTMATH)
+    set(ABLASTR_FASTMATH ON CACHE STRING "Enable fast-math optimizations" FORCE)
+endif()
+
 option(ABLASTR_FFT "compile AnyFFT wrappers" ${WarpX_FFT})
 if(WarpX_FFT)
     set(ABLASTR_FFT ON CACHE STRING "FFT-based solvers" FORCE)
@@ -214,11 +205,11 @@ include(CTest)
 # Old GCCs: std::filesystem as a separate library
 try_compile(CXX_HAS_STD_FS "${WarpX_BINARY_DIR}/temp"
     "${WarpX_SOURCE_DIR}/cmake/has_filesystem.cpp"
-    CMAKE_FLAGS -DCMAKE_CXX_STANDARD=17 -DCMAKE_CXX_STANDARD_REQUIRED=ON
+    CMAKE_FLAGS -DCMAKE_CXX_STANDARD=20 -DCMAKE_CXX_STANDARD_REQUIRED=ON
 )
 try_compile(CXX_HAS_STD_FS_WITH_LINK "${WarpX_BINARY_DIR}/temp"
     "${WarpX_SOURCE_DIR}/cmake/has_filesystem.cpp"
-    CMAKE_FLAGS -DCMAKE_CXX_STANDARD=17 -DCMAKE_CXX_STANDARD_REQUIRED=ON
+    CMAKE_FLAGS -DCMAKE_CXX_STANDARD=20 -DCMAKE_CXX_STANDARD_REQUIRED=ON
     LINK_LIBRARIES stdc++fs
 )
 
@@ -287,6 +278,21 @@ foreach(D IN LISTS WarpX_DIMS)
     list(APPEND _ALL_TARGETS ablastr_${SD})
     add_library(WarpX::ablastr_${SD} ALIAS ablastr_${SD})
 
+    # Fast-Math
+    if(ABLASTR_FASTMATH)
+        target_link_libraries(ablastr_${SD} PUBLIC AMReX::Flags_FASTMATH)
+    endif()
+
+    # GCC < 9 need to manually link std::filesystem
+    if(NOT CXX_HAS_STD_FS)
+        if(CXX_HAS_STD_FS_WITH_LINK)
+            target_link_libraries(ablastr_${SD} PUBLIC stdc++fs)
+        else()
+            message(FATAL_ERROR "Your compiler does not support C++20 "
+                    "<filesystem> Please use a newer C++ compiler.")
+        endif()
+    endif()
+
     # link into a library (default: static)
     if(WarpX_LIB)
         add_library(lib_${SD})
@@ -311,14 +317,9 @@ foreach(D IN LISTS WarpX_DIMS)
             )
         endif()
 
-        # GCC < 9 need to manually link std::filesystem
-        if(NOT CXX_HAS_STD_FS)
-            if(CXX_HAS_STD_FS_WITH_LINK)
-                target_link_libraries(ablastr_${SD} PUBLIC stdc++fs)
-            else()
-                message(FATAL_ERROR "Your compiler does not support C++17 "
-                        "<filesystem> Please use a newer C++ compiler.")
-            endif()
+        # Fast-Math
+        if(WarpX_FASTMATH)
+            target_link_libraries(lib_${SD} PUBLIC AMReX::Flags_FASTMATH)
         endif()
     endif()
 
@@ -386,6 +387,25 @@ foreach(D IN LISTS WarpX_DIMS)
             PDB_OUTPUT_DIRECTORY ${CMAKE_PYTHON_OUTPUT_DIRECTORY}/pywarpx
             COMPILE_PDB_OUTPUT_DIRECTORY ${CMAKE_PYTHON_OUTPUT_DIRECTORY}/pywarpx
         )
+
+        # The CXX_VISIBILITY_PRESET above only hides pyWarpX's own objects, but
+        # statically-embedded dependencies (HDF5, openPMD, ADIOS2, and the WarpX
+        # lib) are compiled without hidden visibility and would otherwise
+        # be re-exported from this extension. If another extension loaded in the
+        # same process also statically embeds them (openpmd_api, ImpactX, a second
+        # openPMD/HDF5), the duplicate exported symbols cross-bind, one has two
+        # HDF5/openPMD instances in one process, UBs and crashes.
+        # Export only the module init symbol so each extension keeps its
+        # dependencies private.
+        # Windows does not auto-export and Emscripten links a single namespace, so
+        # neither needs this.
+        if(APPLE)
+            target_link_options(pyWarpX_${SD} PRIVATE
+                "LINKER:-exported_symbol,_PyInit_warpx_pybind_${SD}")
+        elseif(NOT WIN32 AND NOT EMSCRIPTEN)
+            target_link_options(pyWarpX_${SD} PRIVATE "LINKER:--exclude-libs,ALL")
+        endif()
+
         get_property(isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
         if(isMultiConfig)
             foreach(CFG IN LISTS CMAKE_CONFIGURATION_TYPES)
@@ -460,12 +480,16 @@ foreach(D IN LISTS WarpX_DIMS)
 endforeach()
 
 if(WarpX_PYTHON)
-    # copy PICMI and other Python scripts to build directory
-    add_custom_command(TARGET pyWarpX_${WarpX_DIMS_LAST} POST_BUILD
+    # populate the build-tree Python package for ctest and direct build-tree imports
+    add_custom_target(pyWarpX_python_sources ALL
+        COMMAND ${CMAKE_COMMAND} -E make_directory
+            $<TARGET_FILE_DIR:pyWarpX_${WarpX_DIMS_LAST}>
         COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${WarpX_SOURCE_DIR}/Python/pywarpx
-        $<TARGET_FILE_DIR:pyWarpX_${WarpX_DIMS_LAST}>
+            ${WarpX_SOURCE_DIR}/Python/pywarpx
+            $<TARGET_FILE_DIR:pyWarpX_${WarpX_DIMS_LAST}>
+        VERBATIM
     )
+    add_dependencies(pyWarpX_python_sources pyWarpX_${WarpX_DIMS_LAST})
 endif()
 
 add_subdirectory(Source/ablastr)
@@ -509,6 +533,10 @@ foreach(D IN LISTS WarpX_DIMS)
         target_link_libraries(ablastr_${SD} PUBLIC WarpX::thirdparty::amrex_${D}d)
     endif()
 
+    if(ABLASTR_FASTMATH)
+        target_link_libraries(ablastr_${SD} PUBLIC AMReX::Flags_FASTMATH)
+    endif()
+
     if(ABLASTR_FFT)
         target_link_libraries(ablastr_${SD} PUBLIC WarpX::thirdparty::FFT)
         if(D STREQUAL "RZ")
@@ -549,14 +577,14 @@ foreach(D IN LISTS WarpX_DIMS)
     endif()
 endforeach()
 
-# C++ properties: at least a C++17 capable compiler is needed
+# C++ properties: at least a C++20 capable compiler is needed
 if(WarpX_COMPUTE STREQUAL CUDA)
     # AMReX helper function: propagate CUDA specific target & source properties
     foreach(warpx_tgt IN LISTS _ALL_TARGETS)
         setup_target_for_cuda_compilation(${warpx_tgt})
     endforeach()
     foreach(warpx_tgt IN LISTS _ALL_TARGETS)
-        target_compile_features(${warpx_tgt} PUBLIC cuda_std_17)
+        target_compile_features(${warpx_tgt} PUBLIC cuda_std_20)
     endforeach()
     set_target_properties(${_ALL_TARGETS} PROPERTIES
         CUDA_EXTENSIONS OFF
@@ -564,7 +592,7 @@ if(WarpX_COMPUTE STREQUAL CUDA)
     )
 else()
     foreach(warpx_tgt IN LISTS _ALL_TARGETS)
-        target_compile_features(${warpx_tgt} PUBLIC cxx_std_17)
+        target_compile_features(${warpx_tgt} PUBLIC cxx_std_20)
     endforeach()
     set_target_properties(${_ALL_TARGETS} PROPERTIES
         CXX_EXTENSIONS OFF
@@ -644,11 +672,6 @@ foreach(D IN LISTS WarpX_DIMS)
         target_compile_definitions(pyWarpX_${SD} PRIVATE ABLASTR_IS_DLL_BUILDING)
     endif()
 endforeach()
-
-
-# Warnings ####################################################################
-#
-set_cxx_warnings()
 
 
 # Generate Configuration and .pc Files ########################################
@@ -769,6 +792,7 @@ if(WarpX_PYTHON)
             ${WarpX_BINARY_DIR}
         DEPENDS
             ${pyWarpX_INSTALL_TARGET_NAMES}
+            pyWarpX_python_sources
     )
 
     # this will also upgrade/downgrade dependencies, e.g., when the version of picmistandard changes
@@ -828,7 +852,17 @@ if(BUILD_TESTING)
     if(WarpX_APP OR WarpX_PYTHON)
         add_subdirectory(Examples)
     endif()
+    if(WarpX_PYTHON)
+        add_subdirectory(tests/unit)
+    endif()
 endif()
+
+
+# Warnings ####################################################################
+#
+foreach(warpx_tgt IN LISTS _ALL_TARGETS)
+    warpx_set_compile_warnings(${warpx_tgt})
+endforeach()
 
 
 # Status Summary for Build Options ############################################

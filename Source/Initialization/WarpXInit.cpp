@@ -8,6 +8,8 @@
 #include "WarpXInit.H"
 
 #include "Initialization/WarpXAMReXInit.H"
+#include "Utils/Parser/ParserUtils.H"
+#include "Utils/WarpXConst.H"
 #include "Utils/TextMsg.H"
 
 #include <AMReX.H>
@@ -17,18 +19,90 @@
 #include <ablastr/parallelization/MPIInitHelpers.H>
 #include <ablastr/warn_manager/WarnManager.H>
 
+#ifdef AMREX_USE_PETSC
+#include <petscsys.h>
+#endif
+
+
 #include <optional>
+#include <sstream>
 #include <string>
+#include <vector>
+
+#ifdef AMREX_USE_PETSC
+namespace
+{
+    // Whether WarpX, rather than AMReX, initialized PETSc and has to finalize it
+    bool petsc_initialized_by_warpx = false;
+}
+#endif
 
 void warpx::initialization::initialize_external_libraries(int argc, char* argv[])
 {
     ablastr::parallelization::mpi_init(argc, argv);
     warpx::initialization::amrex_init(argc, argv);
     ablastr::math::anyfft::setup();
+#ifdef AMREX_USE_PETSC
+    PetscBool petsc_is_initialized = PETSC_FALSE;
+    PetscInitialized(&petsc_is_initialized);
+    if (!petsc_is_initialized) {
+        PETSC_COMM_WORLD = amrex::ParallelContext::CommunicatorSub();
+        PetscInitialize(&argc, &argv, nullptr, "WarpX with PETSc");
+        petsc_initialized_by_warpx = true;
+    }
+    amrex::Print() << "Initialized PETSc.\n";
+#endif
+}
+
+void warpx::initialization::reinitialize_petsc ()
+{
+#ifdef AMREX_USE_PETSC
+    // PetscFinalize clears the options database (command line, PETSC_OPTIONS and the
+    // options WarpX set), so pass its content to the new PetscInitialize as a command line.
+    // PETSc keeps a pointer to that command line, hence the static storage.
+    static std::vector<std::string> args;
+    static std::vector<char*> argv;
+
+    std::vector<std::string> new_args = {"warpx"};
+    {
+        char* all_options = nullptr;
+        if (PetscOptionsGetAll(nullptr, &all_options) != PETSC_SUCCESS) {
+            WARPX_ABORT_WITH_MESSAGE("reinitialize_petsc: PetscOptionsGetAll failed");
+        }
+        std::istringstream iss(all_options);
+        std::string token;
+        while (iss >> token) { new_args.push_back(token); }
+        PetscFree(all_options);
+    }
+    const MPI_Comm comm = PETSC_COMM_WORLD;
+
+    // The options database is rebuilt below; do not report unused options now
+    PetscOptionsSetValue(nullptr, "-options_left", "no");
+    if (PetscFinalize() != PETSC_SUCCESS) {
+        WARPX_ABORT_WITH_MESSAGE("reinitialize_petsc: PetscFinalize failed");
+    }
+
+    args = std::move(new_args);
+    argv.clear();
+    for (auto& arg : args) { argv.push_back(arg.data()); }
+    argv.push_back(nullptr);
+    int argc = static_cast<int>(args.size());
+    char** argv_ptr = argv.data();
+    PETSC_COMM_WORLD = comm;
+    if (PetscInitialize(&argc, &argv_ptr, nullptr, "WarpX with PETSc") != PETSC_SUCCESS) {
+        WARPX_ABORT_WITH_MESSAGE("reinitialize_petsc: PetscInitialize failed");
+    }
+#endif
 }
 
 void warpx::initialization::finalize_external_libraries ()
 {
+#ifdef AMREX_USE_PETSC
+    if (petsc_initialized_by_warpx) {
+        PetscFinalize();
+        amrex::Print() << "Finalized PETSc.\n";
+    }
+#endif
     ablastr::math::anyfft::cleanup();
     amrex::Finalize();
     ablastr::parallelization::mpi_finalize();
@@ -95,4 +169,43 @@ void warpx::initialization::check_dims()
         dims_error.append(dims_compiled).append("' to inputs file.");
     }
     WARPX_ALWAYS_ASSERT_WITH_MESSAGE(dims == dims_compiled, dims_error);
+}
+
+void warpx::initialization::read_moving_window_parameters(
+    int& do_moving_window, int& start_moving_window_step, int& end_moving_window_step,
+    [[maybe_unused]] int& moving_window_dir, amrex::Real& moving_window_v)
+{
+    const amrex::ParmParse pp_warpx("warpx");
+    pp_warpx.query("do_moving_window", do_moving_window);
+    if (do_moving_window) {
+        utils::parser::queryWithParser(
+            pp_warpx, "start_moving_window_step", start_moving_window_step);
+        utils::parser::queryWithParser(
+            pp_warpx, "end_moving_window_step", end_moving_window_step);
+        std::string s;
+        pp_warpx.get("moving_window_dir", s);
+
+        if (s == "z" || s == "Z") {
+#ifdef WARPX_ZINDEX
+            moving_window_dir = WARPX_ZINDEX;
+#endif
+        }
+#if defined(WARPX_DIM_3D)
+        else if (s == "y" || s == "Y") {
+            moving_window_dir = 1;
+        }
+#endif
+#if defined(WARPX_DIM_XZ) || defined(WARPX_DIM_3D)
+        else if (s == "x" || s == "X") {
+            moving_window_dir = 0;
+        }
+#endif
+        else {
+            WARPX_ABORT_WITH_MESSAGE("Unknown moving_window_dir: "+s);
+        }
+
+        utils::parser::getWithParser(
+            pp_warpx, "moving_window_v", moving_window_v);
+        moving_window_v *= PhysConst::c;
+    }
 }

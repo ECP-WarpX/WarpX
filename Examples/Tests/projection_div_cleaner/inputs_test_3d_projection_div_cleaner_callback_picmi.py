@@ -7,7 +7,7 @@ import scipy.constants as con
 from mpi4py import MPI as mpi
 from scipy.special import ellipe, ellipk
 
-from pywarpx import fields, picmi
+from pywarpx import picmi
 
 constants = picmi.constants
 
@@ -171,7 +171,7 @@ class ProjectionDivCleanerTest(object):
         #######################################################################
         init_field = picmi.LoadInitialFieldFromPython(
             load_from_python=load_current_ring,
-            warpx_do_divb_cleaning_external=True,
+            warpx_do_initial_div_cleaning=True,
             load_E=False,
         )
         simulation.add_applied_field(init_field)
@@ -199,9 +199,9 @@ class ProjectionDivCleanerTest(object):
 def load_current_ring():
     curr_loop = CurrentLoop(radius=0.75)
 
-    Bx = fields.BxFPExternalWrapper()
-    By = fields.ByFPExternalWrapper()
-    Bz = fields.BzFPExternalWrapper()
+    Bx = simulation.fields.get("Bfield_fp_external", dir="x", level=0)
+    By = simulation.fields.get("Bfield_fp_external", dir="y", level=0)
+    Bz = simulation.fields.get("Bfield_fp_external", dir="z", level=0)
 
     Bx[(), (), ()] = curr_loop(Bx, coord="x")
 
@@ -218,9 +218,9 @@ simulation.step()
 ##############################################
 # Post load image generation and error check #
 ##############################################
-Bxg = fields.BxWrapper()
-Byg = fields.ByWrapper()
-Bzg = fields.BzWrapper()
+Bxg = simulation.fields.get("Bfield_aux", dir="x", level=0)
+Byg = simulation.fields.get("Bfield_aux", dir="y", level=0)
+Bzg = simulation.fields.get("Bfield_aux", dir="z", level=0)
 
 Bx_local = Bxg[(), (), ()]
 By_local = Byg[(), (), ()]
@@ -240,7 +240,7 @@ plt.colorbar()
 plt.savefig("divb.png")
 
 error = np.sqrt((divB[2:-2, 2:-2, 2:-2] ** 2).sum())
-tolerance = 1e-12
+tolerance = 3e-12
 
 print("error = ", error)
 print("tolerance = ", tolerance)

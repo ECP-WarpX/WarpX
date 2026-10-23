@@ -7,16 +7,17 @@
 #include "Python/pyWarpX.H"
 
 #include <Particles/WarpXParticleContainer.H>
+#include <WarpX.H>
 
 
 void init_WarpXParIter (py::module& m)
 {
     py::class_<
-        WarpXParIter, amrex::ParIterSoA<PIdx::nattribs, 0>
+        WarpXParIter, amrex::ParIterSoA<PIdx::nattribs, 0, amrex::PolymorphicArenaAllocator>
     >(m, "WarpXParIter")
-        .def(py::init<amrex::ParIterSoA<PIdx::nattribs, 0>::ContainerType&, int>(),
+        .def(py::init<amrex::ParIterSoA<PIdx::nattribs, 0, amrex::PolymorphicArenaAllocator>::ContainerType&, int>(),
             py::arg("particle_container"), py::arg("level"))
-        .def(py::init<amrex::ParIterSoA<PIdx::nattribs, 0>::ContainerType&, int, amrex::MFItInfo&>(),
+        .def(py::init<amrex::ParIterSoA<PIdx::nattribs, 0, amrex::PolymorphicArenaAllocator>::ContainerType&, int, amrex::MFItInfo&>(),
             py::arg("particle_container"), py::arg("level"),
             py::arg("info"))
     ;
@@ -26,13 +27,9 @@ void init_WarpXParticleContainer (py::module& m)
 {
     py::class_<
         WarpXParticleContainer,
-        amrex::ParticleContainerPureSoA<PIdx::nattribs, 0>
+        amrex::ParticleContainerPureSoA<PIdx::nattribs, 0, amrex::PolymorphicArenaAllocator>
     > wpc (m, "WarpXParticleContainer");
     wpc
-        .def("add_real_comp",
-            [](WarpXParticleContainer& pc, const std::string& name, bool comm) { pc.AddRealComp(name, comm); },
-            py::arg("name"), py::arg("comm")
-        )
         .def("add_n_particles",
             [](WarpXParticleContainer& pc, int lev,
                 int n, py::array_t<double> &x,
@@ -101,14 +98,6 @@ void init_WarpXParticleContainer (py::module& m)
             },
             py::arg("comp_name")
         )
-        .def("num_local_tiles_at_level",
-            &WarpXParticleContainer::numLocalTilesAtLevel,
-            py::arg("level")
-        )
-        .def("total_number_of_particles",
-            &WarpXParticleContainer::TotalNumberOfParticles,
-            py::arg("valid_particles_only"), py::arg("local")
-        )
         .def("sum_particle_weight",
             &WarpXParticleContainer::sumParticleWeight,
             py::arg("local")
@@ -129,20 +118,62 @@ void init_WarpXParticleContainer (py::module& m)
                 {
                     const long np = pti.numParticles();
                     auto& wp = pti.GetAttribs(PIdx::w);
-                    pc.DepositCharge(pti, wp, nullptr, rho, 0, 0, np, 0, lev, lev);
+                    int* ion_lev = nullptr;
+                    if (pc.DoFieldIonization()) {
+                        ion_lev = pti.GetiAttribs("ionizationLevel").dataPtr();
+                    }
+                    pc.DepositCharge(pti, wp, ion_lev, rho, 0, 0, np, 0, lev, lev);
                 }
             },
             py::arg("rho"), py::arg("lev")
         )
         .def("get_charge_density",
-            [](WarpXParticleContainer& pc, int lev, bool local)
+            [](WarpXParticleContainer& pc, int lev, bool local, bool finalize)
             {
-                return pc.GetChargeDensity(lev, local);
+                return pc.GetChargeDensityOnLevel(lev, local, finalize);
             },
-            py::arg("lev"), py::arg("local")
+            py::arg("lev"), py::arg("local"), py::arg("finalize") = true
+        )
+        .def("deposit_current",
+            [](WarpXParticleContainer& pc, std::string mf_name, int lev, double dt, double relative_time)
+            {
+                pc.DepositCurrentOnLevel(mf_name, lev, dt, relative_time);
+                auto& warpx = WarpX::GetInstance();
+                auto const current = warpx.m_fields.get_alldirs(mf_name, lev);
+                warpx.FinalizeJOnLevel(
+                    lev, current[0], current[1], current[2], PatchType::fine);
+            },
+            py::arg("mf_name"), py::arg("lev"), py::arg("dt"), py::arg("relative_time"),
+            R"pbdoc(Deposit current density, sum guard values, and apply boundary conditions
+
+Parameters
+----------
+mf_name: string
+  Name of the vector field in which to deposit current density
+lev: int
+  Mesh refinement level for deposition
+dt: float
+  Time step for particle level
+relative_time: float
+  Time at which to deposit J, relative to the time of the current positions of the particles)pbdoc"
+        )
+        .def("get_number_density",
+            [](WarpXParticleContainer& pc, int lev)
+            {
+                return pc.GetNumberDensity(lev);
+            },
+            py::arg("lev")
         )
         .def("set_do_not_push",
             [](WarpXParticleContainer& pc, bool flag) { pc.setDoNotPush(flag); },
+            py::arg("flag")
+        )
+        .def("set_do_not_gather",
+            [](WarpXParticleContainer& pc, int flag) { pc.setDoNotGather(flag); },
+            py::arg("flag")
+        )
+        .def("set_do_not_deposit",
+            [](WarpXParticleContainer& pc, int flag) { pc.setDoNotDeposit(flag); },
             py::arg("flag")
         )
     ;

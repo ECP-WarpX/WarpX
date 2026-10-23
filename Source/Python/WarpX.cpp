@@ -15,6 +15,7 @@
 #include <FieldSolver/FiniteDifferenceSolver/FiniteDifferenceSolver.H>
 #include <FieldSolver/FiniteDifferenceSolver/MacroscopicProperties/MacroscopicProperties.H>
 #include <FieldSolver/FiniteDifferenceSolver/HybridPICModel/HybridPICModel.H>
+#include <FieldSolver/ImplicitSolvers/ImplicitSolver.H>
 #ifdef WARPX_USE_FFT
 #   include <FieldSolver/SpectralSolver/SpectralKSpace.H>
 #   ifdef WARPX_DIM_RZ
@@ -35,23 +36,61 @@
 #include <Utils/TextMsg.H>
 #include <Utils/WarpXAlgorithmSelection.H>
 #include <Utils/WarpXConst.H>
-#include <Utils/WarpXProfilerWrapper.H>
 #include <Utils/WarpXUtil.H>
 #include "FieldSolver/ElectrostaticSolvers/ElectrostaticSolver.H"
+
+#include <ablastr/profiler/ProfilerWrapper.H>
+
 #include <AMReX.H>
 #include <AMReX_ParmParse.H>
 #include <AMReX_ParallelDescriptor.H>
+#include <AMReX_OpenMP.H>
 
 #if defined(AMREX_DEBUG) || defined(DEBUG)
 #   include <cstdio>
 #endif
+#include <memory>
 #include <string>
 
 
 //using namespace warpx;
 
-namespace warpx {
-    struct Config {};
+namespace detail
+{
+    /** Helper Function for Property Getters
+     *
+     * This queries an amrex::ParmParse entry. This throws a
+     * std::runtime_error if the entry is not found.
+     *
+     * This handles the most common throw exception logic in WarpX instead of
+     * going over library boundaries via amrex::Abort().
+     *
+     * @tparam T type of the amrex::ParmParse entry
+     * @param prefix the prefix, e.g., "warpx" or "amr"
+     * @param name the actual key of the entry, e.g., "particle_shape"
+     * @return the queried value (or throws if not found)
+     */
+    template< typename T>
+    auto get_or_throw (std::string const & prefix, std::string const & name)
+    {
+        using V = std::decay_t<T>;
+        V value;
+
+        bool has_name = false;
+        // TODO: if array do queryarr
+        // has_name = amrex::ParmParse(prefix).queryarr(name.c_str(), value);
+        if constexpr (std::is_same_v<V, bool> || std::is_same_v<V, std::string>) {
+            has_name = amrex::ParmParse(prefix).query(name.c_str(), value);
+        }
+        else {
+            has_name = amrex::ParmParse(prefix).queryWithParser(name.c_str(), value);
+        }
+
+        if (!has_name) {
+            throw std::runtime_error(prefix + "." + name + " is not set yet");
+        }
+        return value;
+    }
 }
 
 void init_WarpX (py::module& m)
@@ -66,7 +105,13 @@ void init_WarpX (py::module& m)
     m.def("finalize", &WarpX::Finalize,
         "Close out the WarpX related data");
 
-    py::class_<WarpX> warpx(m, "WarpX");
+    // WarpX is a singleton owned by the C++ side: its lifetime ends in
+    // WarpX::Finalize (i.e. WarpX::ResetInstance), never when the last Python
+    // reference goes away. Without py::nodelete, pybind11's default
+    // return_value_policy for the raw pointer returned by get_instance below is
+    // take_ownership, and destroying the Python object would leave
+    // WarpX::m_instance dangling and WarpX::Finalize double-freeing it.
+    py::class_<WarpX, std::unique_ptr<WarpX, py::nodelete>> warpx(m, "WarpX");
     warpx
         // WarpX is a Singleton Class with a private constructor
         //   https://github.com/BLAST-WarpX/warpx/pull/4104
@@ -87,6 +132,26 @@ void init_WarpX (py::module& m)
         )
         .def("evolve", &WarpX::Evolve,
             "Evolve the simulation the specified number of steps"
+        )
+
+        .def_property("omp_threads",
+            [](WarpX & /* wx */){
+                return detail::get_or_throw<std::string>("amrex", "omp_threads");
+            },
+            [](WarpX & /* wx */, std::variant<int, std::string> omp_threads_var) {
+                std::visit([&]( auto && omp_threads) {
+                    amrex::ParmParse pp_amrex("amrex");
+                    pp_amrex.add("omp_threads", omp_threads);
+
+                    // set the value if not "system" or "nosmt"
+                    if constexpr(std::is_same_v<std::decay_t<decltype(omp_threads)>, int>) {
+                        amrex::Print() << "Changing WarpX threads to N=" << omp_threads << "\n";
+                        amrex::OpenMP::set_num_threads(omp_threads);
+                    }
+                }, omp_threads_var);
+            },
+            "Controls the number of OpenMP threads to use (WarpX default: \"nosmt\").\n"
+            "https://amrex-codes.github.io/amrex/docs_html/InputsComputeBackends.html."
         )
 
         // from amrex::AmrCore / amrex::AmrMesh
@@ -115,90 +180,7 @@ void init_WarpX (py::module& m)
         )
         .def("multifab_register",&WarpX::GetMultiFabRegister,
             py::return_value_policy::reference_internal)
-        .def("multifab",
-             [](WarpX & wx, std::string internal_name) {
-                 if (wx.m_fields.internal_has(internal_name)) {
-                     return wx.m_fields.internal_get(internal_name);
-                 } else {
-                     throw std::runtime_error("MultiFab '" + internal_name + "' is unknown or is not allocated!");
-                 }
-             },
-             py::arg("internal_name"),
-             py::return_value_policy::reference_internal,
-             R"doc(Return a MultiFab by its internal name (deprecated).
 
-The multifab('internal_name') signature is deprecated.
-Please use:
-- multifab('prefix', level=...) for scalar fields
-- multifab('prefix', dir=..., level=...) for vector field components
-where 'prefix' is the part of 'internal_name';'  before the [])doc"
-        )
-        .def("multifab",
-            [](WarpX & wx, std::string scalar_name, int level) {
-                if (wx.m_fields.has(scalar_name, level)) {
-                    return wx.m_fields.get(scalar_name, level);
-                } else {
-                    throw std::runtime_error("The scalar field '" + scalar_name + "' is unknown or is not allocated!");
-                }
-            },
-            py::arg("scalar_name"),
-            py::arg("level"),
-            py::return_value_policy::reference_internal,
-            R"doc(Return scalar fields (MultiFabs) by name and level. The name is in the form like``\"rho_fp\"``, ``\"phi_fp"``. The level is an integer with 0 being the lowest level.
-
-The physical fields in WarpX have the following naming:
-
-- ``_fp`` are the "fine" patches, the regular resolution of a current mesh-refinement level
-- ``_aux`` are temporary (auxiliar) patches at the same resolution as ``_fp``.
-  They usually include contributions from other levels and can be interpolated for gather routines of particles.
-- ``_cp`` are "coarse" patches, at the same resolution (but not necessary values) as the ``_fp`` of ``level - 1``
-  (only for level 1 and higher).)doc"
-        )
-        .def("multifab",
-            [](WarpX & wx, std::string vector_name, Direction dir, int level) {
-                if (wx.m_fields.has(vector_name, dir, level)) {
-                    return wx.m_fields.get(vector_name, dir, level);
-                } else {
-                    throw std::runtime_error("The vector field '" + vector_name + "' is unknown or is not allocated!");
-                }
-            },
-            py::arg("vector_name"),
-            py::arg("dir"),
-            py::arg("level"),
-            py::return_value_policy::reference_internal,
-            R"doc(Return the component of a vector field (MultiFab) by name, direction, and level. The name is in the form like ``\"Efield_aux\"``, ``\"Efield_fp"``, etc. The direction is a Direction instance, Direction(idir) where idir is an integer 0, 1, or 2. The level is an integer with 0 being the lowest level.
-
-The physical fields in WarpX have the following naming:
-
-- ``_fp`` are the "fine" patches, the regular resolution of a current mesh-refinement level
-- ``_aux`` are temporary (auxiliar) patches at the same resolution as ``_fp``.
-  They usually include contributions from other levels and can be interpolated for gather routines of particles.
-- ``_cp`` are "coarse" patches, at the same resolution (but not necessary values) as the ``_fp`` of ``level - 1``
-  (only for level 1 and higher).)doc"
-        )
-        .def("multifab",
-            [](WarpX & wx, std::string vector_name, int idir, int level) {
-                Direction const dir{idir};
-                if (wx.m_fields.has(vector_name, dir, level)) {
-                    return wx.m_fields.get(vector_name, dir, level);
-                } else {
-                    throw std::runtime_error("The vector field '" + vector_name + "' is unknown or is not allocated!");
-                }
-            },
-            py::arg("vector_name"),
-            py::arg("idir"),
-            py::arg("level"),
-            py::return_value_policy::reference_internal,
-            R"doc(Return the component of a vector field (MultiFab) by name, direction, and level. The name is in the form like ``\"Efield_aux\"``, ``\"Efield_fp"``, etc. The direction is an integer 0, 1, or 2. The level is an integer with 0 being the lowest level.
-
-The physical fields in WarpX have the following naming:
-
-- ``_fp`` are the "fine" patches, the regular resolution of a current mesh-refinement level
-- ``_aux`` are temporary (auxiliar) patches at the same resolution as ``_fp``.
-  They usually include contributions from other levels and can be interpolated for gather routines of particles.
-- ``_cp`` are "coarse" patches, at the same resolution (but not necessary values) as the ``_fp`` of ``level - 1``
-  (only for level 1 and higher).)doc"
-        )
         .def("multi_particle_container",
             [](WarpX& wx){ return &wx.GetPartContainer(); },
             py::return_value_policy::reference_internal
@@ -208,19 +190,39 @@ The physical fields in WarpX have the following naming:
             py::return_value_policy::reference_internal
         )
 
-        // Expose functions used to sync the charge density multifab
+        // Expose the implicit solver and the mass matrices deposition
+        .def("implicit_solver",
+            [](WarpX& wx){ return wx.get_pointer_ImplicitSolver(); },
+            py::return_value_policy::reference_internal,
+            R"pbdoc(Return the implicit solver, or None when the evolve scheme is explicit)pbdoc"
+        )
+        .def("save_particles_at_implicit_step_start",
+            [](WarpX& wx){ wx.SaveParticlesAtImplicitStepStart(); },
+            R"pbdoc(Save the particle positions and velocities at the start of the step)pbdoc"
+        )
+        .def("deposit_mass_matrices",
+            [](WarpX& wx, amrex::Real a_dt){
+                auto const* solver = wx.get_pointer_ImplicitSolver();
+                if (!solver) { throw py::value_error("deposit_mass_matrices requires an implicit solver"); }
+                wx.DepositMassMatrices(a_dt, solver->GetImplicitOptions());
+            },
+            R"pbdoc(Zero and deposit the mass matrices from all species)pbdoc"
+        )
+        .def("sync_mass_matrices",
+            [](WarpX& wx){ wx.SyncMassMatrices(); },
+            R"pbdoc(Sum the guard cells of the mass matrices into the valid cells)pbdoc"
+        )
+
+        // Expose functions used to sync the current and charge density multifabs
         // accross tiles and apply appropriate boundary conditions
+        .def("sync_current",
+            [](WarpX& wx, const std::string& current_fp_string){ wx.SyncCurrent(current_fp_string); },
+            py::arg("current_fp_string"),
+            R"pbdoc(Sum the guard cells of a current-like vector field into the valid cells)pbdoc"
+        )
         .def("sync_rho",
             [](WarpX& wx){ wx.SyncRho(); }
         )
-#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
-        .def("apply_inverse_volume_scaling_to_charge_density",
-            [](WarpX& wx, amrex::MultiFab* rho, int const lev) {
-                wx.ApplyInverseVolumeScalingToChargeDensity(rho, lev);
-            },
-            py::arg("rho"), py::arg("lev")
-        )
-#endif
 
         // Expose functions to get the current simulation step and time
         .def("getistep",
@@ -308,51 +310,4 @@ The physical fields in WarpX have the following naming:
             "Gets the number of substeps to take in the hybrid solver."
         )
     ;
-
-    py::class_<warpx::Config>(m, "Config")
-//        .def_property_readonly_static(
-//            "warpx_version",
-//            [](py::object) { return Version(); },
-//            "WarpX version")
-        .def_property_readonly_static(
-            "have_mpi",
-            [](py::object){
-#ifdef AMREX_USE_MPI
-                return true;
-#else
-                return false;
-#endif
-            })
-        .def_property_readonly_static(
-            "have_gpu",
-            [](py::object){
-#ifdef AMREX_USE_GPU
-                return true;
-#else
-                return false;
-#endif
-            })
-        .def_property_readonly_static(
-            "have_omp",
-            [](py::object){
-#ifdef AMREX_USE_OMP
-                return true;
-#else
-                return false;
-#endif
-            })
-        .def_property_readonly_static(
-            "gpu_backend",
-            [](py::object){
-#ifdef AMREX_USE_CUDA
-                return "CUDA";
-#elif defined(AMREX_USE_HIP)
-                return "HIP";
-#elif defined(AMREX_USE_DPCPP)
-                return "SYCL";
-#else
-                return py::none();
-#endif
-            })
-        ;
 }

@@ -12,9 +12,8 @@
 #define WARPX_ParticleContainer_H_
 
 #include "MultiParticleContainer_fwd.H"
+#include "FieldSolver/ImplicitSolvers/ImplicitOptions.H"
 
-#include "Evolve/WarpXDtType.H"
-#include "Evolve/WarpXPushType.H"
 #include "Particles/Collision/CollisionHandler.H"
 #ifdef WARPX_QED
 #   include "Particles/ElementaryProcess/QEDInternals/BreitWheelerEngineWrapper_fwd.H"
@@ -25,6 +24,7 @@
 #include "Utils/WarpXConst.H"
 #include "WarpXParticleContainer.H"
 #include "ParticleBoundaries.H"
+#include "ExternalParticleFields.H"
 
 #include <ablastr/fields/MultiFabRegister.H>
 
@@ -70,7 +70,7 @@ class MultiParticleContainer
 
 public:
 
-    MultiParticleContainer (amrex::AmrCore* amr_core);
+    explicit MultiParticleContainer (amrex::AmrCore* amr_core);
 
     ~MultiParticleContainer() = default;
 
@@ -92,7 +92,9 @@ public:
         return allcontainers[index]->meanParticleVelocity();
     }
 
-    amrex::ParticleReal maxParticleVelocity();
+    amrex::ParticleReal maxParticleDtInv();
+
+    void TransformMomentumToCurvilinear (bool forward);
 
     void AllocData ();
 
@@ -111,11 +113,19 @@ public:
         std::string const& current_fp_string,
         amrex::Real t,
         amrex::Real dt,
-        DtType a_dt_type=DtType::Full,
+        SubcyclingHalf subcycling_half=SubcyclingHalf::None,
         bool skip_deposition=false,
-        bool deposit_mass_matrices=false,
-        PushType push_type=PushType::Explicit
+        PositionPushType position_push_type=PositionPushType::Full,
+        MomentumPushType momentum_push_type=MomentumPushType::Full,
+        ImplicitOptions const * implicit_options = nullptr
     );
+
+    /**
+     * \brief Deposit mass matrices.
+    */
+    void DepositMassMatrices (ablastr::fields::MultiFabRegister& fields,
+                              int lev, amrex::Real dt,
+                              ImplicitOptions const& implicit_options);
 
     /**
     * \brief This pushes the particle positions by one time step for all the species in the
@@ -131,7 +141,9 @@ public:
     */
     void PushP (int lev, amrex::Real dt,
                 const amrex::MultiFab& Ex, const amrex::MultiFab& Ey, const amrex::MultiFab& Ez,
-                const amrex::MultiFab& Bx, const amrex::MultiFab& By, const amrex::MultiFab& Bz);
+                const amrex::MultiFab& Bx, const amrex::MultiFab& By, const amrex::MultiFab& Bz,
+                MomentumPushType momentum_push_type,
+                std::optional<FieldGatherOrders> gather_orders = std::nullopt);
 
     /**
     * \brief This returns a MultiFAB filled with zeros. It is used to return the charge density
@@ -142,9 +154,11 @@ public:
     std::unique_ptr<amrex::MultiFab> GetZeroChargeDensity(int lev);
 
     /**
-     * \brief Deposit charge density.
+     * \brief Deposit charge from all species without synchronization (i.e. summing guard
+     * cells and transferring charge across mesh-refinement levels) and without finalization
+     * (i.e. applying physical boundary conditions and radial volume scaling).
      *
-     * \param[in,out] rho vector of charge densities (one pointer to MultiFab per mesh refinement level)
+     * \param[in,out] rho Charge deposits, one MultiFab per mesh refinement level.
      * \param[in] relative_time Time at which to deposit rho, relative to the time of the
      *                          current positions of the particles. When different than 0,
      *                          the particle position will be temporarily modified to match
@@ -164,10 +178,13 @@ public:
      *                          current positions of the particles. When different than 0,
      *                          the particle position will be temporarily modified to match
      *                          the time of the deposition.
+     * \param[in] push_type Type of particle push used with the deposition. With
+     *                      PushType::Implicit the time-centered velocities are used.
      */
     void
     DepositCurrent (ablastr::fields::MultiLevelVectorField const& J,
-                    amrex::Real dt, amrex::Real relative_time);
+                    amrex::Real dt, amrex::Real relative_time,
+                    PushType push_type = PushType::Explicit);
 
     /**
      * \brief Deposit temperature to species MFs. This is done for each
@@ -186,9 +203,25 @@ public:
     /// This deposits the particle charge onto a node-centered MultiFab and returns a unique ptr
     /// to it. The charge density is accumulated over all the particles in the MultiParticleContainer
 
-    std::unique_ptr<amrex::MultiFab> GetChargeDensity(int lev, bool local = false);
+    /**
+     * \brief Deposit charge from all species on one level with optional summation and finalization.
+     *
+     * \param[in] lev Mesh refinement level for deposition.
+     * \param[in] local If false, sum overlapping valid- and guard-cell deposits.
+     * \param[in] finalize If true, apply physical boundary conditions and radial volume
+     *                     scaling to return physical charge density; requires local=false.
+     *                     If false, leave boundary handling and radial scaling to the caller.
+     */
+    std::unique_ptr<amrex::MultiFab> GetChargeDensityOnLevel (int lev, bool local, bool finalize);
 
+    std::unique_ptr<amrex::MultiFab> GetGlobalPlasmaFrequency (int lev);
     void GenerateGlobalDebyeLength ();
+
+    /*
+     * \brief Calculates the electron-ion collision frequency for the specified species
+     * @param[in] electron_species_name name of the electon species
+     */
+    void CalculateNuei (std::string const & electron_species_name);
 
     void doFieldIonization (int lev,
                             const amrex::MultiFab& Ex, const amrex::MultiFab& Ey, const amrex::MultiFab& Ez,
@@ -241,7 +274,7 @@ public:
 
     void deleteInvalidParticles ();
 
-    void RedistributeLocal (int num_ghost);
+    void RedistributeLocal (const amrex::IntVect& max_cells_travelled);
 
     /** Apply BC. For now, just discard particles outside the domain, regardless
      *  of the whole simulation BC. */
@@ -339,6 +372,8 @@ public:
     std::unique_ptr<amrex::Parser> m_Ex_particle_parser;
     std::unique_ptr<amrex::Parser> m_Ey_particle_parser;
     std::unique_ptr<amrex::Parser> m_Ez_particle_parser;
+
+    ExternalParticleFields m_external_particle_fields_metadata;
 
     amrex::ParticleReal m_repeated_plasma_lens_period;
     amrex::Vector<amrex::ParticleReal> h_repeated_plasma_lens_starts;
@@ -452,7 +487,7 @@ protected:
 
     static constexpr auto m_default_quantum_sync_photon_creation_energy_threshold =
         static_cast<amrex::ParticleReal>(
-        2.0 * PhysConst::m_e * PhysConst::c * PhysConst::c );  /*!< Default value of the energy threshold for photon creation in Quantum Synchrotron process.*/
+        2.0 * PhysConst::m_e * PhysConst::c2 );  /*!< Default value of the energy threshold for photon creation in Quantum Synchrotron process.*/
 
 
     amrex::ParticleReal m_quantum_sync_photon_creation_energy_threshold =
@@ -525,6 +560,10 @@ private:
     amrex::Vector<std::unique_ptr<WarpXParticleContainer>> allcontainers;
 
     void ReadParameters ();
+
+    /** Guards ReadParameters against running twice for this instance.
+     */
+    bool m_params_initialized = false;
 
     void mapSpeciesProduct ();
 

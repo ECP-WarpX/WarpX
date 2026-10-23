@@ -7,7 +7,6 @@
 #ifndef WARPX_WarpXFluidContainer_H_
 #define WARPX_WarpXFluidContainer_H_
 
-#include "Evolve/WarpXDtType.H"
 #include "Initialization/PlasmaInjector.H"
 #include "MultiFluidContainer.H"
 
@@ -130,10 +129,11 @@ public:
         amrex::MultiFab& jx, amrex::MultiFab& jy, amrex::MultiFab& jz, int lev);
 
     /**
-     * DepositCharge interpolates the fluid charge density onto the Yee grid and
-     * sums the contributions to the particle charge density
+     * DepositCharge adds fluid charge to the PIC deposits on the Yee grid,
+     * before radial inverse-volume scaling.
      *
-     * \brief Deposit fluid charge density.
+     * \brief Deposit fluid charge in the same unscaled representation as PIC.
+     * Physical boundary handling and radial volume scaling are left to the caller.
      *
      * \param m_fields reference to MultiFab register storing all fields
      * \param[in,out] rho charge density MultiFab.
@@ -182,12 +182,6 @@ protected:
 
     std::unique_ptr<InjectorMomentum,InjectorMomentumDeleter> h_inj_mom;
     InjectorMomentum* d_inj_mom = nullptr;
-    std::unique_ptr<amrex::Parser> ux_parser;
-    std::unique_ptr<amrex::Parser> uy_parser;
-    std::unique_ptr<amrex::Parser> uz_parser;
-    std::unique_ptr<amrex::Parser> ux_th_parser;
-    std::unique_ptr<amrex::Parser> uy_th_parser;
-    std::unique_ptr<amrex::Parser> uz_th_parser;
 
     // Keep a pointer to TemperatureProperties to ensure the lifetime of the
     // contained Parser

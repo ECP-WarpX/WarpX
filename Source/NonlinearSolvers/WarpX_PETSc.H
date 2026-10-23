@@ -9,6 +9,7 @@
 #define WARPX_PETSC_H_
 
 #include "LinearFunction.H"
+#include "Preconditioner.H"
 
 #include <AMReX_BLassert.H>
 #include <AMReX_REAL.H>
@@ -21,20 +22,115 @@
 // forward declarations
 class WarpXSolverVec;
 class ImplicitSolver;
+struct NonlinearSolverParams;
+struct NewtonSolverParams;
 // end of forward declarations
 
+/* \brief Implementations of linear and nonlinear solvers using PETSc
+ *
+ * This namespace contains the implementations of linear and nonlinear solvers using
+ * PETSc that are needed by the implicit time integrators.
+ */
 namespace warpx_petsc {
 
 // forward declarations
-class KSPObj;
-class MatObj;
-class VecObj;
+struct SNESObj;
+struct KSPObj;
+struct MatObj;
+struct VecObj;
 // end of forward declarations
 
+using TIType = ImplicitSolver;
 using LinOpType = LinearFunction<WarpXSolverVec,ImplicitSolver>;
 using VecType = WarpXSolverVec;
 
-class KSP_impl
+/**
+ * \brief Base class for PETSc linear and nonlinear solvers
+ *
+ * This contains all the variables and functions that are common to the
+ * WarpX classes that use PETSc's KSP and SNES to solve linear and nonlinear
+ * systems, respectively.
+ */
+class PETScSolver_impl
+{
+    public:
+
+        //! Constructor
+        PETScSolver_impl ();
+
+        //! Destructor
+        virtual ~PETScSolver_impl ();
+
+        // Prohibit Move and Copy operations
+        PETScSolver_impl(const PETScSolver_impl&) = delete;
+        PETScSolver_impl& operator=(const PETScSolver_impl&) = delete;
+        PETScSolver_impl(PETScSolver_impl&&) noexcept = delete;
+        PETScSolver_impl& operator=(PETScSolver_impl&&) noexcept = delete;
+
+        //! Apply the action of the preconditioner
+        void applyPC(VecType&, const VecType&, LinOpType* const) const;
+        //! Apply the action of the Jacobian
+        void applyOp(VecType& a_F, const VecType& a_U, LinOpType* const) const;
+
+        //! Assemble the sparse matrix for preconditioner
+        [[nodiscard]] int assemblePCMatrix(LinOpType* const);
+        //! Destroy the PETSc objects, e.g. before PETSc is finalized; they are created again
+        //! by createObjects
+        virtual void destroyObjects ();
+
+        //! Work vector
+        mutable VecType m_U;
+        //! Work vector
+        mutable VecType m_F;
+
+        //! Local number of DOFs
+        long m_ndofs_l = 0;
+        //! Global number of DOFs
+        long m_ndofs_g = 0;
+
+        //! Matrix (lin operator) object
+        std::unique_ptr<MatObj> m_A;
+        //! Matrix (PC) object
+        std::unique_ptr<MatObj> m_P;
+        //! solution vector
+        std::unique_ptr<VecObj> m_x;
+        //! right-hand-side vector
+        std::unique_ptr<VecObj> m_b;
+
+        //! is defined?
+        bool m_is_defined = false;
+
+        //! Preconditioner type
+        PreconditionerType m_pc_type = PreconditionerType::none;
+
+        // Return the PC type
+        PreconditionerType getPreconditionerType () const
+        {
+            return m_pc_type;
+        }
+
+        //! Set the GMRES restart length, unless it is given as a PETSc option
+        void setRestartLength(int) const;
+
+    protected:
+
+        //! Set PETSc options from WarpX input file
+        void setOptions();
+};
+
+/**
+ * \brief Linear solver using PETSc KSP
+ *
+ * This class uses PETSc's KSP to solve a linear system (with and without a
+ * preconditioner):
+ *     Ax = b
+ * where the x and b are of type WarpXSolverVec, and the operator A is of the
+ * type LinearFunction<WarpXSolverVec,ImplicitSolver>.
+ *
+ * This class is used in the implicit solvers through it's wrapper PETScKSP
+ * (PETScKSP_Wrapper.H).
+ */
+class KSP_impl : public PETScSolver_impl
 {
     public:
 
@@ -42,7 +138,7 @@ class KSP_impl
         KSP_impl (LinOpType&);
 
         //! Destructor
-        ~KSP_impl ();
+        ~KSP_impl () override;
 
         // Prohibit Move and Copy operations
         KSP_impl(const KSP_impl&) = delete;
@@ -52,6 +148,9 @@ class KSP_impl
 
         //! Create PETSc objects
         void createObjects (const VecType&);
+        void destroyObjects () override;
+        //! Set the GMRES restart length, also for the objects created later
+        void setRestartLength (int);
 
         //! Set tolerances
         void setTolerances(amrex::Real, amrex::Real, int);
@@ -59,52 +158,37 @@ class KSP_impl
         //! Set max iters
         void setMaxIters(int);
 
+        //! Rebuild the PETSc matrix and preconditioner on the next linear solve.
+        void invalidatePreconditioner () { m_pc_needs_update = true; }
+
         //! Solve
         void solve(VecType&, const VecType&);
 
         //! Set verbosity
         void setVerbose(int);
 
-        //! Get number of iterations for recentmost solve
+        //! Get number of iterations for recent most solve
         inline int getNumIters() const { return m_niters; }
 
-        //! Get status for recentmost solve
+        //! Get status for recent most linear solve
         inline int getStatus() const { return m_status; }
 
-        //! Get relative norm for recentmost solve
+        //! Get relative norm for recent most solve
         inline amrex::Real getResidualNorm() const { return m_norm; }
 
         //! Check if object is defined
         [[nodiscard]] bool isDefined () const
         {
-            return m_is_defined && (m_op != nullptr);
+            return (this->m_is_defined && (m_linop != nullptr));
         }
 
-        //! Apply matrix op on given vector
-        void applyOp( VecType& a_F, const VecType& a_U);
-
-        //! Apply PC op on given vector
-        void applyPC( VecType& a_F, const VecType& a_U);
-
-        /* the following are not private to let them be accessible from
-         * non-member functions passed to PETSc */
-
-        //! Work vector
-        VecType m_U;
-        //! Work vector
-        VecType m_F;
+        //! Linear operator object
+        LinOpType* m_linop = nullptr;
 
     private:
 
-        //! Number of MPI ranks
-        int m_num_procs = -1;
-        //! MPI rank of this process
-        int m_myid = -1;
-
-        //! Local number of DOFs
-        long m_ndofs_l = 0;
-        //! Global number of DOFs
-        long m_ndofs_g = 0;
+        //! Whether the PETSc preconditioner matrix needs reassembly.
+        bool m_pc_needs_update = true;
 
         //! absolute tolerance
         amrex::Real m_atol = 1e-12;
@@ -112,32 +196,179 @@ class KSP_impl
         amrex::Real m_rtol = 1e-8;
         //! maximum iterations
         int m_maxits= 100;
+        //! GMRES restart length (negative: PETSc's default)
+        int m_restart_length = -1;
         //! verbosity
         int m_verbose = 1;
 
-        //! number of iterations for recentmost solve
+        //! number of iterations for recent most solve
         int m_niters = -1;
-        //! status for recentmost solve
+        //! status for recent most solve
         int m_status = -1;
-        //! residual norm (relative) for recentmost solve
+        //! residual norm (relative) for recent most solve
         amrex::Real m_norm = DBL_MAX;
 
-        //! Linear operator object
-        LinOpType* m_op = nullptr;
-
-        // Note: unable to use std::unique_ptr<> due to
-        // incomplete-type compilation error.
         //! Solver object
-        KSPObj* m_ksp = nullptr;
-        //! Matrix (lin operator) object
-        MatObj* m_A = nullptr;
-        //! solution vector
-        VecObj* m_x = nullptr;
-        //! right-hand-side vector
-        VecObj* m_b = nullptr;
+        std::unique_ptr<KSPObj> m_ksp;
+};
 
-        //!PETSc objects created?
-        bool m_is_defined = false;
+/**
+ * \brief Nonlinear solver using PETSc SNES
+ *
+ * This class uses PETSc's SNES to solve a nonlinear system:
+ *     G(x) = b
+ * where the x and b are of type WarpXSolverVec, and the nonlinear function G()
+ * is provided by the ImplicitSolver class.
+ *
+ * This class is used in the implicit solvers through it's wrapper PETScSNES
+ * (PETScSNES_Wrapper.H).
+ */
+class SNES_impl : public PETScSolver_impl
+{
+    public:
+
+        //! Constructor
+        SNES_impl (const VecType&, TIType*,
+                   const NonlinearSolverParams&, const NewtonSolverParams&);
+
+        //! Destructor
+        ~SNES_impl() override;
+        //! Create the PETSc objects (done by the constructor, and again after destroyObjects)
+        void createObjects ();
+        void destroyObjects () override;
+
+        //! Check if object is defined
+        [[nodiscard]] bool isDefined () const
+        {
+            return (this->m_is_defined && (m_op != nullptr) && (this->m_linop != nullptr));
+        }
+
+        //! Solve the system
+        void solve(VecType&, const VecType&, amrex::Real, amrex::Real, int) const;
+
+        //! Evaluate the RHS
+        void computeRHS(VecType&, const VecType&);
+
+        //! Prepare for the linear solve at the current iterate
+        void preLinearSolve();
+
+        //! With -snes_fd: called when the KSP solve of a Newton iteration has returned, so its
+        //! finite-difference Jacobian is complete and later residual evaluations are true residuals
+        void endFDJacobian() const { m_fd_jac_in_progress = false; }
+
+        //! Record that the PC has been set up
+        void setPCInitialized() const { m_pc_initialized = true; }
+
+        //! Require a PC update before the next linear solve.
+        void invalidatePreconditioner() { m_pc_initialized = false; }
+
+        //! Allow the owner to force PC updates during adaptive substepping.
+        void setForcePreconditionerUpdate(bool force_update)
+        {
+            m_force_pc_update = force_update;
+        }
+
+        //! Returns if a preconditioner is being used
+        [[nodiscard]] bool usePC() const;
+
+        //! Whether the PC is updated at the current nonlinear iteration.
+        [[nodiscard]] bool updatePC() const { return m_update_pc; }
+
+        //! Set verbosity
+        void setVerbose(bool);
+
+        //! Whether the residual norms are printed
+        [[nodiscard]] bool verbose() const { return m_verbose; }
+
+        //! Print parameters of the linear operator
+        void printParams () const;
+
+        AMREX_FORCE_INLINE
+        auto numIters() const { return m_niters; }
+
+        AMREX_FORCE_INLINE
+        auto numTotalIters() const { return m_total_iters; }
+
+        AMREX_FORCE_INLINE
+        auto normAbs() const { return m_norm; }
+
+        AMREX_FORCE_INLINE
+        auto normRel() const { return m_norm_rel; }
+
+        AMREX_FORCE_INLINE
+        auto numLinIters() const { return m_niters_l; }
+
+        AMREX_FORCE_INLINE
+        auto numTotalLinIters() const { return m_total_linsol_iters; }
+
+        AMREX_FORCE_INLINE
+        auto normLinResidual() const { return m_norm_lin; }
+
+        //! Get status for recent most nonlinear solve
+        inline int getStatus() const { return m_status; }
+
+        //! Using SNES FD?
+        bool m_fd_jac_comput = false;
+
+        /** With -snes_fd, SNES builds the Jacobian of each Newton iteration from residual
+         *  evaluations. True while these are in progress: from the start of a Newton
+         *  iteration until its KSP solve for the Newton update has returned.
+         */
+        mutable bool m_fd_jac_in_progress = false;
+
+        //! Linear operator object
+        std::unique_ptr<LinOpType> m_linop;
+
+    private:
+
+        //! Set the SNES and KSP tolerances and maximum iterations from the input parameters
+        void setTolerances();
+
+        //! Input parameters common to all nonlinear solvers
+        const NonlinearSolverParams& m_params;
+        //! Input parameters of the Newton-type solvers
+        const NewtonSolverParams& m_newton_params;
+
+        //! Ensure the first linear solve initializes the PC, including after restart.
+        mutable bool m_pc_initialized = false;
+        //! PC update decision for the current nonlinear iteration.
+        mutable bool m_update_pc = true;
+        //! Override the normal PC update decision until disabled by the owner.
+        bool m_force_pc_update = false;
+
+        //! verbosity
+        bool m_verbose = true;
+
+        //! number of iterations for recent most solve
+        mutable int m_niters = -1;
+        //! number of linear solver iterations for recent most solve
+        mutable int m_niters_l = -1;
+        //! status for recent most solve
+        mutable int m_status = -1;
+        //! residual norm (absolute) for recent most solve
+        mutable amrex::Real m_norm = DBL_MAX;
+        //! residual norm relative to the initial one for recent most solve
+        mutable amrex::Real m_norm_rel = DBL_MAX;
+        //! residual norm (relative) for recent most linear solve
+        mutable amrex::Real m_norm_lin = DBL_MAX;
+
+        //! Simulation time
+        mutable amrex::Real m_time = 0.0;
+        //! Time step index
+        mutable int m_step = 0;
+        //! Newton iteration index of the next residual evaluation
+        mutable int m_iter = 0;
+
+        //! Total nonlinear iterations for the diagnostic file
+        mutable int m_total_iters = 0;
+        //! Total linear iterations for the diagnostic file
+        mutable int m_total_linsol_iters = 0;
+
+        //! Implicit time integrator object
+        TIType* m_op = nullptr;
+
+        //! Solver object
+        std::unique_ptr<SNESObj> m_snes;
 };
 
 }

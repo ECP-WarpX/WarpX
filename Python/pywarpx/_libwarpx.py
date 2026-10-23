@@ -50,6 +50,14 @@ class LibWarpX:
             # return an AttributeError.
             return self.__getattribute__(attribute)
 
+    @property
+    def libwarpx_so_loaded(self):
+        """Check if the compiled ``warpx_pybind_*`` module is loaded.
+
+        Contrary to accessing ``libwarpx_so``, this does not load it.
+        """
+        return "libwarpx_so" in self.__dict__
+
     def _get_package_root(self):
         """
         Get the path to the installation location (where libwarpx.so would be installed).
@@ -74,17 +82,16 @@ class LibWarpX:
         # --- Use geometry to determine whether to import the 1D, 2D, 3D or RZ version.
         # --- The geometry must be setup before the lib warpx shared object can be loaded.
         try:
-            _prob_lo = geometry.prob_lo
-            _dims = geometry.dims
+            _dims = str(geometry.dims)
         except AttributeError:
             raise Exception(
-                "The shared object could not be loaded. The geometry must be setup before the WarpX pybind11 module can be accessesd. The geometry determines which version of the shared object to load."
+                "The shared object could not be loaded. The geometry must be setup before the WarpX pybind11 module can be accessed. The geometry determines which version of the shared object to load."
             )
 
         if _dims == "RZ":
             self.geometry_dim = "rz"
         elif _dims == "1" or _dims == "2" or _dims == "3":
-            self.geometry_dim = "%dd" % len(_prob_lo)
+            self.geometry_dim = "%dd" % int(_dims)
         else:
             raise Exception("Undefined geometry %d" % _dims)
 
@@ -130,6 +137,23 @@ class LibWarpX:
 
         self.__version__ = self.libwarpx_so.__version__
 
+        # Extend pybind11 types in libwarpx_so (and pyAMReX) with pure Python
+        from .extensions.MultiFab import register_warpx_MultiFab_extension
+        from .extensions.MultiFabRegister import (
+            register_warpx_MultiFabRegister_extension,
+        )
+        from .extensions.MultiParticleContainer import (
+            register_warpx_MultiParticleContainer_extension,
+        )
+        from .extensions.WarpXParticleContainer import (
+            register_warpx_WarpXParticleContainer_extension,
+        )
+
+        register_warpx_MultiFab_extension(self.amr)
+        register_warpx_MultiFabRegister_extension(self.libwarpx_so)
+        register_warpx_MultiParticleContainer_extension(self.libwarpx_so)
+        register_warpx_WarpXParticleContainer_extension(self.libwarpx_so)
+
     def amrex_init(self, argv, mpi_comm=None):
         if mpi_comm is None:  # or MPI is None:
             self.libwarpx_so.amrex_init(argv)
@@ -156,13 +180,22 @@ class LibWarpX:
         """
         # TODO: simplify, part of pyAMReX already
         if self.initialized:
+            self.initialized = False
             del self.warpx
-            # The call to warpx_finalize causes a crash - don't know why
-            # self.libwarpx_so.warpx_finalize()
+            # Destroy the C++ WarpX singleton (and everything it owns) before
+            # tearing down AMReX, so that its MultiFabs are freed while the
+            # Arena that allocated them still exists.
+            self.libwarpx_so.finalize()
             self.libwarpx_so.amrex_finalize()
 
-            from pywarpx import callbacks
-
+        # Callbacks can be installed without initializing WarpX, e.g. already
+        # when constructing PICMI objects. Unregister them independently of
+        # self.initialized, otherwise they leak into the next simulation in
+        # this process. If the module was never imported, no callback can be
+        # installed and there is nothing to clear - this also avoids an import
+        # while the interpreter shuts down (atexit).
+        callbacks = sys.modules.get("pywarpx.callbacks")
+        if callbacks is not None:
             callbacks.clear_all()
 
 

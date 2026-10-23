@@ -160,7 +160,10 @@ void ChargeOnEB::ComputeDiags (const int step)
         const amrex::Array4<const amrex::Real> & dSy_fraction_arr = eb_area_fraction[1]->array(mfi);
         const amrex::Array4<const amrex::Real> & dSz_fraction_arr = eb_area_fraction[2]->array(mfi);
 
-        amrex::ParallelFor( box,
+        // amrex::For: iterations accumulate into the shared surface integral;
+        // in serial (non-OpenMP) builds HostDevice::Atomic::Add is a plain +=,
+        // which is unsafe under the SIMD pragma of ParallelFor (see issue #7097)
+        amrex::For( box,
             [=] AMREX_GPU_DEVICE (int i, int j, int k) {
 
                 // Only cells that are partially covered do contribute to the integral
@@ -213,7 +216,7 @@ void ChargeOnEB::ComputeDiags (const int step)
     amrex::ParallelDescriptor::ReduceRealSum( surface_integral_value );
 
     // save data
-    m_data[0] = PhysConst::ep0 * surface_integral_value;
+    m_data[0] = PhysConst::epsilon_0 * surface_integral_value;
 #endif
 }
 // end void ChargeOnEB::ComputeDiags

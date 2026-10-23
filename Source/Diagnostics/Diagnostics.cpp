@@ -17,9 +17,9 @@
 #include "Utils/Parser/ParserUtils.H"
 #include "Utils/TextMsg.H"
 #include "Utils/WarpXAlgorithmSelection.H"
-#include "Utils/WarpXProfilerWrapper.H"
 #include "WarpX.H"
 
+#include <ablastr/profiler/ProfilerWrapper.H>
 #include <ablastr/utils/Communication.H>
 #include <ablastr/warn_manager/WarnManager.H>
 
@@ -50,6 +50,11 @@ Diagnostics::BaseReadParameters ()
 {
     auto & warpx = WarpX::GetInstance();
 
+    // Diagnostics are constructed before the checkpoint geometry is restored.
+    if (WarpX::do_moving_window) {
+        m_moving_window_initial_lo = warpx.Geom(0).ProbLo(WarpX::moving_window_dir);
+    }
+
     const amrex::ParmParse pp_diag_name(m_diag_name);
     m_file_prefix = "diags/" + m_diag_name;
     pp_diag_name.query("file_prefix", m_file_prefix);
@@ -62,8 +67,11 @@ Diagnostics::BaseReadParameters ()
     std::string dims;
     pp_geometry.get("dims", dims);
 
+    // use warpx.verbose as global diagnostic verbosity level
     const amrex::ParmParse pp_warpx("warpx");
     pp_warpx.query("verbose", m_verbose);
+    // now overwrite verbosity value if it is specified for this diagnostic instance
+    pp_diag_name.query("verbose", m_verbose);
 
     // Query list of grid fields to write to output
     const bool varnames_specified = pp_diag_name.queryarr("fields_to_plot", m_varnames_fields);
@@ -79,13 +87,22 @@ Diagnostics::BaseReadParameters ()
         }
     }
 
+    amrex::Vector< std::string > additional_varnames_fields;
+    pp_diag_name.queryarr("additional_fields_to_plot", additional_varnames_fields);
+    m_varnames_fields.insert(m_varnames_fields.end(), additional_varnames_fields.begin(), additional_varnames_fields.end());
+
     // Sanity check if user requests to plot phi
-    if (utils::algorithms::is_in(m_varnames_fields, "phi")){
-        WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-            warpx.electrostatic_solver_id==ElectrostaticSolverAlgo::LabFrame ||
-            warpx.electrostatic_solver_id==ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic ||
-            warpx.electrostatic_solver_id==ElectrostaticSolverAlgo::LabFrameEffectivePotential,
-            "plot phi only works if do_electrostatic = labframe, do_electrostatic = labframe-electromagnetostatic or do_electrostatic = labframe-effective-potential");
+    if (utils::algorithms::is_in(m_varnames_fields, "phi") && (
+            WarpX::electrostatic_solver_id != ElectrostaticSolverAlgo::LabFrame &&
+            WarpX::electrostatic_solver_id != ElectrostaticSolverAlgo::LabFrameElectroMagnetostatic &&
+            WarpX::electrostatic_solver_id != ElectrostaticSolverAlgo::LabFrameEffectivePotential
+        )
+    ){
+        ablastr::warn_manager::WMRecordWarning(
+            "Diagnostics",
+            "Electrostatic potential diagnostic is requested but an EM solver is used. A Poisson solve will be added to diagnostic output steps.",
+            ablastr::warn_manager::WarnPriority::low
+        );
     }
 
     // Sanity check if user requests to plot A
@@ -141,7 +158,7 @@ Diagnostics::BaseReadParameters ()
     for (const auto& var : m_pfield_varnames) {
 
         bool do_average = true;
-        pp_diag_pfield.query((var + ".do_average").c_str(), do_average);
+        pp_diag_pfield.query(var + ".do_average", do_average);
         m_pfield_do_average.push_back(do_average);
         utils::parser::Store_parserString(
             pp_diag_pfield, (var + "(x,y,z,ux,uy,uz)"), parser_str);
@@ -155,7 +172,7 @@ Diagnostics::BaseReadParameters ()
 
         // Look for and record filter functions. If one is not found, the empty string will be
         // stored as the filter string, and will be ignored.
-        const bool do_parser_filter = pp_diag_pfield.query((var + ".filter(x,y,z,ux,uy,uz)").c_str(), filter_parser_str);
+        const bool do_parser_filter = pp_diag_pfield.query(var + ".filter(x,y,z,ux,uy,uz)", filter_parser_str);
         m_pfield_dofilter.push_back(do_parser_filter);
         m_pfield_filter_strings.push_back(filter_parser_str);
     }
@@ -264,7 +281,7 @@ Diagnostics::BaseReadParameters ()
     // Loop over all fields stored in m_varnames
     for (const auto& var : m_varnames) {
         // Check if m_varnames contains a string of the form rho_<species_name>
-        if (var.rfind("rho_", 0) == 0) {
+        if (var.starts_with("rho_")) {
             // Extract species name from the string rho_<species_name>
             const std::string species = var.substr(var.find("rho_") + 4);
             // Boolean used to check if species name was misspelled
@@ -288,7 +305,7 @@ Diagnostics::BaseReadParameters ()
             );
         }
         // Check if m_varnames contains a string of the form T_<species_name>
-        if (var.rfind("T_", 0) == 0) {
+        if (var.starts_with("T_")) {
             // Extract species name from the string T_<species_name>
             const std::string species = var.substr(var.find("T_") + 2);
             // Boolean used to check if species name was misspelled
@@ -311,18 +328,19 @@ Diagnostics::BaseReadParameters ()
                 + ".fields_to_plot does not match any species"
             );
         }
-
-        // Check if m_varnames contains a string of the form T_<species_name>
-        if (var.rfind("Tx_", 0) == 0 || var.rfind("Ty_", 0) == 0 || var.rfind("Tz_", 0) == 0) {
-            // Extract species name from the string T_<species_name>
-            const std::string species = var.substr(var.find("T") + 3);
+        if (var.starts_with("part_per_cell_")) {
+            // Extract species name from the string part_per_cell_<species_name>
+            const std::string species = var.substr(std::string_view("part_per_cell_").size());
             // Boolean used to check if species name was misspelled
             bool species_name_is_wrong = true;
             // Loop over all species
             for (int i = 0, n = int(m_all_species_names.size()); i < n; i++) {
-                // Check if species name extracted from the string T_<species_name>
+                // Check if species name extracted from the string part_per_cell_<species_name>
                 // matches any of the species in the simulation
                 if (species == m_all_species_names[i]) {
+                    // Store species index: will be used in PartPerCellFunctor to dump
+                    // part_per_cell for this species
+                    m_part_per_cell_per_species_index.push_back(i);
                     species_name_is_wrong = false;
                 }
             }
@@ -332,6 +350,17 @@ Diagnostics::BaseReadParameters ()
                 "Input error: string " + var + " in " + m_diag_name
                 + ".fields_to_plot does not match any species"
             );
+        }
+
+        // Check if m_varnames contains a string of the form T_<species_name>
+        if (var.starts_with("Tx_") || var.starts_with("Ty_") || var.starts_with("Tz_")) {
+            // Extract species name from the string T_<species_name>
+            const std::string species = var.substr(var.find("T") + 3);
+
+            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
+                utils::algorithms::is_in(m_all_species_names, species),
+                "Input error: string " + var + " in " + m_diag_name
+                + ".fields_to_plot does not match any species");
         }
     }
 
@@ -360,7 +389,7 @@ Diagnostics::InitDataBeforeRestart ()
 }
 
 void
-Diagnostics::InitDataAfterRestart ()
+Diagnostics::InitDataAfterRestart (const MultiParticleContainer& mpc)
 {
     for (int i_buffer = 0; i_buffer < m_num_buffers; ++i_buffer) {
         // loop over all levels
@@ -387,7 +416,7 @@ Diagnostics::InitDataAfterRestart ()
     if (write_species == 1) {
         // When particle buffers, m_particle_boundary_buffer are included,
         // they will be initialized here
-        InitializeParticleBuffer();
+        InitializeParticleBuffer(mpc);
         InitializeParticleFunctors();
     }
     if (write_species == 0) {
@@ -429,7 +458,7 @@ Diagnostics::InitDataAfterRestart ()
 
 
 void
-Diagnostics::InitData ()
+Diagnostics::InitData (const MultiParticleContainer& mpc)
 {
     auto& warpx = WarpX::GetInstance();
 
@@ -466,7 +495,7 @@ Diagnostics::InitData ()
     if (write_species == 1) {
         // When particle buffers, m_particle_boundary_buffer are included,
         // they will be initialized here
-        InitializeParticleBuffer();
+        InitializeParticleBuffer(mpc);
         InitializeParticleFunctors();
     }
 
@@ -520,16 +549,15 @@ Diagnostics::InitBaseData ()
     nmax_lev = warpx.maxLevel() + 1;
     m_all_field_functors.resize( nmax_lev );
 
-    // For restart, move the m_lo and m_hi of the diag consistent with the
-    // current moving_window location
-    if (WarpX::do_moving_window) {
+    // The checkpoint geometry contains the shifts actually applied to the grid.
+    // Reconstructing them from the step count and dt can round differently at cell
+    // boundaries. Preserve each diagnostic's offset from the original simulation domain.
+    if (WarpX::do_moving_window && warpx.getistep(0) > 0) {
         const int moving_dir = WarpX::moving_window_dir;
         const amrex::Real displacement =
-            warpx.getmoving_window_x() - warpx.Geom(0).ProbLo(moving_dir);
-        const int shift_num_base = static_cast<int>
-            (displacement / warpx.Geom(0).CellSize(moving_dir));
-        m_lo[moving_dir] += shift_num_base * warpx.Geom(0).CellSize(moving_dir);
-        m_hi[moving_dir] += shift_num_base * warpx.Geom(0).CellSize(moving_dir);
+            warpx.Geom(0).ProbLo(moving_dir) - m_moving_window_initial_lo;
+        m_lo[moving_dir] += displacement;
+        m_hi[moving_dir] += displacement;
     }
     // Construct Flush class.
     if        (m_format == "plotfile"){
@@ -643,7 +671,7 @@ Diagnostics::ComputeAndPack ()
 void
 Diagnostics::FilterComputePackFlush (int step, bool force_flush)
 {
-    WARPX_PROFILE("Diagnostics::FilterComputePackFlush()");
+    ABLASTR_PROFILE("Diagnostics::FilterComputePackFlush()");
     MovingWindowAndGalileanDomainShift (step);
 
     if ( DoComputeAndPack (step, force_flush) ) {

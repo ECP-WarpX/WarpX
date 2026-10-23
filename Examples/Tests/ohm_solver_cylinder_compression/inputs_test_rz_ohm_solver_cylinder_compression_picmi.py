@@ -15,7 +15,7 @@ import numpy as np
 import openpmd_api as io
 from mpi4py import MPI as mpi
 
-from pywarpx import fields, picmi
+from pywarpx import picmi
 
 constants = picmi.constants
 
@@ -58,7 +58,7 @@ class PlasmaCylinderCompression(object):
     NPPC = 100
 
     # Number of substeps used to update B
-    substeps = 30
+    substeps = 60
 
     def Bz(self, r):
         return np.sqrt(
@@ -213,9 +213,9 @@ class PlasmaCylinderCompression(object):
         self.rho_i = self.vi_th / self.w_ci
 
     def load_fields(self):
-        Br = fields.BxFPExternalWrapper()
-        Bt = fields.ByFPExternalWrapper()
-        Bz = fields.BzFPExternalWrapper()
+        Br = simulation.fields.get("Bfield_fp_external", dir="r", level=0)
+        Bt = simulation.fields.get("Bfield_fp_external", dir="theta", level=0)
+        Bz = simulation.fields.get("Bfield_fp_external", dir="z", level=0)
 
         Br[:, :] = 0.0
         Bt[:, :] = 0.0
@@ -286,7 +286,7 @@ class PlasmaCylinderCompression(object):
         # Add field loader callback
         B_ext = picmi.LoadInitialFieldFromPython(
             load_from_python=self.load_fields,
-            warpx_do_divb_cleaning_external=True,
+            warpx_do_initial_div_cleaning=True,
             load_B=True,
             load_E=False,
         )

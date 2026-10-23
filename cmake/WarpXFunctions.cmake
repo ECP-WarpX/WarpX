@@ -1,11 +1,11 @@
-# Set C++17 for the whole build if not otherwise requested
+# Set C++20 for the whole build if not otherwise requested
 #
-# This is the easiest way to push up a C++17 requirement for AMReX, PICSAR and
+# This is the easiest way to push up a C++20 requirement for AMReX, PICSAR and
 # openPMD-api until they increase their requirement.
 #
-macro(set_cxx17_superbuild)
+macro(set_cxx20_superbuild)
     if(NOT DEFINED CMAKE_CXX_STANDARD)
-        set(CMAKE_CXX_STANDARD 17)
+        set(CMAKE_CXX_STANDARD 20)
     endif()
     if(NOT DEFINED CMAKE_CXX_EXTENSIONS)
         set(CMAKE_CXX_EXTENSIONS OFF)
@@ -15,7 +15,7 @@ macro(set_cxx17_superbuild)
     endif()
 
     if(NOT DEFINED CMAKE_CUDA_STANDARD)
-        set(CMAKE_CUDA_STANDARD 17)
+        set(CMAKE_CUDA_STANDARD 20)
     endif()
     if(NOT DEFINED CMAKE_CUDA_EXTENSIONS)
         set(CMAKE_CUDA_EXTENSIONS OFF)
@@ -171,41 +171,40 @@ macro(set_default_build_type default_build_type)
     endif()
 endmacro()
 
-# Set CXX
-# Note: this is a bit legacy and one should use CMake TOOLCHAINS instead.
+# Set compile warnings
 #
-macro(set_cxx_warnings)
+function(warpx_set_compile_warnings tgt)
     # On Windows, Clang -Wall aliases -Weverything; default is /W3
     if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" AND NOT WIN32)
-        # list(APPEND CMAKE_CXX_FLAGS "-fsanitize=address") # address, memory, undefined
-        # set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address")
-        # set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fsanitize=address")
-        # set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -fsanitize=address")
-
-        # note: might still need a
+        # To find memory issues at runtime:
+        # - Add "-fsanitize=address" to the compile options
+        # - set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address")
+        # - set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fsanitize=address")
+        # - set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -fsanitize=address")
+        # You might still need
         #   export LD_PRELOAD=libclang_rt.asan.so
-        # or on Debian 9 with Clang 6.0
+        # or, on Debian 9 with Clang 6.0,
         #   export LD_PRELOAD=/usr/lib/llvm-6.0/lib/clang/6.0.0/lib/linux/libclang_rt.asan-x86_64.so:
         #                     /usr/lib/llvm-6.0/lib/clang/6.0.0/lib/linux/libclang_rt.ubsan_minimal-x86_64.so
-        # at runtime when used with symbol-hidden code (e.g. pybind11 module)
-
-        #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Weverything")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -Wshadow -Woverloaded-virtual -Wextra-semi -Wunreachable-code")
+        # at runtime when used with symbol-hidden code (e.g., pybind11 module).
+        target_compile_options(${tgt} PRIVATE -Wall -Wextra -Wpedantic -Wshadow -Woverloaded-virtual -Wextra-semi -Wunreachable-code)
     elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -Wshadow -Woverloaded-virtual -Wextra-semi -Wunreachable-code")
+        target_compile_options(${tgt} PRIVATE -Wall -Wextra -Wpedantic -Wshadow -Woverloaded-virtual -Wextra-semi -Wunreachable-code)
     elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -Wshadow -Woverloaded-virtual -Wunreachable-code")
+        target_compile_options(${tgt} PRIVATE -Wall -Wextra -Wshadow -Woverloaded-virtual -Wunreachable-code -Wno-array-bounds)
+        if(NOT WarpX_COMPUTE STREQUAL CUDA)
+            # In older NVCC, -Wpedantic causes "warning: style of line directive is a GCC extension"
+            target_compile_options(${tgt} PRIVATE -Wpedantic)
+        endif()
     elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
-        # Warning C4503: "decorated name length exceeded, name was truncated"
-        # Symbols longer than 4096 chars are truncated (and hashed instead)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -wd4503")
-        # Yes, you should build against the same C++ runtime and with same
-        # configuration (Debug/Release). MSVC does inconvenient choices for their
-        # developers, so be it. (Our Windows-users use conda-forge builds, which
-        # are consistent.)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -wd4251")
+        # Warning C4503: "decorated name length exceeded, name was truncated".
+        # Symbols longer than 4096 chars are truncated (and hashed instead).
+        # You should build against the same C++ runtime and with the same configuration (Debug/Release).
+        # MSVC does inconvenient choices for their developers, so be it.
+        # Our Windows-users use conda-forge builds, which are consistent.
+        target_compile_options(${tgt} PRIVATE /wd4503 /wd4251)
     endif ()
-endmacro()
+endfunction()
 
 # Enables interprocedural optimization for a list of targets
 #
@@ -237,6 +236,128 @@ macro(warpx_set_suffix_dims suffix dim)
         set(${suffix} ${dim}d)
     endif()
 endmacro()
+
+# Set the PYTHONPATH (and PATH, for .dll files on Windows) on a test, so that
+# the build tree is importable without installing our Python packages first.
+#
+# The build tree is prepended, so that an already installed pywarpx cannot
+# shadow the freshly built one.
+#
+# test_name: name of an already registered ctest test
+#
+function(warpx_test_set_pythonpath test_name)
+    if(WIN32)
+        string(REPLACE ";" "\\;" WIN_PYTHONPATH "$ENV{PYTHONPATH}")
+        string(REPLACE ";" "\\;" WIN_PATH "$ENV{PATH}")  # DLLs
+        string(REGEX REPLACE "/" "\\\\" WIN_PYTHON_OUTPUT_DIRECTORY ${CMAKE_PYTHON_OUTPUT_DIRECTORY})
+        # shared library note:
+        #   For Windows Python 3.8+, this also needs to be injected via
+        #   os.add_dll_directory.
+        #   https://github.com/python/cpython/issues/80266
+        #   https://docs.python.org/3.8/library/os.html#os.add_dll_directory
+        set_property(TEST ${test_name}
+            APPEND PROPERTY ENVIRONMENT
+                "PYTHONPATH=${WIN_PYTHON_OUTPUT_DIRECTORY}\;${WIN_PYTHONPATH}"
+        )
+        #   collect all DLL directories into a single PATH entry: repeating the
+        #   key in the ENVIRONMENT property would keep only the last one
+        #   note: WarpX_amrex_dim maps RZ->2, RCYLINDER/RSPHERE->1 (see top-level CMakeLists.txt)
+        set(WIN_DLL_DIRS "$<TARGET_FILE_DIR:pyWarpX_${WarpX_DIMS_LAST}>")
+        foreach(D IN LISTS WarpX_amrex_dim)
+            string(APPEND WIN_DLL_DIRS "\;$<TARGET_FILE_DIR:AMReX::amrex_${D}d>")
+        endforeach()
+        set_property(TEST ${test_name}
+            APPEND PROPERTY ENVIRONMENT "PATH=${WIN_DLL_DIRS}\;${WIN_PATH}"
+        )
+    else()
+        #   note: a trailing separator would put the current working directory
+        #         on sys.path, so only append an existing PYTHONPATH
+        if(DEFINED ENV{PYTHONPATH})
+            set(WARPX_TEST_PYTHONPATH "${CMAKE_PYTHON_OUTPUT_DIRECTORY}:$ENV{PYTHONPATH}")
+        else()
+            set(WARPX_TEST_PYTHONPATH "${CMAKE_PYTHON_OUTPUT_DIRECTORY}")
+        endif()
+        set_property(TEST ${test_name}
+            APPEND PROPERTY ENVIRONMENT "PYTHONPATH=${WARPX_TEST_PYTHONPATH}"
+        )
+    endif()
+endfunction()
+
+
+set(_warpx_pytest_dims "1;2;3;RZ")
+
+# Add the pytest-based unit test suite for one dimensionality.
+#
+# The tests themselves are dimensionality-agnostic: every dimensionality runs
+# the same directory and the suite adapts, skipping what does not apply. What
+# cannot be shared is the process, because a compiled warpx_pybind_* module can
+# only be imported once per process (see Python/pywarpx/_libwarpx.py). We
+# therefore register one ctest test per built dimensionality and tell each of
+# them which one to use through WARPX_TEST_DIMS.
+#
+# Test names are pytest.WarpX.<suffix>, so that
+#   ctest -R pytest             runs all of them and
+#   ctest -R pytest.WarpX.3d    runs a single dimensionality.
+#
+# dims: 1, 2, 3, RZ
+#
+function(add_warpx_pytest dims)
+    # pytest tests drive WarpX through its Python bindings
+    if(NOT WarpX_PYTHON)
+        return()
+    endif()
+
+    # cannot run tests with unsupported geometry
+    if(NOT dims IN_LIST WarpX_DIMS)
+        return()
+    endif()
+
+    # pywarpx cannot select RCYLINDER or RSPHERE yet, even though they are
+    # valid WarpX_DIMS values, see LibWarpX.load_library
+    if(NOT dims IN_LIST _warpx_pytest_dims)
+        return()
+    endif()
+
+    # set dimension suffix
+    warpx_set_suffix_dims(SD ${dims})
+
+    set(THIS_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+
+    set(name pytest.WarpX.${SD})
+
+    # make a unique run directory
+    file(MAKE_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${name})
+    set(THIS_WORKING_DIR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${name})
+
+    if(NOT Python_EXECUTABLE)
+        find_package(Python COMPONENTS Interpreter REQUIRED)
+    endif()
+
+    add_test(
+        NAME ${name}
+        COMMAND
+            ${Python_EXECUTABLE} -m pytest -s -vvvv
+            -p no:cacheprovider
+            ${THIS_TEST_DIR}
+        WORKING_DIRECTORY ${THIS_WORKING_DIR}
+    )
+
+    # run all tests with 1 OpenMP thread by default
+    set_property(TEST ${name} APPEND PROPERTY ENVIRONMENT "OMP_NUM_THREADS=1")
+
+    # the tests are run from the source directory: keep __pycache__ out of it,
+    # which also avoids concurrent writes when several dimensionalities run
+    set_property(TEST ${name} APPEND PROPERTY ENVIRONMENT "PYTHONDONTWRITEBYTECODE=1")
+
+    # the dimensionality this process runs; a bare pytest run without it picks
+    # one of the built dimensionalities itself
+    set_property(TEST ${name} APPEND PROPERTY ENVIRONMENT "WARPX_TEST_DIMS=${dims}")
+
+    set_property(TEST ${name} APPEND PROPERTY LABELS "pytest")
+
+    warpx_test_set_pythonpath(${name})
+endfunction()
+
 
 # Take an <imported_target> and expose it as INTERFACE target with
 # WarpX::thirdparty::<propagated_name> naming and SYSTEM includes.
@@ -455,9 +576,11 @@ function(warpx_print_summary)
     message("    ASCENT: ${WarpX_ASCENT}")
     message("    CATALYST: ${WarpX_CATALYST}")
     message("    COMPUTE: ${WarpX_COMPUTE}")
+    message("    FASTMATH: ${WarpX_FASTMATH}")
     message("    SIMD: ${WarpX_SIMD}")
     message("    DIMS: ${WarpX_DIMS}")
     message("    Embedded Boundary: ${WarpX_EB}")
+    message("    PETSc: ${WarpX_PETSC}")
     message("    IPO/LTO: ${WarpX_IPO}")
     message("    LIB: ${WarpX_LIB}${LIB_TYPE}")
     message("    MPI: ${WarpX_MPI}")

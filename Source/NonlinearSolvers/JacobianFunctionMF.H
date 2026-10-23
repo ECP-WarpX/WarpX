@@ -8,8 +8,7 @@
 #define JacobianFunctionMF_H_
 
 #include "LinearFunction.H"
-#include "CurlCurlMLMGPC.H"
-#include "JacobiPC.H"
+#include "PreconditionerLibrary.H"
 #include "Utils/TextMsg.H"
 #include <AMReX_Config.H>
 #include <string>
@@ -29,7 +28,7 @@ class JacobianFunctionMF : public LinearFunction<T,Ops>
     using RT = typename T::value_type;
 
     JacobianFunctionMF() = default;
-    ~JacobianFunctionMF() = default;
+    ~JacobianFunctionMF() override = default;
 
     // Default move and copy operations
     JacobianFunctionMF(const JacobianFunctionMF&) = default;
@@ -51,15 +50,27 @@ class JacobianFunctionMF : public LinearFunction<T,Ops>
     }
 
     inline
-    void updatePreCondMat ( const T&  a_X ) override
+    void updatePreCondMat () override
     {
-        if (m_usePreCond) { m_preCond->Update(a_X); }
+        if (m_usePreCond) { m_preCond->Update(); }
     }
+
+    inline
+    void getPCMatrix( amrex::Gpu::DeviceVector<int>& a_ridx_g,
+                      amrex::Gpu::DeviceVector<int>& a_nnz,
+                      amrex::Gpu::DeviceVector<int>& a_cidx_g,
+                      amrex::Gpu::DeviceVector<RT>&  a_aij,
+                      int& a_n, int& a_ncols_max ) override
+    {
+        AMREX_ALWAYS_ASSERT(m_usePreCond);
+        m_preCond->getPCMatrix(a_ridx_g, a_nnz, a_cidx_g, a_aij, a_n, a_ncols_max);
+    }
+
 
     T makeVecLHS () const override;
     T makeVecRHS () const override;
 
-    inline
+    [[nodiscard]] inline
     bool isDefined() const { return m_is_defined;  }
 
     [[nodiscard]] inline
@@ -114,7 +125,7 @@ class JacobianFunctionMF : public LinearFunction<T,Ops>
 
     void define( const T&, Ops*, const PreconditionerType& ) override;
 
-    inline
+    [[nodiscard]] inline
     PreconditionerType pcType () const override { return m_pc_type; }
 
     private:
@@ -153,17 +164,11 @@ void JacobianFunctionMF<T,Ops>::define ( const T& a_U,
             m_preCond = std::make_unique<CurlCurlMLMGPC<T,Ops>>();
         } else if (m_pc_type == PreconditionerType::pc_jacobi) {
             m_preCond = std::make_unique<JacobiPC<T,Ops>>();
-        } else if (m_pc_type == PreconditionerType::pc_petsc) {
-#ifdef AMREX_USE_PETSC
-            WARPX_ABORT_WITH_MESSAGE("JacobianFunctionMF::Define(): pc_petsc not yet implemented");
-#else
-            WARPX_ABORT_WITH_MESSAGE("JacobianFunctionMF::Define(): must compile with PETSc to use pc_petsc (AMREX_USE_PETSC must be defined)");
-#endif
+        } else if (m_pc_type == PreconditionerType::pc_algmg) {
+            m_preCond = std::make_unique<AlgMGPC<T,Ops>>();
         } else {
-            std::stringstream convergenceMsg;
-            convergenceMsg << "JacobianFunctionMF::define(): " << amrex::getEnumNameString(m_pc_type)
-                            << " is not a valid preconditioner type.";
-            WARPX_ABORT_WITH_MESSAGE(convergenceMsg.str());
+            m_preCond = std::make_unique<ExternLibPC<T,Ops>>();
+            m_preCond->setName(amrex::getEnumNameString(m_pc_type));
         }
         m_preCond->Define(a_U, a_ops);
     }
@@ -221,7 +226,8 @@ void JacobianFunctionMF<T,Ops>::apply (T& a_dF, const T& a_dU)
         const RT eps_inv = 1.0_rt/eps;
 
         m_Z.linComb( 1.0, m_Y0, eps, a_dU ); // Z = Y0 + eps*dU
-        m_ops->ComputeRHS(m_R, m_Z, m_cur_time, -1, true );
+        m_ops->ComputeRHS(m_R, m_Z, m_cur_time, /*a_nl_iter=*/-1,
+                          /*a_from_jacobian=*/true, /*update_pc=*/false);
 
         // F(Y) = Y - b - R(Y) ==> dF = dF/dY*dU = [1 - dR/dY]*dU
         //                            = dU - (R(Z)-R(Y0))/eps

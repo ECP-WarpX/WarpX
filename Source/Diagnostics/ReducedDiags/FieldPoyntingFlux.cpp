@@ -14,6 +14,7 @@
 
 #include <ablastr/fields/MultiFabRegister.H>
 #include <ablastr/coarsen/sample.H>
+#include <ablastr/utils/Enums.H>
 
 #include <AMReX_Array.H>
 #include <AMReX_Array4.H>
@@ -30,7 +31,6 @@
 #include <AMReX_ParallelDescriptor.H>
 #include <AMReX_ParmParse.H>
 #include <AMReX_REAL.H>
-#include <AMReX_Reduce.H>
 #include <AMReX_Tuple.H>
 #include <AMReX_Vector.H>
 
@@ -103,18 +103,21 @@ void FieldPoyntingFlux::ComputeDiags (int /*step*/)
     // This will be called at the end of the time step. Only calculate the
     // flux if it had not already been calculated mid step.
     if (!use_mid_step_value) {
-        ComputePoyntingFlux();
+        auto & warpx = WarpX::GetInstance();
+        int const lev = 0;
+        amrex::Real const dt = warpx.getdt(lev);
+        ComputePoyntingFlux(dt);
     }
 }
 
-void FieldPoyntingFlux::ComputeDiagsMidStep (int /*step*/)
+void FieldPoyntingFlux::ComputeDiagsMidStep (int /*step*/, amrex::Real dt)
 {
     // If this is called, always use the value calculated here.
     use_mid_step_value = true;
-    ComputePoyntingFlux();
+    ComputePoyntingFlux(dt);
 }
 
-void FieldPoyntingFlux::ComputePoyntingFlux ()
+void FieldPoyntingFlux::ComputePoyntingFlux (amrex::Real dt)
 {
     using warpx::fields::FieldType;
     using ablastr::fields::Direction;
@@ -143,12 +146,6 @@ void FieldPoyntingFlux::ComputePoyntingFlux ()
     amrex::MultiFab const & Bx = *warpx.m_fields.get(FieldType::Bfield_fp, Direction{0}, lev);
     amrex::MultiFab const & By = *warpx.m_fields.get(FieldType::Bfield_fp, Direction{1}, lev);
     amrex::MultiFab const & Bz = *warpx.m_fields.get(FieldType::Bfield_fp, Direction{2}, lev);
-
-    // Coarsening ratio (no coarsening)
-    amrex::GpuArray<int,3> const cr{1,1,1};
-
-    // Reduction component (fourth component in Array4)
-    constexpr int comp = 0;
 
     // Index type (staggering) of each MultiFab
     // (with third component set to zero in 2D)
@@ -189,10 +186,6 @@ void FieldPoyntingFlux::ComputePoyntingFlux ()
         dxtemp[face_dir] = 1._rt;
         amrex::Real const dA = AMREX_D_TERM(dxtemp[0], *dxtemp[1], *dxtemp[2]);
 
-        // Node-centered in the face direction, Cell-centered in other directions
-        amrex::GpuArray<int,3> cc{0,0,0};
-        cc[face_dir] = 1;
-
         // Only calculate the ExB term that is normal to the surface.
         // normal_dir is the normal direction relative to the WarpX coordinates
 #if (defined WARPX_DIM_XZ) || (defined WARPX_DIM_RZ)
@@ -206,11 +199,10 @@ void FieldPoyntingFlux::ComputePoyntingFlux ()
         int const normal_dir = face_dir;
 #endif
 
-        amrex::ReduceOps<amrex::ReduceOpSum> reduce_ops;
-        amrex::ReduceData<amrex::Real> reduce_data(reduce_ops);
+        amrex::Real flux = 0._rt;
 
 #ifdef AMREX_USE_OMP
-#pragma omp parallel if (amrex::Gpu::notInLaunchRegion())
+#pragma omp parallel if (amrex::Gpu::notInLaunchRegion()) reduction(+:flux)
 #endif
         // Loop over boxes, interpolate E,B data to cell face centers
         // and compute sum over cells of (E x B) components
@@ -223,7 +215,9 @@ void FieldPoyntingFlux::ComputePoyntingFlux ()
             amrex::Array4<const amrex::Real> const & By_arr = By[mfi].array();
             amrex::Array4<const amrex::Real> const & Bz_arr = Bz[mfi].array();
 
-            amrex::Box box = enclosedCells(mfi.nodaltilebox());
+            // This produces a box that is node center in the face direction
+            // and cell centered in the other directions
+            amrex::Box box = mfi.tilebox(amrex::IntVect::TheZeroVector());
             box.surroundingNodes(face_dir);
 
             // Find the intersection with the boundary
@@ -262,44 +256,54 @@ void FieldPoyntingFlux::ComputePoyntingFlux ()
             // Compute E x B
             // On GPU, reduce_ops doesn't work with empty boxes.
             if (box.ok()) {
-                reduce_ops.eval(box, reduce_data,
-                    [=] AMREX_GPU_DEVICE (int i, int j, int k) -> amrex::GpuTuple<amrex::Real>
-                    {
-                        amrex::Real Ex_cc = 0._rt, Ey_cc = 0._rt, Ez_cc = 0._rt;
-                        amrex::Real Bx_cc = 0._rt, By_cc = 0._rt, Bz_cc = 0._rt;
-
-                        if (normal_dir == 1 || normal_dir == 2) {
-                            Ex_cc = ablastr::coarsen::sample::Interp(Ex_arr, Ex_stag, cc, cr, i, j, k, comp);
-                            Bx_cc = ablastr::coarsen::sample::Interp(Bx_arr, Bx_stag, cc, cr, i, j, k, comp);
-                        }
-
-                        if (normal_dir == 0 || normal_dir == 2) {
-                            Ey_cc = ablastr::coarsen::sample::Interp(Ey_arr, Ey_stag, cc, cr, i, j, k, comp);
-                            By_cc = ablastr::coarsen::sample::Interp(By_arr, By_stag, cc, cr, i, j, k, comp);
-                        }
-                        if (normal_dir == 0 || normal_dir == 1) {
-                            Ez_cc = ablastr::coarsen::sample::Interp(Ez_arr, Ez_stag, cc, cr, i, j, k, comp);
-                            Bz_cc = ablastr::coarsen::sample::Interp(Bz_arr, Bz_stag, cc, cr, i, j, k, comp);
-                        }
-
-                        amrex::Real const af = area_factor(i,j,k);
-                        if      (normal_dir == 0) { return af*(Ey_cc * Bz_cc - Ez_cc * By_cc); }
-                        else if (normal_dir == 1) { return af*(Ez_cc * Bx_cc - Ex_cc * Bz_cc); }
-                        else                      { return af*(Ex_cc * By_cc - Ey_cc * Bx_cc); }
-                    });
+                if (WarpX::grid_type == ablastr::utils::enums::GridType::Staggered ||
+                    WarpX::grid_type == ablastr::utils::enums::GridType::Hybrid) {
+                    if (normal_dir == 0) {
+                        flux += Poynting::Kernel<0, PoyntingStaggered>(box, Ex_arr, Ey_arr, Ez_arr, Bx_arr, By_arr, Bz_arr, area_factor);
+                    }
+                    else if (normal_dir == 1) {
+                        flux += Poynting::Kernel<1, PoyntingStaggered>(box, Ex_arr, Ey_arr, Ez_arr, Bx_arr, By_arr, Bz_arr, area_factor);
+                    }
+                    else if (normal_dir == 2) {
+                        flux += Poynting::Kernel<2, PoyntingStaggered>(box, Ex_arr, Ey_arr, Ez_arr, Bx_arr, By_arr, Bz_arr, area_factor);
+                    }
+                }
+                else if (WarpX::grid_type == ablastr::utils::enums::GridType::Collocated && Ex.is_nodal()) {
+                    if (normal_dir == 0) {
+                        flux += Poynting::Kernel<0, PoyntingNodal>(box, Ex_arr, Ey_arr, Ez_arr, Bx_arr, By_arr, Bz_arr, area_factor);
+                    }
+                    else if (normal_dir == 1) {
+                        flux += Poynting::Kernel<1, PoyntingNodal>(box, Ex_arr, Ey_arr, Ez_arr, Bx_arr, By_arr, Bz_arr, area_factor);
+                    }
+                    else if (normal_dir == 2) {
+                        flux += Poynting::Kernel<2, PoyntingNodal>(box, Ex_arr, Ey_arr, Ez_arr, Bx_arr, By_arr, Bz_arr, area_factor);
+                    }
+                }
+                else if (WarpX::grid_type == ablastr::utils::enums::GridType::Collocated && Ex.is_cell_centered()) {
+                    if (normal_dir == 0) {
+                        flux += Poynting::Kernel<0, PoyntingCellCentered>(box, Ex_arr, Ey_arr, Ez_arr, Bx_arr, By_arr, Bz_arr, area_factor);
+                    }
+                    else if (normal_dir == 1) {
+                        flux += Poynting::Kernel<1, PoyntingCellCentered>(box, Ex_arr, Ey_arr, Ez_arr, Bx_arr, By_arr, Bz_arr, area_factor);
+                    }
+                    else if (normal_dir == 2) {
+                        flux += Poynting::Kernel<2, PoyntingCellCentered>(box, Ex_arr, Ey_arr, Ez_arr, Bx_arr, By_arr, Bz_arr, area_factor);
+                    }
+                }
+                else {
+                    WARPX_ABORT_WITH_MESSAGE("FieldPoyntingFlux::ComputePoyntingFlux: unknown grid centering being used");
+                }
             }
         }
 
         int const sign = (face().isLow() ? -1 : 1);
-        auto r = reduce_data.value();
         int const ii = int(face());
-        m_data[ii] = sign*amrex::get<0>(r)/PhysConst::mu0*dA;
+        m_data[ii] = sign*flux/PhysConst::mu0*dA;
 
     }
 
     amrex::ParallelDescriptor::ReduceRealSum(m_data.data(), 2*AMREX_SPACEDIM);
 
-    amrex::Real const dt = warpx.getdt(lev);
     for (int ii=0 ; ii < 2*AMREX_SPACEDIM ; ii++) {
         m_data[ii + 2*AMREX_SPACEDIM] += m_data[ii]*dt;
     }

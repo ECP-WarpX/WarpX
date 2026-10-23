@@ -14,6 +14,7 @@
 #include <ablastr/warn_manager/WarnManager.H>
 #include <ablastr/math/fft/AnyFFT.H>
 #include <ablastr/fields/Interpolate.H>
+#include <ablastr/fields/MLMGOptions.H>
 #include <ablastr/fields/MultiFabRegister.H>
 #include <ablastr/profiler/ProfilerWrapper.H>
 
@@ -65,12 +66,10 @@ namespace ablastr::fields {
  *
  * \param[in] rho The charge density a given species
  * \param[in] finest_level The most refined mesh refinement level
- * \param[in] absolute_tolerance The absolute convergence threshold for the MLMG solver
  */
 inline amrex::Real getMaxNormRho (
     ablastr::fields::ConstMultiLevelScalarField const& rho,
-    int finest_level,
-    amrex::Real & absolute_tolerance)
+    int finest_level)
 {
     amrex::Real max_norm_rho = 0.0;
     for (int lev=0; lev<=finest_level; lev++) {
@@ -79,7 +78,6 @@ inline amrex::Real getMaxNormRho (
     amrex::ParallelDescriptor::ReduceRealMax(max_norm_rho);
 
     if (max_norm_rho == 0) {
-        if (absolute_tolerance == 0.0) { absolute_tolerance = amrex::Real(1e-6); }
         ablastr::warn_manager::WMRecordWarning(
                 "ElectrostaticSolver",
                 "Max norm of rho is 0",
@@ -157,11 +155,11 @@ inline void interpolatePhiBetweenLevels (
 /** Compute the potential `phi` by solving the Poisson equation
  *
  * Uses `rho` as a source, assuming that the source moves at a
- * constant speed \f$\vec{\beta}\f$. This uses the AMReX solver.
+ * constant speed \f$\boldsymbol{\beta}\f$. This uses the AMReX solver.
  *
  * More specifically, this solves the equation
  * \f[
- *   \vec{\nabla}^2 r \phi - (\vec{\beta}\cdot\vec{\nabla})^2 r \phi = -\frac{r \rho}{\epsilon_0}
+ *   \nabla^2 r \phi - (\boldsymbol{\beta}\cdot\boldsymbol{\nabla})^2 r \phi = -\frac{r \rho}{\epsilon_0}
  * \f]
  *
  * \tparam T_PostPhiCalculationFunctor a calculation per level directly after phi was calculated
@@ -170,10 +168,7 @@ inline void interpolatePhiBetweenLevels (
  * \param[in] rho The charge density a given species
  * \param[out] phi The potential to be computed by this function
  * \param[in] beta Represents the velocity of the source of `phi`
- * \param[in] relative_tolerance The relative convergence threshold for the MLMG solver
- * \param[in] absolute_tolerance The absolute convergence threshold for the MLMG solver
- * \param[in] max_iters The maximum number of iterations allowed for the MLMG solver
- * \param[in] verbosity The verbosity setting for the MLMG solver
+ * \param[in] mlmg_options Settings for the MLMG solve, @see ablastr::fields::MLMGOptions
  * \param[in] geom the geometry per level (e.g., from AmrMesh)
  * \param[in] dmap the distribution mapping per level (e.g., from AmrMesh)
  * \param[in] grids the grids per level (e.g., from AmrMesh)
@@ -198,10 +193,7 @@ computePhi (
     ablastr::fields::MultiLevelScalarField const& rho,
     ablastr::fields::MultiLevelScalarField const& phi,
     std::array<amrex::Real, 3> const beta,
-    amrex::Real relative_tolerance,
-    amrex::Real absolute_tolerance,
-    int max_iters,
-    int verbosity,
+    MLMGOptions const & mlmg_options,
     amrex::Vector<amrex::Geometry> const& geom,
     amrex::Vector<amrex::DistributionMapping> const& dmap,
     amrex::Vector<amrex::BoxArray> const& grids,
@@ -212,9 +204,9 @@ computePhi (
     bool do_single_precision_comms = false,
     std::optional<amrex::Vector<amrex::IntVect> > rel_ref_ratio = std::nullopt,
     [[maybe_unused]] T_PostPhiCalculationFunctor post_phi_calculation = std::nullopt,
-    [[maybe_unused]] T_BoundaryHandler const boundary_handler = std::nullopt,
+    [[maybe_unused]] T_BoundaryHandler const& boundary_handler = std::nullopt,
     [[maybe_unused]] std::optional<amrex::Real const> current_time = std::nullopt, // only used for EB
-    [[maybe_unused]] std::optional<amrex::Vector<T_FArrayBoxFactory const *> > eb_farray_box_factory = std::nullopt // only used for EB
+    [[maybe_unused]] const std::optional<amrex::Vector<T_FArrayBoxFactory const *> >& eb_farray_box_factory = std::nullopt // only used for EB
 )
 {
     using namespace amrex::literals;
@@ -261,11 +253,23 @@ computePhi (
             [](const auto b){return (b<1.0_rt);}),
         "Components of beta_solver must be < 1.");
 
-    // determine if rho is zero everywhere
-    const amrex::Real max_norm_b = getMaxNormRho(
-        amrex::GetVecOfConstPtrs(rho), finest_level, absolute_tolerance);
-
     amrex::LPInfo info;
+    applyMLMGOptions(info, mlmg_options);
+
+#if (defined(ABLASTR_USE_FFT) && defined(WARPX_DIM_3D))
+    // determine if rho is zero everywhere
+    amrex::Real const max_norm_b = getMaxNormRho(
+        amrex::GetVecOfConstPtrs(rho), finest_level);
+
+    // A charge density that is zero everywhere makes a purely relative
+    // convergence criterion meaningless, so require a finite absolute
+    // tolerance in that case.
+    amrex::Real const absolute_tolerance =
+        (max_norm_b == 0._rt && mlmg_options.absolute_tolerance == 0._rt) ?
+            amrex::Real(1.e-6) : mlmg_options.absolute_tolerance;
+#else
+    amrex::Real const absolute_tolerance = mlmg_options.absolute_tolerance;
+#endif
 
     for (int lev=0; lev<=finest_level; lev++) {
         amrex::Array<amrex::Real,AMREX_SPACEDIM> const dx_scaled
@@ -279,14 +283,14 @@ computePhi (
             if ( max_norm_b == 0 ) {
                 phi[lev]->setVal(0);
             } else {
-                computePhiIGF( *rho[lev], *phi[lev], dx_scaled, grids[lev], is_igf_2d);
+                computePhiIGF( *rho[lev], *phi[lev], dx_scaled, is_igf_2d);
             }
             continue;
         }
 #endif
         // Use the Multigrid (MLMG) solver if selected or on refined patches
         // but first scale rho appropriately
-        rho[lev]->mult(-1._rt / ablastr::constant::SI::ep0);
+        rho[lev]->mult(-1._rt / ablastr::constant::SI::epsilon_0);
 
 #ifdef WARPX_DIM_RZ
         constexpr bool is_rz = true;
@@ -402,9 +406,9 @@ computePhi (
 
         // Solve the Poisson equation
         amrex::MLMG mlmg(*linop); // actual solver defined here
-        mlmg.setVerbose(verbosity);
-        mlmg.setMaxIter(max_iters);
-        mlmg.setConvergenceNormType((max_norm_b > 0) ? amrex::MLMGNormType::bnorm : amrex::MLMGNormType::greater);
+        applyMLMGOptions(mlmg, mlmg_options);
+        mlmg.setConvergenceNormType(amrex::MLMGNormType::greater);
+        mlmg.setNoGpuSync(true);
 
         const int ng = int(grid_type == utils::enums::GridType::Collocated); // ghost cells
         if (ng) {
@@ -413,9 +417,11 @@ computePhi (
             mlmg.setFinalFillBC(true);
         }
 
+        rho[lev]->OverrideSync(geom[lev].periodicity());
+
         // Solve Poisson equation at lev
         mlmg.solve( {phi[lev]}, {rho[lev]},
-                     relative_tolerance, absolute_tolerance );
+                     mlmg_options.relative_tolerance, absolute_tolerance );
 
         const amrex::IntVect& refratio = rel_ref_ratio.value()[lev];
         const int ncomp = linop->getNComp();
@@ -441,7 +447,7 @@ computePhi (
                 post_phi_calculation.value()(mlmg, lev);
             }
         }
-        rho[lev]->mult(-ablastr::constant::SI::ep0);  // Multiply rho by epsilon again
+        rho[lev]->mult(-ablastr::constant::SI::epsilon_0);  // Multiply rho by epsilon again
 
     } // loop over lev(els)
 } // computePhi

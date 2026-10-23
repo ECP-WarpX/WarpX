@@ -153,7 +153,7 @@ void FieldMomentum::ComputeDiags (int step)
         // and compute sum over cells of (E x B) components
         for (amrex::MFIter mfi(Ex, TilingIfNotGPU()); mfi.isValid(); ++mfi)
         {
-            const amrex::Box & box = enclosedCells(mfi.nodaltilebox());
+            const amrex::Box & box = mfi.tilebox(amrex::IntVect::TheZeroVector());
             const amrex::Array4<const amrex::Real> & Ex_arr = Ex[mfi].array();
             const amrex::Array4<const amrex::Real> & Ey_arr = Ey[mfi].array();
             const amrex::Array4<const amrex::Real> & Ez_arr = Ez[mfi].array();
@@ -192,8 +192,8 @@ void FieldMomentum::ComputeDiags (int step)
 
         // Save data (offset: 3 values for each refinement level)
         const int offset = lev*3;
-        m_data[offset+0] = PhysConst::ep0 * ExB_x * dV;
-        m_data[offset+1] = PhysConst::ep0 * ExB_y * dV;
-        m_data[offset+2] = PhysConst::ep0 * ExB_z * dV;
+        m_data[offset+0] = PhysConst::epsilon_0 * ExB_x * dV;
+        m_data[offset+1] = PhysConst::epsilon_0 * ExB_y * dV;
+        m_data[offset+2] = PhysConst::epsilon_0 * ExB_z * dV;
     }
 }

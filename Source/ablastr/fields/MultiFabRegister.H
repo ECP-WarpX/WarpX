@@ -8,8 +8,7 @@
 #ifndef ABLASTR_FIELDS_MF_REGISTER_H
 #define ABLASTR_FIELDS_MF_REGISTER_H
 
-#include <AMReX_BoxArray.H>
-#include <AMReX_DistributionMapping.H>
+#include <AMReX_BaseFwd.H>
 #include <AMReX_Enum.H>
 #include <AMReX_Extension.H>
 #include <AMReX_IntVect.H>
@@ -18,11 +17,15 @@
 #include <AMReX_Vector.H>
 
 #include <array>
+#include <cstddef>
 #include <map>
 #include <memory>
 #include <optional>
+#include <stdexcept>
 #include <string>
+#include <string_view>
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 
@@ -42,7 +45,7 @@ namespace
         if constexpr(is_castable_to_string<T>())
         {
             // already a unique string key
-            return std::string(name);
+            return std::string(std::move(name));
         } else
         {
             // user-defined AMREX_ENUM or compile error
@@ -58,20 +61,151 @@ namespace ablastr::fields
      * Because of different staggering, the components of vector/tensor fields are stored
      * in separate (i)MultiFab.
      *
+     * Cartesian: always x,y,z in any ND
+     * RZ: r,t(heta),z (r,z over azimuthal modes)
+     * RCylinder: r,t(heta),z
+     * RSphere: r,t(heta),p(hi)
+     * @see https://warpx.readthedocs.io/en/latest/developers/dimensionality.html
+     *
      * @todo: synchronize with AMReX "enum class Direction"
      */
-    struct Direction
+    class Direction
     {
         int dir = 0;
 
-        bool operator<(const Direction& other) const
+        /** std::string_view{nullptr} is undefined behavior (strlen), so throw instead */
+        static constexpr std::string_view checked_string_view (char const * c)
         {
-            return other.dir < this->dir;
+            if (c == nullptr) {
+                throw std::runtime_error("invalid direction: nullptr");
+            }
+            return std::string_view{c};
         }
 
+    public:
+        constexpr explicit Direction (int d) : dir(d)
+        {
+            // vector/tensor fields have three components in all dimensionalities
+            if (d < 0 || d > 2) {
+                throw std::runtime_error("invalid direction: " + std::to_string(d));
+            }
+        }
+
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
+        static const Direction r;
+        static const Direction theta;
+
+        static constexpr std::string_view r_string = "r";
+        static constexpr std::string_view theta_string = "theta";
+#endif
+#if defined(WARPX_DIM_RSPHERE)
+        static const Direction phi;
+
+        static constexpr std::string_view phi_string = "phi";
+#endif
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_XZ) || defined(WARPX_DIM_1D_Z)
+        static const Direction x;
+        static const Direction y;
+
+        static constexpr std::string_view x_string = "x";
+        static constexpr std::string_view y_string = "y";
+#endif
+#if !defined(WARPX_DIM_RSPHERE)
+        static const Direction z;
+
+        static constexpr std::string_view z_string = "z";
+#endif
+
+        bool operator<(const Direction& other) const
+        {
+            return this->dir < other.dir;
+        }
+
+        operator std::string() const // NOLINT(google-explicit-constructor)
+        {
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
+            if (dir == r) { return std::string{r_string}; }
+            if (dir == theta) { return std::string{theta_string}; }
+#endif
+#if defined(WARPX_DIM_RSPHERE)
+            if (dir == phi) { return std::string{phi_string}; }
+#endif
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_XZ) || defined(WARPX_DIM_1D_Z)
+            if (dir == x) { return std::string{x_string}; }
+            if (dir == y) { return std::string{y_string}; }
+#endif
+#if !defined(WARPX_DIM_RSPHERE)
+            if (dir == z) { return std::string{z_string}; }
+#endif
+            throw std::runtime_error("invalid direction: " + std::to_string(dir));
+            return std::to_string(dir);
+        }
+
+        constexpr Direction (const std::string_view sv) : // NOLINT(google-explicit-constructor)
+            dir{-1}
+        {
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
+            if (sv == r_string) { dir = r; }
+            if (sv == theta_string) { dir = theta; }
+#endif
+#if defined(WARPX_DIM_RSPHERE)
+            if (sv == phi_string) { dir = phi; }
+#endif
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_XZ) || defined(WARPX_DIM_1D_Z)
+            if (sv == x_string) { dir = x; }
+            if (sv == y_string) { dir = y; }
+#endif
+#if !defined(WARPX_DIM_RSPHERE)
+            if (sv == z_string) { dir = z; }
+#endif
+
+            if (dir == -1) {
+                throw std::runtime_error("invalid direction: " + std::string{sv});
+            }
+        }
+
+        // e.g., std::string{"x"}
+        //   needed for implicit conversion: std::string -> std::string_view -> Direction would
+        //   be two user-defined conversions
+        Direction (std::string const & s) : // NOLINT(google-explicit-constructor)
+            Direction{std::string_view{s}}
+        {}
+
+        // e.g., "x"
+        //   needed for implicit conversion, same as above
+        constexpr Direction (char const * c) : // NOLINT(google-explicit-constructor)
+            Direction{checked_string_view(c)}
+        {}
+
+        // e.g., 'x'
+        //   deleted, because a char would otherwise promote silently to Direction (int)
+        Direction (char) = delete;
+
+        // e.g., nullptr
+        //   deleted, so a literal nullptr fails at compile time instead of at runtime
+        Direction (std::nullptr_t) = delete;
+
         /* TODO: just temporary int compatibility */
-        operator int() const { return dir; }
+        constexpr operator int() const { return dir; } // NOLINT(google-explicit-constructor)
+
     };
+
+#if defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER) || defined(WARPX_DIM_RSPHERE)
+    inline constexpr Direction Direction::r = Direction{0};
+    inline constexpr Direction Direction::theta = Direction{1};
+#endif
+#if defined(WARPX_DIM_RSPHERE)
+    inline constexpr Direction Direction::phi = Direction{2};
+#endif
+
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_XZ) || defined(WARPX_DIM_1D_Z)
+    inline constexpr Direction Direction::x = Direction{0};
+    inline constexpr Direction Direction::y = Direction{1};
+#endif
+
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_XZ) || defined(WARPX_DIM_1D_Z) || defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
+    inline constexpr Direction Direction::z = Direction{2};
+#endif
 
     /** A scalar field (a MultiFab)
      *
@@ -136,6 +270,9 @@ namespace ablastr::fields
         /** redistribute on @see amrex::AmrCore::RemakeLevel */
         bool m_redistribute_on_remake = true;
 
+        /** whether to include in checkpoint/restart */
+        bool m_checkpoint_restart = false;
+
         /** if m_mf is a non-owning alias, this string tracks the name of the owner */
         std::string m_owner;
 
@@ -182,6 +319,7 @@ namespace ablastr::fields
          * @param initial_value the optional initial value
          * @param remake follow the default domain decomposition of the simulation
          * @param redistribute_on_remake redistribute on @see amrex::AmrCore::RemakeLevel
+         * @param checkpoint_restart whether to include in checkpoint/restart
          * @return pointer to newly allocated MultiFab
          */
         template<typename T>
@@ -195,11 +333,12 @@ namespace ablastr::fields
             amrex::IntVect const & ngrow,
             std::optional<amrex::Real const> initial_value = std::nullopt,
             bool remake = true,
-            bool redistribute_on_remake = true
+            bool redistribute_on_remake = true,
+            bool checkpoint_restart = false
         )
         {
             return internal_alloc_init(
-                getExtractedName(name),
+                getExtractedName(std::move(name)),
                 level,
                 ba,
                 dm,
@@ -207,7 +346,8 @@ namespace ablastr::fields
                 ngrow,
                 initial_value,
                 remake,
-                redistribute_on_remake
+                redistribute_on_remake,
+                checkpoint_restart
             );
         }
 
@@ -226,6 +366,7 @@ namespace ablastr::fields
          * @param initial_value the optional initial value
          * @param remake follow the default domain decomposition of the simulation
          * @param redistribute_on_remake redistribute on @see amrex::AmrCore::RemakeLevel
+         * @param checkpoint_restart whether to include in checkpoint/restart
          * @return pointer to newly allocated MultiFab
          */
         template<typename T>
@@ -240,11 +381,12 @@ namespace ablastr::fields
             amrex::IntVect const & ngrow,
             std::optional<amrex::Real const> initial_value = std::nullopt,
             bool remake = true,
-            bool redistribute_on_remake = true
+            bool redistribute_on_remake = true,
+            bool checkpoint_restart = false
         )
         {
             return internal_alloc_init(
-                getExtractedName(name),
+                getExtractedName(std::move(name)),
                 dir,
                 level,
                 ba,
@@ -253,7 +395,8 @@ namespace ablastr::fields
                 ngrow,
                 initial_value,
                 remake,
-                redistribute_on_remake
+                redistribute_on_remake,
+                checkpoint_restart
             );
         }
 
@@ -330,7 +473,7 @@ namespace ablastr::fields
         ) const
         {
             return internal_has(
-                getExtractedName(name),
+                getExtractedName(std::move(name)),
                 level
             );
         }
@@ -351,7 +494,7 @@ namespace ablastr::fields
         ) const
         {
             return internal_has(
-                getExtractedName(name),
+                getExtractedName(std::move(name)),
                 dir,
                 level
             );
@@ -371,7 +514,7 @@ namespace ablastr::fields
         ) const
         {
             return internal_has_vector(
-                getExtractedName(name),
+                getExtractedName(std::move(name)),
                 level
             );
         }
@@ -392,7 +535,7 @@ namespace ablastr::fields
         )
         {
             return internal_get(
-                getExtractedName(name),
+                getExtractedName(std::move(name)),
                 level
             );
         }
@@ -415,7 +558,7 @@ namespace ablastr::fields
         )
         {
             return internal_get(
-                getExtractedName(name),
+                getExtractedName(std::move(name)),
                 dir,
                 level
             );
@@ -437,7 +580,7 @@ namespace ablastr::fields
         ) const
         {
             return internal_get(
-                getExtractedName(name),
+                getExtractedName(std::move(name)),
                 level
             );
         }
@@ -460,7 +603,7 @@ namespace ablastr::fields
         ) const
         {
             return internal_get(
-                getExtractedName(name),
+                getExtractedName(std::move(name)),
                 dir,
                 level
             );
@@ -485,7 +628,7 @@ namespace ablastr::fields
         )
         {
             return internal_get_mr_levels(
-                getExtractedName(name),
+                getExtractedName(std::move(name)),
                 finest_level,
                 skip_level_0
             );
@@ -499,7 +642,7 @@ namespace ablastr::fields
         ) const
         {
             return internal_get_mr_levels(
-                getExtractedName(name),
+                getExtractedName(std::move(name)),
                 finest_level,
                 skip_level_0
             );
@@ -523,7 +666,7 @@ namespace ablastr::fields
         )
         {
             return internal_get_alldirs(
-                getExtractedName(name),
+                getExtractedName(std::move(name)),
                 level
             );
         }
@@ -535,7 +678,7 @@ namespace ablastr::fields
         ) const
         {
             return internal_get_alldirs(
-                getExtractedName(name),
+                getExtractedName(std::move(name)),
                 level
             );
         }
@@ -561,7 +704,7 @@ namespace ablastr::fields
         )
         {
             return internal_get_mr_levels_alldirs(
-                getExtractedName(name),
+                getExtractedName(std::move(name)),
                 finest_level,
                 skip_level_0
             );
@@ -575,7 +718,7 @@ namespace ablastr::fields
         ) const
         {
             return internal_get_mr_levels_alldirs(
-                getExtractedName(name),
+                getExtractedName(std::move(name)),
                 finest_level,
                 skip_level_0
             );
@@ -601,7 +744,7 @@ namespace ablastr::fields
             int level
         )
         {
-            internal_erase(getExtractedName(name), level);
+            internal_erase(getExtractedName(std::move(name)), level);
         }
 
         /** Deallocate and remove a vector field component.
@@ -643,6 +786,34 @@ namespace ablastr::fields
         remake_level (
             int other_level,
             amrex::DistributionMapping const & new_dm
+        );
+
+        /** Write out any (i)MultiFabs that are flagged checkpoint_restart to the checkpoint files
+         *
+         * @param level the MR level of the MF
+         * @param dir the pathname to the checkpoint files
+         */
+        void
+        write_checkpoints (
+            int level,
+            std::string const & dir
+        );
+
+        /** Read in any (i)MultiFabs that are flagged checkpoint_restart from the checkpoint files
+         *
+         * A flagged field whose file is absent from the checkpoint (e.g. a
+         * checkpoint written before the field was flagged, or by a run with
+         * a different set of flagged fields) is skipped rather than fatal,
+         * so that older checkpoints remain restartable; the field keeps its
+         * runtime initialization.
+         *
+         * @param level the MR level of the MF
+         * @param dir the pathname to the checkpoint files
+         */
+        void
+        read_restarts (
+            int level,
+            std::string const & dir
         );
 
         /** Create the register name of scalar field and MR level
@@ -698,7 +869,8 @@ namespace ablastr::fields
             amrex::IntVect const & ngrow,
             std::optional<amrex::Real const> initial_value = std::nullopt,
             bool remake = true,
-            bool redistribute_on_remake = true
+            bool redistribute_on_remake = true,
+            bool checkpoint_restart = false
         );
         amrex::MultiFab*
         internal_alloc_init (
@@ -711,7 +883,8 @@ namespace ablastr::fields
             amrex::IntVect const & ngrow,
             std::optional<amrex::Real const> initial_value = std::nullopt,
             bool remake = true,
-            bool redistribute_on_remake = true
+            bool redistribute_on_remake = true,
+            bool checkpoint_restart = false
         );
 
         amrex::MultiFab*
@@ -822,8 +995,23 @@ namespace ablastr::fields
             MultiFabOwner
         > m_mf_register;
 
-        /** the three directions of a vector field */
-        std::vector<Direction> m_all_dirs = {Direction{0}, Direction{1}, Direction{2}};
+      public:
+        /** The directions of a vector field as stored in the simulation.
+         *
+         * Cartesian: always x,y,z in any ND
+         * RZ: r,t(heta),z (r,z over azimuthal modes)
+         * RCylinder: r,t(heta),z
+         * RSphere: r,t(heta),p(hi)
+         * @see https://warpx.readthedocs.io/en/latest/developers/dimensionality.html
+         */
+        static inline std::vector<Direction> m_all_dirs =
+#if defined(WARPX_DIM_3D) || defined(WARPX_DIM_XZ) || defined(WARPX_DIM_1D_Z)
+            {Direction::x, Direction::y, Direction::z};
+#elif defined(WARPX_DIM_RZ) || defined(WARPX_DIM_RCYLINDER)
+            {Direction::r, Direction::theta, Direction::z};
+#elif defined(WARPX_DIM_RSPHERE)
+            {Direction::r, Direction::theta, Direction::phi};
+#endif
     };
 
     /** Little temporary helper function to pass temporary MultiFabs as VectorField.

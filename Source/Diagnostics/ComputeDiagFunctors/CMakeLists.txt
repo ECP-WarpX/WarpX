@@ -3,6 +3,7 @@ foreach(D IN LISTS WarpX_DIMS)
     target_sources(lib_${SD}
       PRIVATE
         CellCenterFunctor.cpp
+        DarwinEfieldFunctor.cpp
         DivBFunctor.cpp
         DivEFunctor.cpp
         EBCoveredFunctor.cpp
@@ -11,9 +12,11 @@ foreach(D IN LISTS WarpX_DIMS)
         RhoFunctor.cpp
         PartPerCellFunctor.cpp
         PartPerGridFunctor.cpp
+        ProcessNumberFunctor.cpp
         BackTransformFunctor.cpp
         BackTransformParticleFunctor.cpp
         ParticleReductionFunctor.cpp
+        PhiFunctor.cpp
         TemperatureFunctor.cpp
     )
 endforeach()

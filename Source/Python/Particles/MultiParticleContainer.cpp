@@ -7,15 +7,17 @@
 #include "Python/pyWarpX.H"
 
 #include <Particles/MultiParticleContainer.H>
+#include <Utils/WarpXAlgorithmSelection.H>
 
 #include <AMReX_GpuContainers.H>
+#include <AMReX_MultiFab.H>
 #include <AMReX_REAL.H>
 
 
 void init_MultiParticleContainer (py::module& m)
 {
     py::class_<MultiParticleContainer>(m, "MultiParticleContainer")
-        .def("get_particle_container_from_name",
+        .def("get",
             &MultiParticleContainer::GetParticleContainerFromName,
             py::arg("name"),
             py::return_value_policy::reference_internal
@@ -44,10 +46,23 @@ strength_E, strength_B: floats
         )
 
         .def("get_charge_density",
-            [](MultiParticleContainer& mpc, int lev, bool local) {
-                return mpc.GetChargeDensity(lev, local);
+            [](MultiParticleContainer& mpc, int lev, bool local, bool finalize) {
+                return mpc.GetChargeDensityOnLevel(lev, local, finalize);
             },
-            py::arg("lev"), py::arg("local")
+            py::arg("lev"), py::arg("local"), py::arg("finalize") = true
+        )
+
+        .def("push_p",
+            [](MultiParticleContainer& mpc, int lev, amrex::Real dt,
+               amrex::MultiFab const& Ex, amrex::MultiFab const& Ey, amrex::MultiFab const& Ez,
+               amrex::MultiFab const& Bx, amrex::MultiFab const& By, amrex::MultiFab const& Bz)
+            {
+                mpc.PushP(lev, dt, Ex, Ey, Ez, Bx, By, Bz, MomentumPushType::Full);
+            },
+            py::arg("lev"), py::arg("dt"),
+            py::arg("Ex"), py::arg("Ey"), py::arg("Ez"),
+            py::arg("Bx"), py::arg("By"), py::arg("Bz"),
+            R"pbdoc(Push the momentum of the particles of all species by a full step)pbdoc"
         )
     ;
 }

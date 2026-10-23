@@ -72,10 +72,11 @@ They are by default installed in the workspace directory (which is recommended),
 The second command activates the Python virtual environment.
 This would normally be done by the ``dane_warpx.profile`` script, but the environment is created by the install script and so wasn't created yet when the profile was run above.
 So the activation needs to be done this way only this one time.
+The install_dependencies.sh must be run in batch since it is compute intensive. The "runNode" is an alias that does "srun" and is defined in dane_warpx.profile.
 
 .. code-block:: bash
 
-   bash /usr/workspace/${USER}/dane/src/warpx/Tools/machines/dane-llnl/install_dependencies.sh
+   runNode /usr/workspace/${USER}/dane/src/warpx/Tools/machines/dane-llnl/install_dependencies.sh
    source /usr/workspace/${USER}/dane/venvs/warpx-dane/bin/activate
 
 .. dropdown:: Script Details
@@ -92,7 +93,7 @@ So the activation needs to be done this way only this one time.
 Compilation
 -----------
 
-Use the following :ref:`cmake commands <building-cmake>` to compile the application executable.
+Use the following :ref:`cmake commands <install-build-cmake>` to compile the application executable.
 The options should be modified to suit your needs, for example only building for the dimensions needed.
 
 .. code-block:: bash

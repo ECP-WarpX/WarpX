@@ -7,17 +7,13 @@
 #ifndef WARPX_PRECONDITIONER_H_
 #define WARPX_PRECONDITIONER_H_
 
-#include <AMReX_Enum.H>
+#include "PreconditionerTypes.H"
 
-/**
- * \brief Types for preconditioners for field solvers
- */
-AMREX_ENUM(PreconditionerType,
-    pc_curl_curl_mlmg,
-    pc_jacobi,
-    pc_petsc,
-    none
-);
+#include "Utils/TextMsg.H"
+#include <AMReX_Enum.H>
+#include <string>
+
+// Can't wrap pc_petsc inside AMREX_USE_PETSC directives.
 
 /**
  * \brief Base class for preconditioners
@@ -57,12 +53,12 @@ class Preconditioner
         /**
          * \brief Define the preconditioner
          */
-        virtual void Define (const T&, Ops* const) = 0;
+        virtual void Define (const T&, Ops*) = 0;
 
         /**
          * \brief Update the preconditioner
          */
-        virtual void Update ( const T& a_U ) = 0;
+        virtual void Update () = 0;
 
         /**
          * \brief Apply (solve) the preconditioner given a RHS
@@ -74,9 +70,31 @@ class Preconditioner
         virtual void Apply (T& a_x, const T& a_b) = 0;
 
         /**
+         * \brief Get the sparse matrix form of the preconditioner
+         *
+         * If the preconditioner is based on constructing and solving the
+         * sparse matrix form, this function will return the sparse matrix
+         * form. Base class implementation aborts with an error message to
+         * ensure this function is not called for operator-form preconditioners
+         */
+        virtual void getPCMatrix( amrex::Gpu::DeviceVector<int>&,
+                                  amrex::Gpu::DeviceVector<int>&,
+                                  amrex::Gpu::DeviceVector<int>&,
+                                  amrex::Gpu::DeviceVector<RT>&,
+                                  int&, int& )
+        {
+            WARPX_ABORT_WITH_MESSAGE("getPCMatrix() called on base class!");
+        }
+
+        /**
          * \brief Check if the nonlinear solver has been defined.
          */
         [[nodiscard]] virtual bool IsDefined () const = 0;
+
+        /**
+         * \brief Set the name for screen output and parsing inputs.
+         */
+        virtual void setName (const std::string&) { }
 
         /**
          * \brief Print parameters

@@ -1,4 +1,4 @@
-/* Copyright 2024 Justin Angus, Debojyoti Ghosh
+/* Copyright 2024-2026 Justin Angus, Debojyoti Ghosh
  *
  * This file is part of WarpX.
  *
@@ -7,12 +7,24 @@
 #ifndef Implicit_Solver_H_
 #define Implicit_Solver_H_
 
+#include "ImplicitSolver_fwd.H"
+
+#include "FieldSolver/ImplicitSolvers/ImplicitOptions.H"
+#include "FieldSolver/ImplicitSolvers/SparseJacobianMatrix.H"
+
 #include "FieldSolver/ImplicitSolvers/WarpXSolverVec.H"
+#include "NonlinearSolvers/MatrixSolverOps.H"
 #include "NonlinearSolvers/NonlinearSolverLibrary.H"
 
 #include <AMReX_Array.H>
+#include <AMReX_GpuContainers.H>
+#include <AMReX_INT.H>
 #include <AMReX_REAL.H>
 #include <AMReX_LO_BCTYPES.H>
+
+#include <map>
+#include <memory>
+#include <string>
 
 /**
  * \brief Base class for implicit time solvers. The base functions are those
@@ -44,27 +56,39 @@ public:
      * \brief Read user-provided parameters that control the implicit solver.
      * Allocate internal arrays for intermediate field values needed by the solver.
      */
-    virtual void Define ( WarpX*  a_WarpX ) = 0;
+    virtual void Define (WarpX* a_WarpX, bool from_restart) = 0;
 
     [[nodiscard]] bool IsDefined () const { return m_is_defined; }
 
     virtual void PrintParameters () const = 0;
 
-    void GetParticleSolverParams (int&  a_max_particle_iter,
-                                  amrex::ParticleReal&  a_particle_tol ) const
-    {
-        a_max_particle_iter = m_max_particle_iterations;
-        a_particle_tol = m_particle_tolerance;
-    }
-
     void CreateParticleAttributes () const;
+
+    bool DoParticleSuborbits () const { return m_particle_suborbits; }
+
+    virtual void SetupStep(amrex::Real /* start_time */) {}
+
+    virtual int DoSolve(amrex::Real a_start_time, int a_step, bool verbose_step) = 0;
+
+    virtual void ResetStep(amrex::Real /* start_time */) {}
+
+    virtual void FinishStep(amrex::Real /* a_start_time */, int /* a_step */) {}
+
+    /**
+     * \brief Finalize and re-initialize PETSc after the steps given by
+     *        implicit_evolve.petsc_reinit_interval
+     */
+    void ReinitializePETScIfDue (int a_step, bool verbose_step);
+
+    [[nodiscard]] ImplicitOptions const& GetImplicitOptions () const { return m_implicit_options; }
 
     /**
      * \brief Advance fields and particles by one time step using the specified implicit algorithm
      */
-    virtual void OneStep ( amrex::Real  a_time,
-                           amrex::Real  a_dt,
-                           int          a_step ) = 0;
+    virtual int OneStep (amrex::Real  start_time,
+                         amrex::Real  a_dt,
+                         int          a_step,
+                         bool verbose_step);
 
     //
     // the following routines are called by the linear and nonlinear solvers
@@ -82,11 +106,17 @@ public:
      * e.g., Ebar - E^n = cvac^2*0.5*dt*(curl(Bbar) - mu0*Jbar(Ebar,Bbar))
      * Here, U = Ebar, b = E^n, and the expression on the right is RHS(U).
      */
-    virtual void ComputeRHS ( WarpXSolverVec&  a_RHS,
-                        const WarpXSolverVec&  a_E,
-                              amrex::Real      a_time,
-                              int              a_nl_iter,
-                              bool             a_from_jacobian ) = 0;
+    virtual void ComputeRHS (WarpXSolverVec& a_RHS,
+                       const WarpXSolverVec& a_E,
+                             amrex::Real     a_time,
+                             int             a_nl_iter,
+                             bool            a_from_jacobian,
+                             bool            update_pc = true) = 0;
+
+    /**
+     * Prepare for the linear solve. This includes depositing the mass matrices and updating the PC.
+     */
+    void PreLinearSolve (bool update_pc = true);
 
     [[nodiscard]] int numAMRLevels () const { return m_num_amr_levels; }
 
@@ -104,12 +134,98 @@ public:
         else { return nullptr; }
     }
 
+    /**
+     * \brief Create the matrix ops for the assembled preconditioner matrix of a_ops
+     */
+    [[nodiscard]] static std::unique_ptr<MatrixSolverOps<WarpXSolverVec>> MakePCMatrixOps (ImplicitSolver* a_ops);
+
+    /**
+     * \brief Return reference to the multifabs for curl curl mask
+     */
+    [[nodiscard]] virtual const amrex::MultiFab* GetCurl2BCmask (const int lev, const int dir) const
+    {
+        amrex::ignore_unused(lev,dir);
+        return nullptr;
+    }
+
+    /**
+     * \brief Return the space_dir number of components for the mass matrices used in
+     *        the preconditioner for field direction field_dir
+     */
+    int GetMassMatricesPCnComp (const int field_dir, const int space_dir) const
+    {
+        if      (field_dir == 0) { return m_ncomp_pc_xx[space_dir]; }
+        else if (field_dir == 1) { return m_ncomp_pc_yy[space_dir]; }
+        else if (field_dir == 2) { return m_ncomp_pc_zz[space_dir]; }
+        else { return -1; }
+    }
+
     // This parameter is used for the time-step fraction in the PC for implicit
     // treatment of light waves in the curl-curl MLMG solver.
     // This function should return zero if light waves are not treated implicitly
     [[nodiscard]] virtual amrex::Real  GetThetaForPC () const = 0;
 
-    void ComputeJfromMassMatrices ();
+    /**
+     * \brief Assemble the sparse Jacobian matrix for the preconditioner.
+     *        Creates the SparseJacobianMatrix on first call (lazy init).
+     */
+    void AssemblePCMatrix ();
+
+    /**
+     * \brief Copy the assembled sparse matrix data to caller-provided device vectors.
+     */
+    void GetPCMatrix (amrex::Gpu::DeviceVector<int>& a_r_indices_g,
+                      amrex::Gpu::DeviceVector<int>& a_num_nz,
+                      amrex::Gpu::DeviceVector<int>& a_c_indices_g,
+                      amrex::Gpu::DeviceVector<amrex::Real>& a_a_ij,
+                      int& a_n, int& a_ncols_max);
+
+    /**
+     * \brief Apply deposited mass matrices to a vector field.
+     * Computes a_out += a_scale * S * (a_in - a_in_ref) [+ a_baseline],
+     * where S is the mass matrix, accumulating into a_out.
+     * If a_in_ref is null, a_in is used directly.
+     * If a_baseline is null, no baseline term is added.
+     * If a_zero_out_first is true, a_out is set to zero before accumulating,
+     * so that it holds the result of this operation only; otherwise the result
+     * is added on top of the existing contents of a_out.
+     */
+    void ApplyMassMatrices (
+        ablastr::fields::MultiLevelVectorField& a_out,
+        const ablastr::fields::MultiLevelVectorField& a_in,
+        const ablastr::fields::MultiLevelVectorField* a_in_ref = nullptr,
+        const ablastr::fields::MultiLevelVectorField* a_baseline = nullptr,
+        amrex::Real a_scale = 1.0,
+        bool a_zero_out_first = false );
+
+    /**
+     * \brief Assert that ApplyMassMatrices(a_out, a_in, ...) reads a_in over the
+     * full stencil of the mass matrices, for every valid cell of a_out.
+     * ApplyMassMatrices silently clips the stencil at the edge of the guard
+     * cells of a_in. This is harmless when the mass matrices have not been
+     * summed over their guard cells, since the entries beyond the guard cells
+     * of a_in are then zero, but not when they have been (e.g. semi-implicit Darwin).
+     */
+    void AssertMassMatricesStencilNotClipped (
+        const ablastr::fields::MultiLevelVectorField& a_out,
+        const ablastr::fields::MultiLevelVectorField& a_in ) const;
+
+    void ComputeJfromMassMatrices (bool a_J_from_MM_only);
+
+    /**
+     * \brief Finish filling the mass matrices after deposit
+     */
+    void FinishMassMatricesDeposition ();
+
+    /**
+     * \brief Communicate Mass Matrices used for PC and apply boundary conditions
+     */
+    void SyncMassMatricesPCAndApplyBCs ();
+
+    /**
+     * \brief Finish the implicit particle update after the converged time-centered solve
+     */
+    void FinishImplicitParticleUpdate (amrex::Real time, int step);
 
 protected:
 
@@ -131,6 +247,11 @@ protected:
     mutable amrex::Real m_dt = 0.0;
 
     /**
+     * \brief Number of substeps
+     */
+    int m_nsubsteps = 1;
+
+    /**
      * \brief Time-biasing parameter for fields used on RHS to advance system.
      */
     amrex::Real m_theta = 0.5;
@@ -145,13 +266,52 @@ protected:
      * \brief tolerance used by the iterative method used to obtain a self-consistent
      *  update of the particle positions and velocities for given E and B on the grid
      */
-    amrex::ParticleReal m_particle_tolerance = 1.0e-10;
+    amrex::ParticleReal m_particle_tolerance = amrex::ParticleReal(1.0e-10);
 
     /**
      * \brief maximum iterations for the iterative method used to obtain a self-consistent
      *  update of the particle positions and velocities for given E and B on the grid
      */
     int m_max_particle_iterations = 21;
+
+    /**
+     * \brief whether to use suborbits for particles that fail to converge in
+     * m_max_particle_iterations iterations
+     */
+    bool m_particle_suborbits = false;
+
+    int m_suborbit_warning_threshold = 5;
+    int m_suborbit_statistics_interval = 100;
+    std::map<std::string, amrex::Long> m_accumulated_suborbit_counts;
+    int m_suborbit_statistics_start_step = -1;
+
+    void AccumulateSuborbitStatistics (
+        std::map<std::string, amrex::Long> const& local_suborbit_counts,
+        int step);
+
+    /**
+     * \brief whether the details of unconverged particles are printed out during
+     * the particle evolve loops
+     */
+    bool m_print_unconverged_particle_details = false;
+
+    // Stable particle options. PreRHSOp copies this before setting per-call values.
+    ImplicitOptions m_implicit_options;
+
+    /**
+     * \brief Finalize and re-initialize PETSc every this many steps (0: never), to release
+     *        the host memory PETSc's GPU vector operations leak until PetscFinalize
+     */
+#ifdef AMREX_USE_GPU
+    int m_petsc_reinit_interval = 1000;
+#else
+    int m_petsc_reinit_interval = 0;
+#endif
+
+    /**
+     * \brief whether to skip the full Picard update of particles on the initial newton step
+     */
+    bool m_skip_particle_picard_init = false;
 
     /**
      * \brief Whether to use mass matrices for the implicit solver
@@ -169,17 +329,30 @@ protected:
     bool m_use_mass_matrices_pc = false;
 
     /**
+     * \brief Width for mass matrices in the preconditioner
+     */
+    int m_mass_matrices_pc_width = -1;
+
+    /**
      * \brief Direction-dependent component number of mass matrices elements
      */
-    amrex::IntVect m_ncomp_xx = amrex::IntVect::TheZeroVector();
-    amrex::IntVect m_ncomp_xy = amrex::IntVect::TheZeroVector();
-    amrex::IntVect m_ncomp_xz = amrex::IntVect::TheZeroVector();
-    amrex::IntVect m_ncomp_yx = amrex::IntVect::TheZeroVector();
-    amrex::IntVect m_ncomp_yy = amrex::IntVect::TheZeroVector();
-    amrex::IntVect m_ncomp_yz = amrex::IntVect::TheZeroVector();
-    amrex::IntVect m_ncomp_zx = amrex::IntVect::TheZeroVector();
-    amrex::IntVect m_ncomp_zy = amrex::IntVect::TheZeroVector();
-    amrex::IntVect m_ncomp_zz = amrex::IntVect::TheZeroVector();
+    amrex::IntVect m_ncomp_xx = amrex::IntVect{0};
+    amrex::IntVect m_ncomp_xy = amrex::IntVect{0};
+    amrex::IntVect m_ncomp_xz = amrex::IntVect{0};
+    amrex::IntVect m_ncomp_yx = amrex::IntVect{0};
+    amrex::IntVect m_ncomp_yy = amrex::IntVect{0};
+    amrex::IntVect m_ncomp_yz = amrex::IntVect{0};
+    amrex::IntVect m_ncomp_zx = amrex::IntVect{0};
+    amrex::IntVect m_ncomp_zy = amrex::IntVect{0};
+    amrex::IntVect m_ncomp_zz = amrex::IntVect{0};
+
+    /**
+     * \brief Direction-dependent component number of mass matrices elements
+     *        used for the preconditioner
+     */
+    amrex::IntVect m_ncomp_pc_xx = amrex::IntVect{0};
+    amrex::IntVect m_ncomp_pc_yy = amrex::IntVect{0};
+    amrex::IntVect m_ncomp_pc_zz = amrex::IntVect{0};
 
     /**
      * \brief Array of multifab pointers to mass matrix preconditioner
@@ -187,91 +360,67 @@ protected:
     amrex::Vector<amrex::Array<amrex::MultiFab*,3>> m_mmpc_mfarrvec;
 
     /**
+     * \brief Whether InitializePCMatrixAssembly() has been called
+     */
+    bool m_pc_matrix_assembly_initialized = false;
+
+    /**
+     * \brief Sparse Jacobian matrix for the preconditioner (lazy-initialized)
+     */
+    std::unique_ptr<SparseJacobianMatrix> m_sparse_jacobian;
+
+    /**
      * \brief parse nonlinear solver parameters (if one is used)
      */
-    void parseNonlinearSolverParams ( const amrex::ParmParse&  pp )
-    {
+    void parseNonlinearSolverParams ( const amrex::ParmParse&  pp );
 
-        std::string nlsolver_type_str;
-        pp.get("nonlinear_solver", nlsolver_type_str);
+    void CopyVectorField (warpx::fields::FieldType dst, warpx::fields::FieldType src);
 
-        if (nlsolver_type_str=="picard") {
-            m_nlsolver_type = NonlinearSolverType::Picard;
-            m_nlsolver = std::make_unique<PicardSolver<WarpXSolverVec,ImplicitSolver>>();
-            m_max_particle_iterations = 1;
-            m_particle_tolerance = 0.0;
-        }
-        else if (nlsolver_type_str=="newton") {
-            m_nlsolver_type = NonlinearSolverType::Newton;
-            m_nlsolver = std::make_unique<NewtonSolver<WarpXSolverVec,ImplicitSolver>>();
-            pp.query("max_particle_iterations", m_max_particle_iterations);
-            pp.query("particle_tolerance", m_particle_tolerance);
-            pp.query("use_mass_matrices_jacobian", m_use_mass_matrices_jacobian);
-            pp.query("use_mass_matrices_pc", m_use_mass_matrices_pc);
-            if (m_use_mass_matrices_jacobian || m_use_mass_matrices_pc) {
-                m_use_mass_matrices = true;
-            }
-#if defined(WARPX_DIM_RCYLINDER)
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                !m_use_mass_matrices,
-                "Using mass matrices is not setup for DIM = RCYLINDER!");
-#endif
-#if defined(WARPX_DIM_RSPHERE)
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                !m_use_mass_matrices,
-                "Using mass matrices is not setup for DIM = RSHERE!");
-#endif
-#if defined(WARPX_DIM_RZ)
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                !m_use_mass_matrices,
-                "Using mass matrices is not setup for DIM = RZ");
-#endif
-#if defined(WARPX_DIM_3D)
-            WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
-                !m_use_mass_matrices_jacobian,
-                "Using mass matrices for jacobian can not be used for DIM = 3");
-#endif
-        }
-        else {
-            WARPX_ABORT_WITH_MESSAGE(
-                "invalid nonlinear_solver specified. Valid options are picard and newton.");
-        }
-
-    }
+    void SaveEoldMultifab ();
 
     /**
      * \brief Initialize the Mass Matrices used for plasma response in nonlinear Newton solver
      */
     void InitializeMassMatrices ();
 
-    void PrintMassMatricesParameters () const;
+    void InitializeImplicitOptions ();
+
+    void PrintBaseImplicitSolverParameters () const;
 
     /**
      * \brief Perform operations needed before computing the Right Hand Side
      */
-    void PreRHSOp ( const amrex::Real  a_cur_time,
-                    const int          a_nl_iter,
-                    const bool         a_from_jacobian );
-
-    /**
-     * \brief Communicate Mass Matrices used for PC and apply boundary conditions
-     */
-    void SyncMassMatricesPCAndApplyBCs ();
+    void PreRHSOp (amrex::Real a_cur_time,
+                   int         a_nl_iter,
+                   bool        a_from_jacobian,
+                   amrex::Real a_dt_scale,
+                   bool        update_pc = true);
 
     /**
      * \brief Scale mass matrices used for PC by c^2*mu0*theta*dt and add 1 to diagonal terms
      */
-    void SetMassMatricesForPC ( const amrex::Real a_theta_dt );
+    void SetMassMatricesForPC ( amrex::Real a_theta_dt );
 
     /**
-     * \brief Save E and J at start of each Newton step
+     * \brief Add J from particles included in mass matrices at start of each Newton step
      */
-    void SaveEandJ ();
+    void CumulateJ ();
+
+    /**
+     * \brief Save E at start of each Newton step
+     */
+    void SaveE ();
+
+    /**
+     * \brief Perform one-time setup before assembling the preconditioner matrix.
+     *        Derived classes initialize required data, such as curl-curl BC masks.
+     */
+    virtual void InitializePCMatrixAssembly () {}
 
     /**
      * \brief Convert from WarpX FieldBoundaryType to amrex::LinOpBCType
      */
-    [[nodiscard]] amrex::Array<amrex::LinOpBCType,AMREX_SPACEDIM> convertFieldBCToLinOpBC ( const amrex::Array<FieldBoundaryType,AMREX_SPACEDIM>& ) const;
+    [[nodiscard]] amrex::Array<amrex::LinOpBCType,AMREX_SPACEDIM> convertFieldBCToLinOpBC ( const amrex::Array<FieldBoundaryType,AMREX_SPACEDIM>&, int bdry_side ) const;
 
 };
 

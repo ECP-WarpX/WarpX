@@ -31,16 +31,7 @@
 void ReadBoostedFrameParameters(amrex::Real& gamma_boost, amrex::Real& beta_boost,
                                 amrex::Vector<int>& boost_direction);
 
-void ReadMovingWindowParameters(
-    int& do_moving_window, int& start_moving_window_step, int& end_moving_window_step,
-    int& moving_window_dir, amrex::Real& moving_window_v);
-
 void ConvertLabParamsToBoost();
-
-/**
- * Reads the user-defined field and particle boundary condition parameters
- */
-void ReadBCParams ();
 
 /** Check the warpx.dims matches the binary name & set up RZ gridding
  *
@@ -100,17 +91,6 @@ void NullifyMF (
     amrex::Real zmin,
     amrex::Real zmax
 );
-
-namespace WarpXUtilIO{
-/**
- * A helper function to write binary data on disk.
- * @param[in] filename where to write
- * @param[in] data Vector containing binary data to write on disk
- * return true if it succeeds, false otherwise
- */
-bool WriteBinaryDataOnFile(const std::string& filename, const amrex::Vector<char>& data);
-
-}
 
 namespace WarpXUtilLoadBalance
 {

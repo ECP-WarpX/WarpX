@@ -65,17 +65,17 @@ ExternalVectorPotential::ReadParameters ()
         m_read_A_from_file[i] = read_from_file;
 
         if (m_read_A_from_file[i]) {
-            pp_ext_A.query((m_field_names[i]+".path").c_str(), m_external_file_path[i]);
+            pp_ext_A.query(m_field_names[i]+".path", m_external_file_path[i]);
         } else {
-            pp_ext_A.query((m_field_names[i]+".Ax_external_grid_function(x,y,z)").c_str(),
+            pp_ext_A.query(m_field_names[i]+".Ax_external_grid_function(x,y,z)",
                 m_Ax_ext_grid_function[i]);
-            pp_ext_A.query((m_field_names[i]+".Ay_external_grid_function(x,y,z)").c_str(),
+            pp_ext_A.query(m_field_names[i]+".Ay_external_grid_function(x,y,z)",
                 m_Ay_ext_grid_function[i]);
-            pp_ext_A.query((m_field_names[i]+".Az_external_grid_function(x,y,z)").c_str(),
+            pp_ext_A.query(m_field_names[i]+".Az_external_grid_function(x,y,z)",
                 m_Az_ext_grid_function[i]);
         }
 
-        pp_ext_A.query((m_field_names[i]+".A_time_external_function(t)").c_str(),
+        pp_ext_A.query(m_field_names[i]+".A_time_external_function(t)",
             m_A_ext_time_function[i]);
     }
 }
@@ -187,7 +187,7 @@ ExternalVectorPotential::InitData ()
             // check if the external current parsers depend on time
             for (int idim=0; idim<3; idim++) {
                 const std::set<std::string> A_ext_symbols = m_A_external_parser[i][idim]->symbols();
-                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(A_ext_symbols.count("t") == 0,
+                WARPX_ALWAYS_ASSERT_WITH_MESSAGE(!A_ext_symbols.contains("t"),
                     "Externally Applied Vector potential time variation must be set with A_time_external_function(t)");
             }
 
@@ -199,7 +199,7 @@ ExternalVectorPotential::InitData ()
                     m_A_external[i][1],
                     m_A_external[i][2],
                     lev, PatchType::fine,
-                    warpx.GetEBUpdateEFlag(),
+                    warpx.GetEBUpdateEFlag_fp(),
                     false);
             }
             // NOTE: Fill Boundary is not done here since non-periodic A fields can lead to periodic E/B fields
@@ -255,7 +255,7 @@ ExternalVectorPotential::CalculateExternalCurlA (std::string& coil_name)
         warpx.get_pointer_fdtd_solver_fp(lev)->ComputeCurlA(
             curlA_ext[lev],
             A_ext[lev],
-            warpx.GetEBUpdateBFlag()[lev],
+            warpx.GetEBUpdateBFlag_fp()[lev],
             lev);
 
         for (int idir = 0; idir < 3; ++idir) {
@@ -366,8 +366,8 @@ ExternalVectorPotential::UpdateHybridExternalFields (const amrex::Real t, const 
             warpx.m_fields.get_mr_levels_alldirs(curlAext_field, warpx.finestLevel());
 
         for (int lev = 0; lev <= warpx.finestLevel(); ++lev) {
-            AddExternalFieldFromVectorPotential(E_ext[lev], scale_factor_E, A_ext[lev], warpx.GetEBUpdateEFlag()[lev]);
-            AddExternalFieldFromVectorPotential(B_ext[lev], scale_factor_B, curlA_ext[lev], warpx.GetEBUpdateBFlag()[lev]);
+            AddExternalFieldFromVectorPotential(E_ext[lev], scale_factor_E, A_ext[lev], warpx.GetEBUpdateEFlag_fp()[lev]);
+            AddExternalFieldFromVectorPotential(B_ext[lev], scale_factor_B, curlA_ext[lev], warpx.GetEBUpdateBFlag_fp()[lev]);
 
             for (int idir = 0; idir < 3; ++idir) {
                 E_ext[lev][Direction{idir}]->FillBoundary(warpx.Geom(lev).periodicity());
