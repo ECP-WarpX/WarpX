@@ -13,6 +13,7 @@
 #include "FieldSolver/ImplicitSolvers/SparseJacobianMatrix.H"
 
 #include "FieldSolver/ImplicitSolvers/WarpXSolverVec.H"
+#include "NonlinearSolvers/MatrixSolverOps.H"
 #include "NonlinearSolvers/NonlinearSolverLibrary.H"
 
 #include <AMReX_Array.H>
@@ -132,6 +133,11 @@ public:
         if (m_use_mass_matrices_pc) { return &m_mmpc_mfarrvec; }
         else { return nullptr; }
     }
+
+    /**
+     * \brief Create the matrix ops for the assembled preconditioner matrix of a_ops
+     */
+    [[nodiscard]] static std::unique_ptr<MatrixSolverOps<WarpXSolverVec>> MakePCMatrixOps (ImplicitSolver* a_ops);
 
     /**
      * \brief Return reference to the multifabs for curl curl mask
