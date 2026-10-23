@@ -371,6 +371,10 @@ namespace detail
                                           {openPMD::UnitDimension::I,  1},
                                           {openPMD::UnitDimension::T,  1},
                                   });
+        } else if (field_name.starts_with("T_")){ // temperature (stored in eV, see unitSI)
+            mesh.setUnitDimension({
+                                          {openPMD::UnitDimension::theta, 1},
+                                  });
         }
     }
 #endif // WARPX_USE_OPENPMD
@@ -1380,6 +1384,10 @@ WarpXOpenPMDPlot::SetupMeshComp (openPMD::Mesh& mesh,
     mesh_comp.resetDataset(dataset);
 
     ::detail::setOpenPMDUnit( mesh, field_name );
+    if (field_name.starts_with("T_")) {
+        // Temperature is stored in eV and readers multiply by unitSI to get K
+        mesh_comp.setUnitSI(PhysConst::q_e / PhysConst::kb);
+    }
     auto relative_cell_pos = ablastr::utils::getRelativeCellPosition(mf);     // AMReX Fortran index order
     std::reverse( relative_cell_pos.begin(), relative_cell_pos.end() ); // now in C order
     mesh_comp.setPosition( relative_cell_pos );
