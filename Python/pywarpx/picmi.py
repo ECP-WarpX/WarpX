@@ -1862,7 +1862,7 @@ class DarwinMLMGPreconditioner(PreconditionerBase):
 
 class JacobiPreconditioner(PreconditionerBase):
     """
-    Sets up the point Jacobi preconditioner used during the nonlinear solver
+    Sets up the weighted Jacobi preconditioner used during the nonlinear solver
     """
 
     name: ClassVar[str | None] = "pc_jacobi"
@@ -1878,6 +1878,14 @@ class JacobiPreconditioner(PreconditionerBase):
     )
     absolute_tolerance: float | None = Field(
         default=None, description="Absolute tolerance of the convergence"
+    )
+    omega: float | None = Field(
+        default=None,
+        description="Relaxation factor. Setting it turns off adaptive_omega.",
+    )
+    adaptive_omega: bool | None = Field(
+        default=None,
+        description="Whether to reduce the relaxation factor when the residual increases",
     )
 
 

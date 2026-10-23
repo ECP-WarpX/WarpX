@@ -1,4 +1,5 @@
 #include "ImplicitSolver.H"
+#include "MassMatrixSolverOps.H"
 #include "SparseJacobianMatrix.H"
 #include "Fields.H"
 #include "WarpX.H"
@@ -766,7 +767,7 @@ void ImplicitSolver::parseNonlinearSolverParams ( const amrex::ParmParse&  pp )
             pp.query("skip_particle_picard_init", m_skip_particle_picard_init);
         }
         if (m_use_mass_matrices_pc) {
-            m_mass_matrices_pc_width = 0;
+            m_mass_matrices_pc_width = 1;
             pp.query("mass_matrices_pc_width", m_mass_matrices_pc_width);
             WARPX_ALWAYS_ASSERT_WITH_MESSAGE(
                 m_mass_matrices_pc_width >= 0,
@@ -807,6 +808,13 @@ void ImplicitSolver::SaveEoldMultifab ()
     // E_old multifab is needed for diagnostics and saving at checkpoints
     using warpx::fields::FieldType;
     CopyVectorField(FieldType::E_old, FieldType::Efield_fp);
+}
+
+std::unique_ptr<MatrixSolverOps<WarpXSolverVec>> ImplicitSolver::MakePCMatrixOps (ImplicitSolver* a_ops)
+{
+    auto ops = std::make_unique<MassMatrixSolverOps<WarpXSolverVec,ImplicitSolver>>();
+    ops->Define(a_ops);
+    return ops;
 }
 
 void ImplicitSolver::InitializeMassMatrices ()
@@ -892,7 +900,8 @@ void ImplicitSolver::InitializeMassMatrices ()
             else if (m_use_mass_matrices_pc && m_mass_matrices_pc_width > 0) {
                 WARPX_ABORT_WITH_MESSAGE(
                     "ImplicitSolver: Mass matrices pc width > 0 with the "
-                    "Villasenor deposition in 3D is not yet supported.");
+                    "Villasenor deposition in 3D is not yet supported. "
+                    "Set implicit_evolve.mass_matrices_pc_width = 0.");
             }
 #else
             const int max_grid_crossings = WarpX::particle_max_grid_crossings;
@@ -1157,6 +1166,7 @@ void ImplicitSolver::PreRHSOp (const amrex::Real a_cur_time,
     // Apply BCs to J and communicate
     m_WarpX->SyncCurrentAndRho();
     m_WarpX->FinalizeRho();
+    m_WarpX->FinalizeJ();
 
 }
 
