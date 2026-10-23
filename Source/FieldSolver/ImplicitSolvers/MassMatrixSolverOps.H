@@ -20,8 +20,37 @@
 /**
  * \brief Matrix ops for A = I + M, with M the preconditioner mass matrices.
  *
- *  Specific to the mass-matrix storage: for each E component, the components of the MultiFab
- *  are the offsets of a tensor-product stencil, so the diagonal is component (nComp-1)/2.
+ *  Storage of M:
+ *  - M has only the diagonal blocks M_xx, M_yy and M_zz (no coupling between E components).
+ *  - Each block is one MultiFab, on the grid of its E component.
+ *  - At cell (i,j,k), the MultiFab components are the entries of row (i,j,k) of the block,
+ *    one per neighbor (i+di, j+dj, k+dk).
+ *  - Each offset di, dj, dk runs from -w to w, where 2*w+1 = GetMassMatricesPCnComp() in that
+ *    direction (w = 0 in the directions above AMREX_SPACEDIM).
+ *  - The components are ordered with di varying fastest, then dj, then dk.
+ *  - The diagonal entry, offset (0,0,0), is component (nComp-1)/2.
+ *
+ *  Example: 2D with w = 1 in both directions, 9 components.
+ *  ```
+ *  component   0   1   2   3   4   5   6   7   8
+ *  di         -1   0   1  -1   0   1  -1   0   1
+ *  dj         -1  -1  -1   0   0   0   1   1   1
+ *
+ *  The same components, placed at their neighbors of cell (i,j):
+ *
+ *            i-1    i    i+1
+ *          +-----+-----+-----+
+ *  j+1     |  6  |  7  |  8  |
+ *          +-----+-----+-----+
+ *  j       |  3  |  4  |  5  |
+ *          +-----+-----+-----+
+ *  j-1     |  0  |  1  |  2  |
+ *          +-----+-----+-----+
+ *  ```
+ *  Component 4 is the diagonal.
+ *
+ *  Matrix-vector product, with (di_n, dj_n, dk_n) the offset of component n:
+ *      (A x)(i,j,k) = x(i,j,k) + sum_n M(i,j,k,n) * x(i+di_n, j+dj_n, k+dk_n)
  */
 template <class T, class Ops>
 class MassMatrixSolverOps : public MatrixSolverOps<T>
