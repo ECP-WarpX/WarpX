@@ -110,8 +110,7 @@ public:
                        const WarpXSolverVec& a_E,
                              amrex::Real     a_time,
                              int             a_nl_iter,
-                             bool            a_from_jacobian,
-                             bool            update_pc = true) = 0;
+                             bool            a_from_jacobian) = 0;
 
     /**
      * Prepare for the linear solve. This includes depositing the mass matrices and updating the PC.
@@ -393,8 +392,7 @@ protected:
     void PreRHSOp (amrex::Real a_cur_time,
                    int         a_nl_iter,
                    bool        a_from_jacobian,
-                   amrex::Real a_dt_scale,
-                   bool        update_pc = true);
+                   amrex::Real a_dt_scale);
 
     /**
      * \brief Scale mass matrices used for PC by c^2*mu0*theta*dt and add 1 to diagonal terms
