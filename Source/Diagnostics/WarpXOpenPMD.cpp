@@ -371,9 +371,9 @@ namespace detail
                                           {openPMD::UnitDimension::I,  1},
                                           {openPMD::UnitDimension::T,  1},
                                   });
-        } else if (field_name.substr(0,2) == "T_"){ // temperature in eV
+        } else if (field_name.substr(0,2) == "T_"){ // temperature (stored in eV, see unitSI)
             mesh.setUnitDimension({
-                                          {openPMD::UnitDimension::theta,  1},
+                                          {openPMD::UnitDimension::theta, 1},
                                   });
         }
     }
@@ -1384,6 +1384,10 @@ WarpXOpenPMDPlot::SetupMeshComp (openPMD::Mesh& mesh,
     mesh_comp.resetDataset(dataset);
 
     ::detail::setOpenPMDUnit( mesh, field_name );
+    if (field_name.substr(0,2) == "T_") {
+        // Temperature is stored in eV and readers multiply by unitSI to get K
+        mesh_comp.setUnitSI(PhysConst::q_e / PhysConst::kb);
+    }
     auto relative_cell_pos = ablastr::utils::getRelativeCellPosition(mf);     // AMReX Fortran index order
     std::reverse( relative_cell_pos.begin(), relative_cell_pos.end() ); // now in C order
     mesh_comp.setPosition( relative_cell_pos );
@@ -1541,9 +1545,6 @@ WarpXOpenPMDPlot::WriteOpenPMDFieldsAll ( //const std::string& filename,
                                         field_name,
                                         mf[lev],
                                         var_in_theta_mode );
-                        if (field_name.substr(0,2) == "T_") {
-                            mesh.setUnitSI(11604.5);  // temperature in eV -> K
-                        }
                     }
                 } else {
                     auto mesh = meshes[field_name];
