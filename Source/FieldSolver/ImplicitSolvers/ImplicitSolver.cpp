@@ -1172,9 +1172,7 @@ void ImplicitSolver::SyncMassMatricesPCAndApplyBCs ()
     using ablastr::fields::Direction;
     using warpx::fields::FieldType;
 
-    // Add mass matrix elements to the preconditioner containers,
-    // which may already include contributions from suborbit particles that
-    // are not included in the mass matrices.
+    // Copy the retained mass-matrix stencil components into the PC containers.
 
     const int diag_comp_xx = (AMREX_D_TERM(m_ncomp_xx[0],*m_ncomp_xx[1],*m_ncomp_xx[2])-1)/2;
     const int diag_comp_yy = (AMREX_D_TERM(m_ncomp_yy[0],*m_ncomp_yy[1],*m_ncomp_yy[2])-1)/2;
@@ -1231,7 +1229,7 @@ void ImplicitSolver::SyncMassMatricesPCAndApplyBCs ()
                     const int jj = (n / MM_PC_ncomp_xx[0]) % MM_PC_ncomp_xx[1] - MM_PC_width_xx[1];
                     const int kk = n / (MM_PC_ncomp_xx[0]*MM_PC_ncomp_xx[1]) - MM_PC_width_xx[2];
                     const int src_comp = diag_comp_xx + ii + MM_ncomp_xx[0]*(jj + MM_ncomp_xx[1]*kk);
-                    Sxx_pc(i,j,k,n) += Sxx(i,j,k,src_comp);
+                    Sxx_pc(i,j,k,n) = Sxx(i,j,k,src_comp);
                 },
                 by, MM_PC[1]->nComp(), [=] AMREX_GPU_DEVICE (int i, int j, int k, int n)
                 {
@@ -1239,7 +1237,7 @@ void ImplicitSolver::SyncMassMatricesPCAndApplyBCs ()
                     const int jj = (n / MM_PC_ncomp_yy[0]) % MM_PC_ncomp_yy[1] - MM_PC_width_yy[1];
                     const int kk = n / (MM_PC_ncomp_yy[0]*MM_PC_ncomp_yy[1]) - MM_PC_width_yy[2];
                     const int src_comp = diag_comp_yy + ii + MM_ncomp_yy[0]*(jj + MM_ncomp_yy[1]*kk);
-                    Syy_pc(i,j,k,n) += Syy(i,j,k,src_comp);
+                    Syy_pc(i,j,k,n) = Syy(i,j,k,src_comp);
                 },
                 bz, MM_PC[2]->nComp(), [=] AMREX_GPU_DEVICE (int i, int j, int k, int n)
                 {
@@ -1247,7 +1245,7 @@ void ImplicitSolver::SyncMassMatricesPCAndApplyBCs ()
                     const int jj = (n / MM_PC_ncomp_zz[0]) % MM_PC_ncomp_zz[1] - MM_PC_width_zz[1];
                     const int kk = n / (MM_PC_ncomp_zz[0]*MM_PC_ncomp_zz[1]) - MM_PC_width_zz[2];
                     const int src_comp = diag_comp_zz + ii + MM_ncomp_zz[0]*(jj + MM_ncomp_zz[1]*kk);
-                    Szz_pc(i,j,k,n) += Szz(i,j,k,src_comp);
+                    Szz_pc(i,j,k,n) = Szz(i,j,k,src_comp);
                 });
         }
 
