@@ -18,6 +18,10 @@
 #include <AMReX_ParallelDescriptor.H>
 #include <AMReX_Print.H>
 
+#ifdef AMREX_USE_PETSC
+#   include <petscconf.h>
+#endif
+
 #include <sstream>
 
 using namespace amrex;
@@ -272,6 +276,15 @@ int ImplicitSolver::OneStep (const amrex::Real  start_time,
     }
 
     return exit_status;
+}
+
+void ImplicitSolver::ReinitializePETScIfDue (const int a_step, const bool verbose_step)
+{
+    if (m_petsc_reinit_interval > 0 && (a_step + 1) % m_petsc_reinit_interval == 0) {
+        if (m_nlsolver->ReinitializePETSc() && verbose_step) {
+            amrex::Print() << "Re-initialized PETSc\n";
+        }
+    }
 }
 
 void ImplicitSolver::CumulateJ ()
@@ -706,6 +719,20 @@ void ImplicitSolver::parseNonlinearSolverParams ( const amrex::ParmParse&  pp )
 {
 
     pp.get("nonlinear_solver", m_nlsolver_type);
+    const bool reinit_interval_set = pp.query("petsc_reinit_interval", m_petsc_reinit_interval);
+#if defined(AMREX_USE_PETSC) && defined(PETSC_HAVE_KOKKOS)
+    // PETSc uses Kokkos on the device (e.g. in PetscSF), and Kokkos cannot be initialized twice
+    if (m_petsc_reinit_interval > 0) {
+        if (reinit_interval_set) {
+            ablastr::warn_manager::WMRecordWarning("ImplicitSolver",
+                "implicit_evolve.petsc_reinit_interval is ignored: PETSc is built with Kokkos, "
+                "which cannot be re-initialized.");
+        }
+        m_petsc_reinit_interval = 0;
+    }
+#else
+    amrex::ignore_unused(reinit_interval_set);
+#endif
 
     if (m_nlsolver_type == NonlinearSolverType::picard) {
 
@@ -1183,6 +1210,7 @@ void ImplicitSolver::PreRHSOp (const amrex::Real a_cur_time,
     // Apply BCs to J and communicate
     m_WarpX->SyncCurrentAndRho();
     m_WarpX->FinalizeRho();
+    m_WarpX->FinalizeJ();
 
 }
 
