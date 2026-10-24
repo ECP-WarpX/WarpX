@@ -50,7 +50,7 @@ namespace utils::algorithms
     bool any_of_is_in(const std::vector<TV>& vect,
                const std::vector<TE>& elems)
     {
-        return std::any_of(elems.begin(), elems.end(),
+        return std::ranges::any_of(elems,
             [&](const auto& elem){return is_in(vect, elem);});
     }
 }
